@@ -1,0 +1,47 @@
+From 57a3af56f4ee4418948dfbff8c02ae1d79de565e Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 24 Nov 2018 12:14:55 +0100
+Subject: [PATCH 49/62] Memory leak in xmlFreeTextReader
+
+In error cases, there might still be elements in the vstate table.
+Since vstateVPop in valid.c is private, we have to pop the elements
+with xmlValidatePopElement. This inspects nodes of the document, so
+the reader doc must be freed after the clearing the vstate table.
+
+Found by OSS-Fuzz.
+---
+ xmlreader.c | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/xmlreader.c b/xmlreader.c
+index 5e486c6..4461b36 100644
+--- a/xmlreader.c
++++ b/xmlreader.c
+@@ -2264,17 +2264,19 @@ xmlFreeTextReader(xmlTextReaderPtr reader) {
+     if (reader->ctxt != NULL) {
+         if (reader->dict == reader->ctxt->dict)
+ 	    reader->dict = NULL;
+-	if (reader->ctxt->myDoc != NULL) {
+-	    if (reader->preserve == 0)
+-		xmlTextReaderFreeDoc(reader, reader->ctxt->myDoc);
+-	    reader->ctxt->myDoc = NULL;
+-	}
+ 	if ((reader->ctxt->vctxt.vstateTab != NULL) &&
+ 	    (reader->ctxt->vctxt.vstateMax > 0)){
++            while (reader->ctxt->vctxt.vstateNr > 0)
++                xmlValidatePopElement(&reader->ctxt->vctxt, NULL, NULL, NULL);
+ 	    xmlFree(reader->ctxt->vctxt.vstateTab);
+ 	    reader->ctxt->vctxt.vstateTab = NULL;
+ 	    reader->ctxt->vctxt.vstateMax = 0;
+ 	}
++	if (reader->ctxt->myDoc != NULL) {
++	    if (reader->preserve == 0)
++		xmlTextReaderFreeDoc(reader, reader->ctxt->myDoc);
++	    reader->ctxt->myDoc = NULL;
++	}
+ 	if (reader->allocs & XML_TEXTREADER_CTXT)
+ 	    xmlFreeParserCtxt(reader->ctxt);
+     }
+-- 
+1.8.3.1
+

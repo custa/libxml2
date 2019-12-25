@@ -1,0 +1,28 @@
+From b7c50b8ddeae4662c639369360f34b832b6b2e49 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 17 Apr 2018 12:07:08 +0200
+Subject: [PATCH 11/13] Remove stray character from comment
+
+Fixes bug #795316:
+
+https://bugzilla.gnome.org/show_bug.cgi?id=795316
+---
+ xpath.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/xpath.c b/xpath.c
+index 9d223977..3fae0bf4 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -2,7 +2,7 @@
+  * xpath.c: XML Path Language implementation
+  *          XPath is a language for addressing parts of an XML document,
+  *          designed to be used by both XSLT and XPointer
+- *f
++ *
+  * Reference: W3C Recommendation 16 November 1999
+  *     http://www.w3.org/TR/1999/REC-xpath-19991116
+  * Public reference:
+-- 
+2.18.0
+

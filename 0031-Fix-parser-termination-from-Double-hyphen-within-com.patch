@@ -1,0 +1,36 @@
+From 3c0d62b4193c5c1fe15a143a138f76ffa1278779 Mon Sep 17 00:00:00 2001
+From: David Warring <david.warring@gmail.com>
+Date: Mon, 13 May 2019 07:15:44 +1200
+Subject: [PATCH 31/37] Fix parser termination from "Double hyphen within
+ comment" error
+
+The patch fixes the parser not halting immediately when the error
+handler attempts to stop the parser.
+
+Rather it was running on and continuing to reference the freed buffer
+in the while loop termination test.
+
+This is only a problem if xmlStopParser is called from an error
+handler. Probably caused by commit 123234f2. Fixes #58.
+---
+ parser.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/parser.c b/parser.c
+index 5879d3b..2cab92c 100644
+--- a/parser.c
++++ b/parser.c
+@@ -4955,6 +4955,10 @@ get_more:
+ 		} else
+ 		    xmlFatalErrMsgStr(ctxt, XML_ERR_HYPHEN_IN_COMMENT,
+ 		                      "Double hyphen within comment\n", NULL);
++                if (ctxt->instate == XML_PARSER_EOF) {
++                    xmlFree(buf);
++                    return;
++                }
+ 		in++;
+ 		ctxt->input->col++;
+ 	    }
+-- 
+1.8.3.1
+

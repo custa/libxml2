@@ -1,0 +1,37 @@
+From b48226f78c626a0fdbaed65793f1a6138de8558f Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 7 Jan 2019 17:58:32 +0100
+Subject: [PATCH 61/62] Fix memory leaks in xmlParseStartTag2 error paths
+
+Found by OSS-Fuzz.
+---
+ parser.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/parser.c b/parser.c
+index c424412..5879d3b 100644
+--- a/parser.c
++++ b/parser.c
+@@ -9247,7 +9247,8 @@ xmlParseStartTag2(xmlParserCtxtPtr ctxt, const xmlChar **pref,
+                 xmlErrMemory(ctxt, "dictionary allocation failure");
+                 if ((attvalue != NULL) && (alloc != 0))
+                     xmlFree(attvalue);
+-                return(NULL);
++                localname = NULL;
++                goto done;
+             }
+             if (*URL != 0) {
+                 uri = xmlParseURI((const char *) URL);
+@@ -9497,7 +9498,8 @@ next_attr:
+ 
+ 		    if ((atts == NULL) || (nbatts + 5 > maxatts)) {
+ 			if (xmlCtxtGrowAttrs(ctxt, nbatts + 5) < 0) {
+-			    return(NULL);
++                            localname = NULL;
++                            goto done;
+ 			}
+ 			maxatts = ctxt->maxatts;
+ 			atts = ctxt->atts;
+-- 
+1.8.3.1
+

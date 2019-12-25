@@ -1,0 +1,29 @@
+From efe8c093c408311ddbb6995c92a9e077386a57bf Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 24 Nov 2018 11:39:32 +0100
+Subject: [PATCH 48/62] Memory leak in xmlFreeID (xmlreader.c)
+
+Fix a memory leak in xmlReader's private copy of xmlFreeID. Only
+affects validation with NODICT.
+
+Found by OSS-Fuzz.
+---
+ xmlreader.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/xmlreader.c b/xmlreader.c
+index db310c8..5e486c6 100644
+--- a/xmlreader.c
++++ b/xmlreader.c
+@@ -238,6 +238,8 @@ xmlFreeID(xmlIDPtr id) {
+ 
+     if (id->value != NULL)
+ 	DICT_FREE(id->value)
++    if (id->name != NULL)
++	DICT_FREE(id->name)
+     xmlFree(id);
+ }
+ 
+-- 
+1.8.3.1
+

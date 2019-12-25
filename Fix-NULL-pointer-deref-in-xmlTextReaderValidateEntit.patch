@@ -1,0 +1,39 @@
+From 157cd3aed70845564e2ecc9754f3f826a3c9c65e Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 24 Nov 2018 15:46:00 +0100
+Subject: [PATCH 50/62] Fix NULL pointer deref in xmlTextReaderValidateEntity
+
+Found by OSS-Fuzz.
+---
+ xmlreader.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/xmlreader.c b/xmlreader.c
+index 4461b36..3acec75 100644
+--- a/xmlreader.c
++++ b/xmlreader.c
+@@ -1114,11 +1114,11 @@ xmlTextReaderValidateEntity(xmlTextReaderPtr reader) {
+ 		continue;
+ 	    } else {
+ 		/*
+-		 * The error has probably be raised already.
++		 * The error has probably been raised already.
+ 		 */
+ 		if (node == oldnode)
+ 		    break;
+-		node = node->next;
++                goto skip_children;
+ 	    }
+ #ifdef LIBXML_REGEXP_ENABLED
+ 	} else if (node->type == XML_ELEMENT_NODE) {
+@@ -1140,6 +1140,7 @@ xmlTextReaderValidateEntity(xmlTextReaderPtr reader) {
+ 	} else if (node->type == XML_ELEMENT_NODE) {
+ 	    xmlTextReaderValidatePop(reader);
+ 	}
++skip_children:
+ 	if (node->next != NULL) {
+ 	    node = node->next;
+ 	    continue;
+-- 
+1.8.3.1
+

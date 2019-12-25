@@ -1,0 +1,31 @@
+From 236dd6ab2e6129ece366117070c7c014500a00c1 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 13 Mar 2019 18:21:02 +0100
+Subject: [PATCH 12/37] Check XPath stack after calling functions
+
+Check that there's exactly one return value on the stack after calling
+XPath functions. Otherwise, functions that corrupt the stack without
+signaling an error could lead to memory errors.
+
+Found with libFuzzer and UBSan.
+---
+ xpath.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/xpath.c b/xpath.c
+index 72c6338..facd641 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -13431,6 +13431,9 @@ xmlXPathCompOpEval(xmlXPathParserContextPtr ctxt, xmlXPathStepOpPtr op)
+                 func(ctxt, op->value);
+                 ctxt->context->function = oldFunc;
+                 ctxt->context->functionURI = oldFuncURI;
++                if ((ctxt->error == XPATH_EXPRESSION_OK) &&
++                    (ctxt->valueNr != ctxt->valueFrame + 1))
++                    XP_ERROR0(XPATH_STACK_ERROR);
+                 xmlXPathPopFrame(ctxt, frame);
+                 return (total);
+             }
+-- 
+1.8.3.1
+
