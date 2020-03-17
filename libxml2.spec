@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.8
-Release: 8
+Release: 9
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -42,9 +42,20 @@ Patch6015: 0031-Fix-parser-termination-from-Double-hyphen-within-com.patch
 Patch6016: 0032-Fix-return-value-of-xmlOutputBufferWrite.patch
 Patch6017: 0034-Fix-unsigned-integer-overflow.patch
 Patch6018: 0037-Fix-memory-leak-in-xmlAllocOutputBufferInternal-erro.patch
+Patch6019: backport-Make-xmlParseContent-and-xmlParseElement-non-recursi.patch
+Patch6020: backport-Make-xmlFreeNodeList-non-recursive.patch
+Patch6021: backport-Make-xmlTextReaderFreeNodeList-non-recursive.patch
+Patch6022: backport-Fix-use-after-free-in-xmlTextReaderFreeNodeList.patch
+Patch6023: backport-Make-xmlParseConditionalSections-non-recursive.patch
+Patch6024: backport-Fix-for-conditional-sections-at-end-of-document.patch
+Patch6025: backport-Another-fix-for-conditional-sections-at-end-of-docum.patch
+Patch6026: backport-Make-xmlDumpElementContent-non-recursive.patch
 
 Patch9000: Fix-memory-leak-in-xmlParseBalancedChunkMemoryRecove.patch
 Patch9001: Fix-memory-leak-in-xmlSchemaValidateStream.patch
+Patch6027: backport-fix-infinite-loop-in-xmlStringLenDecodeEntities.patch
+Patch6028: backport-Annotate-functions-with-__attribute__-no_sanitize.patch
+Patch6029: backport-Avoid-ignored-attribute-warnings-under-GCC.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -234,6 +245,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Mar 17 2020 Leo Fang<leofang_94@163.com> - 2.9.8-9
+- Sync some patches from community 
+
 * Thu Dec 19 2019 openEuler Buildteam <buildteam@openEuler.org> - 2.9.8-8
 - Delete unused infomation
 

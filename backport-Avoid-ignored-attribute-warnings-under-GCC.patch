@@ -1,0 +1,62 @@
+From b88ae6d2e1c9f22931f59ff1ec490befe201fb26 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 14 Oct 2019 15:38:28 +0200
+Subject: [PATCH] Avoid ignored attribute warnings under GCC
+
+GCC doesn't support the unsigned-integer-overflow sanitizer.
+---
+ dict.c | 4 ++++
+ hash.c | 4 ++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/dict.c b/dict.c
+index fb0773b..336e046 100644
+--- a/dict.c
++++ b/dict.c
+@@ -372,7 +372,9 @@ found_pool:
+  * http://burtleburtle.net/bob/hash/doobs.html
+  */
+ 
++#ifdef __clang__
+ ATTRIBUTE_NO_SANITIZE("unsigned-integer-overflow")
++#endif
+ static uint32_t
+ xmlDictComputeBigKey(const xmlChar* data, int namelen, int seed) {
+     uint32_t hash;
+@@ -405,7 +407,9 @@ xmlDictComputeBigKey(const xmlChar* data, int namelen, int seed) {
+  *
+  * Neither of the two strings must be NULL.
+  */
++#ifdef __clang__
+ ATTRIBUTE_NO_SANITIZE("unsigned-integer-overflow")
++#endif
+ static unsigned long
+ xmlDictComputeBigQKey(const xmlChar *prefix, int plen,
+                       const xmlChar *name, int len, int seed)
+diff --git a/hash.c b/hash.c
+index f037af6..a83d979 100644
+--- a/hash.c
++++ b/hash.c
+@@ -79,7 +79,9 @@ struct _xmlHashTable {
+  * xmlHashComputeKey:
+  * Calculate the hash key
+  */
++#ifdef __clang__
+ ATTRIBUTE_NO_SANITIZE("unsigned-integer-overflow")
++#endif
+ static unsigned long
+ xmlHashComputeKey(xmlHashTablePtr table, const xmlChar *name,
+ 	          const xmlChar *name2, const xmlChar *name3) {
+@@ -110,7 +112,9 @@ xmlHashComputeKey(xmlHashTablePtr table, const xmlChar *name,
+     return (value % table->size);
+ }
+ 
++#ifdef __clang__
+ ATTRIBUTE_NO_SANITIZE("unsigned-integer-overflow")
++#endif
+ static unsigned long
+ xmlHashComputeQKey(xmlHashTablePtr table,
+ 		   const xmlChar *prefix, const xmlChar *name,
+-- 
+1.7.12.4
+
