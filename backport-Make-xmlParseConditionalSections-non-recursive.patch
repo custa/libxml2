@@ -1,0 +1,510 @@
+From 94aa233233dac8d6f497f6584d183e3b5cc2a0f8 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 30 Sep 2019 13:50:02 +0200
+Subject: [PATCH] Make xmlParseConditionalSections non-recursive
+
+Avoid call stack overflow in deeply nested conditional sections.
+
+Found by OSS-Fuzz.
+
+backport from https://gitlab.gnome.org/GNOME/libxml2/commit/c51e38cb3a808e315248e03c9e52bce08943c22b
+---
+ parser.c                            | 265 ++++++++++++++--------------
+ result/errors/759573-2.xml.err      |  10 --
+ result/errors/759573.xml.err        |  13 --
+ result/valid/cond_sect1.xml         |   8 +
+ result/valid/cond_sect1.xml.err     |   0
+ result/valid/cond_sect1.xml.err.rdr |   0
+ result/valid/cond_sect2.xml         |   0
+ result/valid/cond_sect2.xml.err     |   9 +
+ result/valid/cond_sect2.xml.err.rdr |  10 ++
+ test/valid/cond_sect1.xml           |   7 +
+ test/valid/cond_sect2.xml           |   4 +
+ test/valid/dtds/cond_sect1.dtd      |  20 +++
+ test/valid/dtds/cond_sect2.dtd      |  16 ++
+ 13 files changed, 203 insertions(+), 159 deletions(-)
+ create mode 100644 result/valid/cond_sect1.xml
+ create mode 100644 result/valid/cond_sect1.xml.err
+ create mode 100644 result/valid/cond_sect1.xml.err.rdr
+ create mode 100644 result/valid/cond_sect2.xml
+ create mode 100644 result/valid/cond_sect2.xml.err
+ create mode 100644 result/valid/cond_sect2.xml.err.rdr
+ create mode 100644 test/valid/cond_sect1.xml
+ create mode 100644 test/valid/cond_sect2.xml
+ create mode 100644 test/valid/dtds/cond_sect1.dtd
+ create mode 100644 test/valid/dtds/cond_sect2.dtd
+
+diff --git a/parser.c b/parser.c
+index 9fb14fe..bfa6585 100644
+--- a/parser.c
++++ b/parser.c
+@@ -6632,149 +6632,143 @@ xmlParseElementDecl(xmlParserCtxtPtr ctxt) {
+ 
+ static void
+ xmlParseConditionalSections(xmlParserCtxtPtr ctxt) {
+-    int id = ctxt->input->id;
++    int *inputIds = NULL;
++    size_t inputIdsSize = 0;
++    size_t depth = 0;
+ 
+-    SKIP(3);
+-    SKIP_BLANKS;
+-    if (CMP7(CUR_PTR, 'I', 'N', 'C', 'L', 'U', 'D', 'E')) {
+-	SKIP(7);
+-	SKIP_BLANKS;
+-	if (RAW != '[') {
+-	    xmlFatalErr(ctxt, XML_ERR_CONDSEC_INVALID, NULL);
+-	    xmlHaltParser(ctxt);
+-	    return;
+-	} else {
+-	    if (ctxt->input->id != id) {
+-		xmlFatalErrMsg(ctxt, XML_ERR_ENTITY_BOUNDARY,
+-	                       "All markup of the conditional section is not"
+-                               " in the same entity\n");
+-	    }
+-	    NEXT;
+-	}
+-	if (xmlParserDebugEntities) {
+-	    if ((ctxt->input != NULL) && (ctxt->input->filename))
+-		xmlGenericError(xmlGenericErrorContext,
+-			"%s(%d): ", ctxt->input->filename,
+-			ctxt->input->line);
+-	    xmlGenericError(xmlGenericErrorContext,
+-		    "Entering INCLUDE Conditional Section\n");
+-	}
++    while (ctxt->instate != XML_PARSER_EOF) {
++        if ((RAW == '<') && (NXT(1) == '!') && (NXT(2) == '[')) {
++            int id = ctxt->input->id;
+ 
+-        SKIP_BLANKS;
+-        GROW;
+-	while (((RAW != 0) && ((RAW != ']') || (NXT(1) != ']') ||
+-	        (NXT(2) != '>'))) && (ctxt->instate != XML_PARSER_EOF)) {
+-	    const xmlChar *check = CUR_PTR;
+-	    unsigned int cons = ctxt->input->consumed;
++            SKIP(3);
++            SKIP_BLANKS;
+ 
+-	    if ((RAW == '<') && (NXT(1) == '!') && (NXT(2) == '[')) {
+-		xmlParseConditionalSections(ctxt);
+-	    } else
+-		xmlParseMarkupDecl(ctxt);
++            if (CMP7(CUR_PTR, 'I', 'N', 'C', 'L', 'U', 'D', 'E')) {
++                SKIP(7);
++                SKIP_BLANKS;
++                if (RAW != '[') {
++                    xmlFatalErr(ctxt, XML_ERR_CONDSEC_INVALID, NULL);
++                    xmlHaltParser(ctxt);
++                    goto error;
++                }
++                if (ctxt->input->id != id) {
++                    xmlFatalErrMsg(ctxt, XML_ERR_ENTITY_BOUNDARY,
++                                   "All markup of the conditional section is"
++                                   " not in the same entity\n");
++                }
++                NEXT;
+ 
+-            SKIP_BLANKS;
+-            GROW;
++                if (inputIdsSize <= depth) {
++                    int *tmp;
+ 
+-	    if ((CUR_PTR == check) && (cons == ctxt->input->consumed)) {
+-		xmlFatalErr(ctxt, XML_ERR_EXT_SUBSET_NOT_FINISHED, NULL);
+-		xmlHaltParser(ctxt);
+-		break;
+-	    }
+-	}
+-	if (xmlParserDebugEntities) {
+-	    if ((ctxt->input != NULL) && (ctxt->input->filename))
+-		xmlGenericError(xmlGenericErrorContext,
+-			"%s(%d): ", ctxt->input->filename,
+-			ctxt->input->line);
+-	    xmlGenericError(xmlGenericErrorContext,
+-		    "Leaving INCLUDE Conditional Section\n");
+-	}
++                    inputIdsSize = (inputIdsSize == 0 ? 4 : inputIdsSize * 2);
++                    tmp = (int *) xmlRealloc(inputIds,
++                            inputIdsSize * sizeof(int));
++                    if (tmp == NULL) {
++                        xmlErrMemory(ctxt, NULL);
++                        goto error;
++                    }
++                    inputIds = tmp;
++                }
++                inputIds[depth] = id;
++                depth++;
++            } else if (CMP6(CUR_PTR, 'I', 'G', 'N', 'O', 'R', 'E')) {
++                int state;
++                xmlParserInputState instate;
++                size_t ignoreDepth = 0;
++
++                SKIP(6);
++                SKIP_BLANKS;
++                if (RAW != '[') {
++                    xmlFatalErr(ctxt, XML_ERR_CONDSEC_INVALID, NULL);
++                    xmlHaltParser(ctxt);
++                    goto error;
++                }
++                if (ctxt->input->id != id) {
++                    xmlFatalErrMsg(ctxt, XML_ERR_ENTITY_BOUNDARY,
++                                   "All markup of the conditional section is"
++                                   " not in the same entity\n");
++                }
++                NEXT;
+ 
+-    } else if (CMP6(CUR_PTR, 'I', 'G', 'N', 'O', 'R', 'E')) {
+-	int state;
+-	xmlParserInputState instate;
+-	int depth = 0;
++                /*
++                 * Parse up to the end of the conditional section but disable
++                 * SAX event generating DTD building in the meantime
++                 */
++                state = ctxt->disableSAX;
++                instate = ctxt->instate;
++                if (ctxt->recovery == 0) ctxt->disableSAX = 1;
++                ctxt->instate = XML_PARSER_IGNORE;
++
++                while (RAW != 0) {
++                    if ((RAW == '<') && (NXT(1) == '!') && (NXT(2) == '[')) {
++                        SKIP(3);
++                        ignoreDepth++;
++                        /* Check for integer overflow */
++                        if (ignoreDepth == 0) {
++                            xmlErrMemory(ctxt, NULL);
++                            goto error;
++                        }
++                    } else if ((RAW == ']') && (NXT(1) == ']') &&
++                               (NXT(2) == '>')) {
++                        if (ignoreDepth == 0)
++                            break;
++                        SKIP(3);
++                        ignoreDepth--;
++                    } else {
++                        NEXT;
++                    }
++                }
+ 
+-	SKIP(6);
+-	SKIP_BLANKS;
+-	if (RAW != '[') {
+-	    xmlFatalErr(ctxt, XML_ERR_CONDSEC_INVALID, NULL);
+-	    xmlHaltParser(ctxt);
+-	    return;
+-	} else {
+-	    if (ctxt->input->id != id) {
+-		xmlFatalErrMsg(ctxt, XML_ERR_ENTITY_BOUNDARY,
+-	                       "All markup of the conditional section is not"
+-                               " in the same entity\n");
+-	    }
+-	    NEXT;
+-	}
+-	if (xmlParserDebugEntities) {
+-	    if ((ctxt->input != NULL) && (ctxt->input->filename))
+-		xmlGenericError(xmlGenericErrorContext,
+-			"%s(%d): ", ctxt->input->filename,
+-			ctxt->input->line);
+-	    xmlGenericError(xmlGenericErrorContext,
+-		    "Entering IGNORE Conditional Section\n");
+-	}
++                ctxt->disableSAX = state;
++                ctxt->instate = instate;
+ 
+-	/*
+-	 * Parse up to the end of the conditional section
+-	 * But disable SAX event generating DTD building in the meantime
+-	 */
+-	state = ctxt->disableSAX;
+-	instate = ctxt->instate;
+-	if (ctxt->recovery == 0) ctxt->disableSAX = 1;
+-	ctxt->instate = XML_PARSER_IGNORE;
++                if (ctxt->input->id != id) {
++                    xmlFatalErrMsg(ctxt, XML_ERR_ENTITY_BOUNDARY,
++                                   "All markup of the conditional section is"
++                                   " not in the same entity\n");
++                }
++                SKIP(3);
++            } else {
++                xmlFatalErr(ctxt, XML_ERR_CONDSEC_INVALID_KEYWORD, NULL);
++                xmlHaltParser(ctxt);
++                goto error;
++            }
++        } else if ((depth > 0) &&
++                   (RAW == ']') && (NXT(1) == ']') && (NXT(2) == '>')) {
++            depth--;
++            if (ctxt->input->id != inputIds[depth]) {
++                xmlFatalErrMsg(ctxt, XML_ERR_ENTITY_BOUNDARY,
++                               "All markup of the conditional section is not"
++                               " in the same entity\n");
++            }
++            SKIP(3);
++        } else {
++            const xmlChar *check = CUR_PTR;
++            unsigned int cons = ctxt->input->consumed;
+ 
+-	while (((depth >= 0) && (RAW != 0)) &&
+-               (ctxt->instate != XML_PARSER_EOF)) {
+-	  if ((RAW == '<') && (NXT(1) == '!') && (NXT(2) == '[')) {
+-	    depth++;
+-	    SKIP(3);
+-	    continue;
+-	  }
+-	  if ((RAW == ']') && (NXT(1) == ']') && (NXT(2) == '>')) {
+-	    if (--depth >= 0) SKIP(3);
+-	    continue;
+-	  }
+-	  NEXT;
+-	  continue;
+-	}
++            xmlParseMarkupDecl(ctxt);
+ 
+-	ctxt->disableSAX = state;
+-	ctxt->instate = instate;
++            if ((CUR_PTR == check) && (cons == ctxt->input->consumed)) {
++                xmlFatalErr(ctxt, XML_ERR_EXT_SUBSET_NOT_FINISHED, NULL);
++                xmlHaltParser(ctxt);
++                goto error;
++            }
++        }
+ 
+-	if (xmlParserDebugEntities) {
+-	    if ((ctxt->input != NULL) && (ctxt->input->filename))
+-		xmlGenericError(xmlGenericErrorContext,
+-			"%s(%d): ", ctxt->input->filename,
+-			ctxt->input->line);
+-	    xmlGenericError(xmlGenericErrorContext,
+-		    "Leaving IGNORE Conditional Section\n");
+-	}
++        if (depth == 0)
++            break;
+ 
+-    } else {
+-	xmlFatalErr(ctxt, XML_ERR_CONDSEC_INVALID_KEYWORD, NULL);
+-	xmlHaltParser(ctxt);
+-	return;
++        SKIP_BLANKS;
++        GROW;
+     }
+ 
+-    if (RAW == 0)
+-        SHRINK;
+-
+     if (RAW == 0) {
+ 	xmlFatalErr(ctxt, XML_ERR_CONDSEC_NOT_FINISHED, NULL);
+-    } else {
+-	if (ctxt->input->id != id) {
+-	    xmlFatalErrMsg(ctxt, XML_ERR_ENTITY_BOUNDARY,
+-	                   "All markup of the conditional section is not in"
+-                           " the same entity\n");
+-	}
+-	if ((ctxt-> instate != XML_PARSER_EOF) &&
+-	    ((ctxt->input->cur + 3) <= ctxt->input->end))
+-	    SKIP(3);
+     }
++
++error:
++    xmlFree(inputIds);
+ }
+ 
+ /**
+@@ -6836,16 +6830,6 @@ xmlParseMarkupDecl(xmlParserCtxtPtr ctxt) {
+     if (ctxt->instate == XML_PARSER_EOF)
+         return;
+ 
+-    /*
+-     * Conditional sections are allowed from entities included
+-     * by PE References in the internal subset.
+-     */
+-    if ((ctxt->external == 0) && (ctxt->inputNr > 1)) {
+-        if ((RAW == '<') && (NXT(1) == '!') && (NXT(2) == '[')) {
+-	    xmlParseConditionalSections(ctxt);
+-	}
+-    }
+-
+     ctxt->instate = XML_PARSER_DTD;
+ }
+ 
+@@ -8306,6 +8290,15 @@ xmlParseInternalSubset(xmlParserCtxtPtr ctxt) {
+ 	    xmlParseMarkupDecl(ctxt);
+ 	    xmlParsePEReference(ctxt);
+ 
++            /*
++             * Conditional sections are allowed from entities included
++             * by PE References in the internal subset.
++             */
++            if ((ctxt->inputNr > 1) &&
++                (RAW == '<') && (NXT(1) == '!') && (NXT(2) == '[')) {
++                xmlParseConditionalSections(ctxt);
++            }
++
+ 	    if ((CUR_PTR == check) && (cons == ctxt->input->consumed)) {
+ 		xmlFatalErr(ctxt, XML_ERR_INTERNAL_ERROR,
+ 	     "xmlParseInternalSubset: error detected in Markup declaration\n");
+diff --git a/result/errors/759573-2.xml.err b/result/errors/759573-2.xml.err
+index 86d6420..ecaf18f 100644
+--- a/result/errors/759573-2.xml.err
++++ b/result/errors/759573-2.xml.err
+@@ -46,13 +46,3 @@ Entity: line 3:
+ Entity: line 3: 
+ %zz;<!ELEMENTD(%MENT%MENTDŹMENTD%zNMT9KENSMYSYSTEM;MENT9%zz;
+              ^
+-./test/errors/759573-2.xml:6: parser error : internal error: xmlParseInternalSubset: error detected in Markup declaration
+-
+-
+-^
+-./test/errors/759573-2.xml:6: parser error : DOCTYPE improperly terminated
+-
+-^
+-./test/errors/759573-2.xml:6: parser error : Start tag expected, '<' not found
+-
+-^
+diff --git a/result/errors/759573.xml.err b/result/errors/759573.xml.err
+index 554039f..2617cad 100644
+--- a/result/errors/759573.xml.err
++++ b/result/errors/759573.xml.err
+@@ -19,16 +19,3 @@ T t (A)><!ENTITY % xx '&#37;<![INCLUDE[000&#37;&#3000;000&#37;z;'><!ENTITYz>%xx;
+ Entity: line 1: 
+ %<![INCLUDE[000%ஸ000%z;
+             ^
+-./test/errors/759573.xml:1: parser error : internal error: xmlParseInternalSubset: error detected in Markup declaration
+-
+-<?h?><!DOCTYPEt[<!ELEMENT t (A)><!ENTITY % xx '&#37;<![INCLUDE[000&#37;&#3000;00
+-     ^
+-./test/errors/759573.xml:1: parser error : DOCTYPE improperly terminated
+-<?h?><!DOCTYPEt[<!ELEMENT t (A)><!ENTITY % xx '&#37;<![INCLUDE[000&#37;&#3000;00
+-     ^
+-./test/errors/759573.xml:1: parser error : StartTag: invalid element name
+-<?h?><!DOCTYPEt[<!ELEMENT t (A)><!ENTITY % xx '&#37;<![INCLUDE[000&#37;&#3000;00
+-      ^
+-./test/errors/759573.xml:1: parser error : Extra content at the end of the document
+-<?h?><!DOCTYPEt[<!ELEMENT t (A)><!ENTITY % xx '&#37;<![INCLUDE[000&#37;&#3000;00
+-      ^
+diff --git a/result/valid/cond_sect1.xml b/result/valid/cond_sect1.xml
+new file mode 100644
+index 0000000..dd2e5b4
+--- /dev/null
++++ b/result/valid/cond_sect1.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0"?>
++<!DOCTYPE doc SYSTEM "dtds/cond_sect1.dtd" [
++<!ENTITY % include "INCLUDE">
++<!ENTITY % ignore "IGNORE">
++]>
++<doc>
++    <child>text</child>
++</doc>
+diff --git a/result/valid/cond_sect1.xml.err b/result/valid/cond_sect1.xml.err
+new file mode 100644
+index 0000000..e69de29
+diff --git a/result/valid/cond_sect1.xml.err.rdr b/result/valid/cond_sect1.xml.err.rdr
+new file mode 100644
+index 0000000..e69de29
+diff --git a/result/valid/cond_sect2.xml b/result/valid/cond_sect2.xml
+new file mode 100644
+index 0000000..e69de29
+diff --git a/result/valid/cond_sect2.xml.err b/result/valid/cond_sect2.xml.err
+new file mode 100644
+index 0000000..9a7624b
+--- /dev/null
++++ b/result/valid/cond_sect2.xml.err
+@@ -0,0 +1,9 @@
++test/valid/dtds/cond_sect2.dtd:15: parser error : All markup of the conditional section is not in the same entity
++    %ent;
++         ^
++Entity: line 1: 
++]]>
++^
++test/valid/dtds/cond_sect2.dtd:17: parser error : Content error in the external subset
++
++^
+diff --git a/result/valid/cond_sect2.xml.err.rdr b/result/valid/cond_sect2.xml.err.rdr
+new file mode 100644
+index 0000000..fd3cb75
+--- /dev/null
++++ b/result/valid/cond_sect2.xml.err.rdr
+@@ -0,0 +1,10 @@
++test/valid/dtds/cond_sect2.dtd:15: parser error : All markup of the conditional section is not in the same entity
++    %ent;
++         ^
++Entity: line 1: 
++]]>
++^
++test/valid/dtds/cond_sect2.dtd:17: parser error : Content error in the external subset
++
++^
++./test/valid/cond_sect2.xml : failed to parse
+diff --git a/test/valid/cond_sect1.xml b/test/valid/cond_sect1.xml
+new file mode 100644
+index 0000000..796faa4
+--- /dev/null
++++ b/test/valid/cond_sect1.xml
+@@ -0,0 +1,7 @@
++<!DOCTYPE doc SYSTEM "dtds/cond_sect1.dtd" [
++    <!ENTITY % include "INCLUDE">
++    <!ENTITY % ignore  "IGNORE">
++]>
++<doc>
++    <child>text</child>
++</doc>
+diff --git a/test/valid/cond_sect2.xml b/test/valid/cond_sect2.xml
+new file mode 100644
+index 0000000..5153d05
+--- /dev/null
++++ b/test/valid/cond_sect2.xml
+@@ -0,0 +1,4 @@
++<!DOCTYPE doc SYSTEM "dtds/cond_sect2.dtd">
++<doc>
++    <child>text</child>
++</doc>
+diff --git a/test/valid/dtds/cond_sect1.dtd b/test/valid/dtds/cond_sect1.dtd
+new file mode 100644
+index 0000000..e327022
+--- /dev/null
++++ b/test/valid/dtds/cond_sect1.dtd
+@@ -0,0 +1,20 @@
++<![ %include; [
++    <![%include; [
++        <![ %include;[
++            <![%include;[
++                <!ELEMENT doc (child)>
++                <!ELEMENT child (#PCDATA)>
++            ]]>
++        ]]>
++    ]]>
++]]>
++<![ %ignore; [
++    <![%include; [
++        <![ %include;[
++            <![%ignore;[
++                <!ELEMENT doc (x)>
++                <!ELEMENT child (y)>
++            ]]>
++        ]]>
++    ]]>
++]]>
+diff --git a/test/valid/dtds/cond_sect2.dtd b/test/valid/dtds/cond_sect2.dtd
+new file mode 100644
+index 0000000..29eb4bf
+--- /dev/null
++++ b/test/valid/dtds/cond_sect2.dtd
+@@ -0,0 +1,16 @@
++<!ENTITY % ent "]]>">
++<![INCLUDE[
++    <![INCLUDE[
++        <![INCLUDE[
++            <![INCLUDE[
++                <![INCLUDE[
++                    <![INCLUDE[
++                        <![INCLUDE[
++                            <![INCLUDE[
++                        ]]>
++                    ]]>
++                ]]>
++            ]]>
++        ]]>
++    %ent;
++]]>
+-- 
+2.18.1
+
