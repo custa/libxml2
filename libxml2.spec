@@ -1,61 +1,15 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
-Version: 2.9.8
-Release: 9
+Version: 2.9.10
+Release: 1
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
 Patch0:         libxml2-multilib.patch
 # upstream patches
-Patch0001:      0001-NaN-and-Inf-fixes-for-pre-C99-compilers.patch
-Patch0002:      0002-Revert-Change-calls-to-xmlCharEncInput-to-set-flush-.patch
-Patch0003:      0003-Fix-inconsistency-in-xmlXPathIsInf.patch
-Patch0004:      0004-Stop-using-XPATH_OP_RESET.patch
-Patch0005:      0005-Don-t-change-context-node-in-xmlXPathRoot.patch
-Patch0006:      0006-Avoid-unnecessary-backups-of-the-context-node.patch
-Patch0007:      0007-Simplify-and-harden-nodeset-filtering.patch
-Patch0008:      0008-Improve-restoring-of-context-size-and-position.patch
-Patch0009:      0009-HTML-noscript-should-not-close-p.patch
-Patch0010:      0010-Remove-a-misleading-line-from-xmlCharEncOutput.patch
-Patch0011:      0011-Remove-stray-character-from-comment.patch
-Patch0012:      0012-Fix-nullptr-deref-with-XPath-logic-ops.patch
-Patch0013:      0013-Fix-infinite-loop-in-LZMA-decompression.patch
-
-Patch6000: Remove-a-misleading-line-from-xmlCharEncOutput.patch
-Patch6001: Fix-xmlSchemaValidCtxtPtr-reuse-memory-leak.patch
-Patch6002: Reset-HTML-parser-input-pointers-on-encoding-failure.patch
-Patch6003: Fix-HTML-serialization-with-UTF-8-encoding.patch
-Patch6004: Fix-memory-leak-in-xmlSwitchInputEncodingInt-error-p.patch
-
-Patch6005: Memory-leak-in-xmlFreeID-xmlreader.c.patch
-Patch6006: Memory-leak-in-xmlFreeTextReader.patch
-Patch6007: Fix-NULL-pointer-deref-in-xmlTextReaderValidateEntit.patch
-Patch6008: Fix-commit-Memory-leak-in-xmlFreeID-xmlreader.c.patch
-Patch6009: Fix-memory-leaks-in-xmlParseStartTag2-error-paths.patch
-
-Patch6010: 0009-Fix-null-deref-in-xmlregexp-error-path.patch
-Patch6011: 0012-Check-XPath-stack-after-calling-functions.patch
-Patch6012: 0013-Check-for-integer-overflow-in-xmlXPtrEvalChildSeq.patch
-Patch6013: 0021-Fix-memory-leaks-in-xmlXPathParseNameComplex-error-p.patch
-Patch6014: 0026-Fix-call-stack-overflow-in-xmlFreePattern.patch
-Patch6015: 0031-Fix-parser-termination-from-Double-hyphen-within-com.patch
-Patch6016: 0032-Fix-return-value-of-xmlOutputBufferWrite.patch
-Patch6017: 0034-Fix-unsigned-integer-overflow.patch
-Patch6018: 0037-Fix-memory-leak-in-xmlAllocOutputBufferInternal-erro.patch
-Patch6019: backport-Make-xmlParseContent-and-xmlParseElement-non-recursi.patch
-Patch6020: backport-Make-xmlFreeNodeList-non-recursive.patch
-Patch6021: backport-Make-xmlTextReaderFreeNodeList-non-recursive.patch
-Patch6022: backport-Fix-use-after-free-in-xmlTextReaderFreeNodeList.patch
-Patch6023: backport-Make-xmlParseConditionalSections-non-recursive.patch
-Patch6024: backport-Fix-for-conditional-sections-at-end-of-document.patch
-Patch6025: backport-Another-fix-for-conditional-sections-at-end-of-docum.patch
-Patch6026: backport-Make-xmlDumpElementContent-non-recursive.patch
-
-Patch9000: Fix-memory-leak-in-xmlParseBalancedChunkMemoryRecove.patch
-Patch9001: Fix-memory-leak-in-xmlSchemaValidateStream.patch
-Patch6027: backport-fix-infinite-loop-in-xmlStringLenDecodeEntities.patch
-Patch6028: backport-Annotate-functions-with-__attribute__-no_sanitize.patch
-Patch6029: backport-Avoid-ignored-attribute-warnings-under-GCC.patch
+Patch6001: backport-Fix-memory-leak-in-xmlSchemaValidateStream.patch
+Patch6002: backport-fix-infinite-loop-in-xmlStringLenDecodeEntities.patch
+Patch6003: backport-Updated-python-tests-tstLastError.py.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -63,6 +17,7 @@ BuildRequires: python3-devel
 BuildRequires: zlib-devel
 BuildRequires: pkgconfig
 BuildRequires: xz-devel
+BuildRequires: libtool
 URL: http://xmlsoft.org/
 
 %description
@@ -149,6 +104,7 @@ cp doc/*.py py3doc
 sed -i 's|#!/usr/bin/python |#!%{__python3} |' py3doc/*.py
 
 %build
+./autogen.sh
 %configure
 %make_build
 
@@ -245,6 +201,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Fri Apr 24 2020 BruceGW <gyl93216@163.com> - 2.9.10-1
+- update upstream to 2.9.10
+
 * Tue Mar 17 2020 Leo Fang<leofang_94@163.com> - 2.9.8-9
 - Sync some patches from community 
 
@@ -257,7 +216,7 @@ rm -fr %{buildroot}
 * Fri Sep 20 2019 openEuler Buildteam <buildteam@openeuler.org> - 2.9.8-6
 - Delete redundant information
 
-* Thu Sep 10 2019 openEuler Buildteam <buildteam@openeuler.org> - 2.9.8-5
+* Tue Sep 10 2019 openEuler Buildteam <buildteam@openeuler.org> - 2.9.8-5
 - Delete epoch
 
 * Thu Sep 5 2019 openEuler Buildteam <buildteam@openeuler.org> - 2.9.8-2
