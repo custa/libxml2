@@ -1,0 +1,41 @@
+From 5c7e0a9a4608ac442e727f6e479cf2a6dea368ec Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 11 Feb 2020 16:29:30 +0100
+Subject: [PATCH] Copy some XMLReader option flags to parser context
+
+The parser context stores some options both in the "options" bits and
+extra members like "validate" or "replaceEntities". Which of these
+are actually read is inconsistent, so make sure to also update the
+bit field.
+---
+ xmlreader.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/xmlreader.c b/xmlreader.c
+index f3891e4..e336bc7 100644
+--- a/xmlreader.c
++++ b/xmlreader.c
+@@ -3848,16 +3848,20 @@ xmlTextReaderSetParserProp(xmlTextReaderPtr reader, int prop, int value) {
+ 	    return(0);
+         case XML_PARSER_VALIDATE:
+ 	    if (value != 0) {
++                ctxt->options |= XML_PARSE_DTDVALID;
+ 		ctxt->validate = 1;
+ 		reader->validate = XML_TEXTREADER_VALIDATE_DTD;
+ 	    } else {
++                ctxt->options &= ~XML_PARSE_DTDVALID;
+ 		ctxt->validate = 0;
+ 	    }
+ 	    return(0);
+         case XML_PARSER_SUBST_ENTITIES:
+ 	    if (value != 0) {
++                ctxt->options |= XML_PARSE_NOENT;
+ 		ctxt->replaceEntities = 1;
+ 	    } else {
++                ctxt->options &= ~XML_PARSE_NOENT;
+ 		ctxt->replaceEntities = 0;
+ 	    }
+ 	    return(0);
+-- 
+1.8.3.1
+

@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 1
+Release: 2
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -10,6 +10,20 @@ Patch0:         libxml2-multilib.patch
 Patch6001: backport-Fix-memory-leak-in-xmlSchemaValidateStream.patch
 Patch6002: backport-fix-infinite-loop-in-xmlStringLenDecodeEntities.patch
 Patch6003: backport-Updated-python-tests-tstLastError.py.patch
+Patch0004: Null-pointer-handling-in-catalog-c.patch 
+Patch0005: Fix-overflow-handling-in-xmlBufBackToBuffer.patch
+Patch0006: Fix-memory-leak-in-error-path-of-XPath-expr-parser.patch
+Patch0007: Fix-memory-leaks-of-encoding-handlers-in-xmlsave-c.patch
+Patch0008: Use-random-seed-in-xmlDictComputeFastKey.patch 
+Patch0009: Fix-more-memory-leaks-in-error-paths-of-XPath-parser.patch
+Patch0010: Fix-freeing-of-nested-documents.patch
+Patch0011: Fix-overflow-check-in-xmlNodeDump.patch
+Patch0012: Check-for-overflow-when-allocating-two-dimensional-a.patch
+Patch0013: Fix-integer-overflow-in-xmlBufferResize.patch
+Patch0014: Fix-copying-of-entities-in-xmlParseReference.patch
+Patch0015: Copy-some-XMLReader-option-flags-to-parser-context.patch
+Patch0016: Merge-code-paths-loading-external-entities.patch
+Patch0017: Don-t-load-external-entity-from-xmlSAX2GetEntity.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -201,6 +215,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Wed Jun 24 2020 wangchen <wangchen137@huawei.com> - 2.9.10-2
+- Sync some patches from community
+
 * Fri Apr 24 2020 BruceGW <gyl93216@163.com> - 2.9.10-1
 - update upstream to 2.9.10
 
