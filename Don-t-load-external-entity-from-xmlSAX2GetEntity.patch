@@ -1,0 +1,99 @@
+From eddfbc38fa7e84ccd480eab3738e40d1b2c83979 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 22 Jan 2020 22:03:45 +0100
+Subject: [PATCH] Don't load external entity from xmlSAX2GetEntity
+
+Despite the comment, I can't see a reason why external entities must be
+loaded in the SAX handler. For external entities, the handler is
+typically first invoked via xmlParseReference which will later load the
+entity on its own if it wasn't loaded yet.
+
+The old code also lead to duplicated SAX events which makes it
+basically impossible to reuse xmlSAX2GetEntity for a custom SAX parser.
+See the change to the expected test output.
+
+Note that xmlSAX2GetEntity was loading the entity via
+xmlParseCtxtExternalEntity while xmlParseReference uses
+xmlParseExternalEntityPrivate. In the previous commit, the two
+functions were merged, trying to compensate for some slight differences
+between the two mostly identical implementations.
+
+But the more urgent reason for this change is that xmlParseReference
+has the facility to abort early when recursive entities are detected,
+avoiding what could practically amount to an infinite loop.
+
+If you want to backport this change, note that the previous three
+commits are required as well:
+
+f9ea1a24 Fix copying of entities in xmlParseReference
+5c7e0a9a Copy some XMLReader option flags to parser context
+1a3e584a Merge code paths loading external entities
+
+Found by OSS-Fuzz.
+---
+ SAX2.c                 | 30 ------------------------------
+ result/noent/ent2.sax2 |  7 -------
+ 2 files changed, 37 deletions(-)
+
+diff --git a/SAX2.c b/SAX2.c
+index 5f141f9..6045ca1 100644
+--- a/SAX2.c
++++ b/SAX2.c
+@@ -590,36 +590,6 @@ xmlSAX2GetEntity(void *ctx, const xmlChar *name)
+     } else {
+ 	ret = xmlGetDocEntity(ctxt->myDoc, name);
+     }
+-    if ((ret != NULL) &&
+-	((ctxt->validate) || (ctxt->replaceEntities)) &&
+-	(ret->children == NULL) &&
+-	(ret->etype == XML_EXTERNAL_GENERAL_PARSED_ENTITY)) {
+-	int val;
+-
+-	/*
+-	 * for validation purposes we really need to fetch and
+-	 * parse the external entity
+-	 */
+-	xmlNodePtr children;
+-	unsigned long oldnbent = ctxt->nbentities;
+-
+-        val = xmlParseCtxtExternalEntity(ctxt, ret->URI,
+-		                         ret->ExternalID, &children);
+-	if (val == 0) {
+-	    xmlAddChildList((xmlNodePtr) ret, children);
+-	} else {
+-	    xmlFatalErrMsg(ctxt, XML_ERR_ENTITY_PROCESSING,
+-		           "Failure to process entity %s\n", name, NULL);
+-	    ctxt->validate = 0;
+-	    return(NULL);
+-	}
+-	ret->owner = 1;
+-	if (ret->checked == 0) {
+-	    ret->checked = (ctxt->nbentities - oldnbent + 1) * 2;
+-	    if ((ret->content != NULL) && (xmlStrchr(ret->content, '<')))
+-	        ret->checked |= 1;
+-	}
+-    }
+     return(ret);
+ }
+ 
+diff --git a/result/noent/ent2.sax2 b/result/noent/ent2.sax2
+index 88c6aa6..d17f2ff 100644
+--- a/result/noent/ent2.sax2
++++ b/result/noent/ent2.sax2
+@@ -17,13 +17,6 @@ SAX.characters(my title, 8)
+ SAX.endElementNs(title, NULL, NULL)
+ SAX.characters(
+ , 1)
+-SAX.ignorableWhitespace(
+-, 1)
+-SAX.startElementNs(title, NULL, NULL, 0, 0, 0)
+-SAX.characters(my title, 8)
+-SAX.endElementNs(title, NULL, NULL)
+-SAX.characters(
+-, 1)
+ SAX.characters(
+   This text is about XML, the, 31)
+ SAX.getEntity(xml)
+-- 
+1.8.3.1
+
