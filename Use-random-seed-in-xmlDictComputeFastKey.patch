@@ -1,0 +1,27 @@
+From 3c8a3e9922cb1203ab5998ec542ce1e4c7fd085a Mon Sep 17 00:00:00 2001
+From: Ranier Vilela <ranier_gyn@hotmail.com>
+Date: Thu, 7 Nov 2019 12:59:10 +0000
+Subject: [PATCH] Use random seed in xmlDictComputeFastKey
+
+xmlDictComputeFastKey is only used for small tables, so this shouldn't
+be a security problem.
+---
+ dict.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/dict.c b/dict.c
+index 336e046..26ce516 100644
+--- a/dict.c
++++ b/dict.c
+@@ -452,7 +452,7 @@ xmlDictComputeFastKey(const xmlChar *name, int namelen, int seed) {
+     unsigned long value = seed;
+ 
+     if (name == NULL) return(0);
+-    value = *name;
++    value += *name;
+     value <<= 5;
+     if (namelen > 10) {
+         value += name[namelen - 1];
+-- 
+1.8.3.1
+

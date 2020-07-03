@@ -1,0 +1,135 @@
+From f9ea1a24ed0fd2fd051bb01b0d08cdff60887938 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 11 Feb 2020 16:17:34 +0100
+Subject: [PATCH] Fix copying of entities in xmlParseReference
+
+Before, reader mode would end up in a branch that didn't handle
+entities with multiple children and failed to update ent->last, so the
+hack copying the "extra" reader data wouldn't trigger. Consequently,
+some empty nodes in entities are correctly detected now in the test
+suite. (The detection of empty nodes in entities is still buggy,
+though.)
+---
+ parser.c        | 64 +++++++++++++++++++++++++++------------------------------
+ result/att7.rde |  3 +--
+ result/ent9.rde |  6 ++----
+ 3 files changed, 33 insertions(+), 40 deletions(-)
+
+diff --git a/parser.c b/parser.c
+index 1ba988c..5ff8592 100644
+--- a/parser.c
++++ b/parser.c
+@@ -7159,42 +7159,38 @@ xmlParseReference(xmlParserCtxtPtr ctxt) {
+ 	     (ent->etype == XML_EXTERNAL_GENERAL_PARSED_ENTITY))&&
+ 		(ent->children == NULL)) {
+ 		ent->children = list;
+-		if (ctxt->replaceEntities) {
+-		    /*
+-		     * Prune it directly in the generated document
+-		     * except for single text nodes.
+-		     */
+-		    if (((list->type == XML_TEXT_NODE) &&
+-			 (list->next == NULL)) ||
+-			(ctxt->parseMode == XML_PARSE_READER)) {
+-			list->parent = (xmlNodePtr) ent;
+-			list = NULL;
+-			ent->owner = 1;
+-		    } else {
+-			ent->owner = 0;
+-			while (list != NULL) {
+-			    list->parent = (xmlNodePtr) ctxt->node;
+-			    list->doc = ctxt->myDoc;
+-			    if (list->next == NULL)
+-				ent->last = list;
+-			    list = list->next;
+-			}
+-			list = ent->children;
++                /*
++                 * Prune it directly in the generated document
++                 * except for single text nodes.
++                 */
++                if ((ctxt->replaceEntities == 0) ||
++                    (ctxt->parseMode == XML_PARSE_READER) ||
++                    ((list->type == XML_TEXT_NODE) &&
++                     (list->next == NULL))) {
++                    ent->owner = 1;
++                    while (list != NULL) {
++                        list->parent = (xmlNodePtr) ent;
++                        xmlSetTreeDoc(list, ent->doc);
++                        if (list->next == NULL)
++                            ent->last = list;
++                        list = list->next;
++                    }
++                    list = NULL;
++                } else {
++                    ent->owner = 0;
++                    while (list != NULL) {
++                        list->parent = (xmlNodePtr) ctxt->node;
++                        list->doc = ctxt->myDoc;
++                        if (list->next == NULL)
++                            ent->last = list;
++                        list = list->next;
++                    }
++                    list = ent->children;
+ #ifdef LIBXML_LEGACY_ENABLED
+-			if (ent->etype == XML_EXTERNAL_GENERAL_PARSED_ENTITY)
+-			  xmlAddEntityReference(ent, list, NULL);
++                    if (ent->etype == XML_EXTERNAL_GENERAL_PARSED_ENTITY)
++                        xmlAddEntityReference(ent, list, NULL);
+ #endif /* LIBXML_LEGACY_ENABLED */
+-		    }
+-		} else {
+-		    ent->owner = 1;
+-		    while (list != NULL) {
+-			list->parent = (xmlNodePtr) ent;
+-			xmlSetTreeDoc(list, ent->doc);
+-			if (list->next == NULL)
+-			    ent->last = list;
+-			list = list->next;
+-		    }
+-		}
++                }
+ 	    } else {
+ 		xmlFreeNodeList(list);
+ 		list = NULL;
+diff --git a/result/att7.rde b/result/att7.rde
+index afcef5f..6079637 100644
+--- a/result/att7.rde
++++ b/result/att7.rde
+@@ -5,8 +5,7 @@
+ 1 1 test 1 0
+ 1 14 #text 0 1 
+     
+-1 1 test 0 0
+-1 15 test 0 0
++1 1 test 1 0
+ 1 14 #text 0 1 
+ 
+ 0 15 x 0 0
+diff --git a/result/ent9.rde b/result/ent9.rde
+index 38b9f43..2206146 100644
+--- a/result/ent9.rde
++++ b/result/ent9.rde
+@@ -12,8 +12,7 @@
+ 2 1 c 0 0
+ 2 15 c 0 0
+ 2 3 #text 0 1 ,
+-2 1 d 0 0
+-2 15 d 0 0
++2 1 d 1 0
+ 1 15 ent 0 0
+ 1 14 #text 0 1 
+    
+@@ -292,8 +291,7 @@
+ 2 1 c 0 0
+ 2 15 c 0 0
+ 2 3 #text 0 1 ,
+-2 1 d 0 0
+-2 15 d 0 0
++2 1 d 1 0
+ 1 15 ent 0 0
+ 1 14 #text 0 1 
+ 
+-- 
+1.8.3.1
+
