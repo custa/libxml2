@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 2
+Release: 3
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -24,6 +24,8 @@ Patch14:  Fix-copying-of-entities-in-xmlParseReference.patch
 Patch15:  Copy-some-XMLReader-option-flags-to-parser-context.patch
 Patch16:  Merge-code-paths-loading-external-entities.patch
 Patch17:  Don-t-load-external-entity-from-xmlSAX2GetEntity.patch
+Patch18:  Fix-use-after-free-with-validating-reader.patch
+Patch19:  Never-expand-parameter-entities-in-text-declaration.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -215,6 +217,10 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Jul 28 2020 shenyangyang <shenyangyang4@huawei.com> - 2.9.10-3
+- Fix-use-after-free-with-validating-reader and
+  Never-expand-parameter-entities-in-text-declaration
+
 * Fri Jul 3 2020 wangchen <wangchen137@huawei.com> - 2.9.10-2
 - Sync some patches from community
 
