@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 3
+Release: 4
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -16,7 +16,7 @@ Patch6:   Fix-memory-leak-in-error-path-of-XPath-expr-parser.patch
 Patch7:   Fix-memory-leaks-of-encoding-handlers-in-xmlsave-c.patch
 Patch8:   Use-random-seed-in-xmlDictComputeFastKey.patch 
 Patch9:   Fix-more-memory-leaks-in-error-paths-of-XPath-parser.patch
-Patch10:   Fix-freeing-of-nested-documents.patch
+Patch10:  Fix-freeing-of-nested-documents.patch
 Patch11:  Fix-overflow-check-in-xmlNodeDump.patch
 Patch12:  Check-for-overflow-when-allocating-two-dimensional-arrays.patch
 Patch13:  Fix-integer-overflow-in-xmlBufferResize.patch
@@ -26,6 +26,9 @@ Patch16:  Merge-code-paths-loading-external-entities.patch
 Patch17:  Don-t-load-external-entity-from-xmlSAX2GetEntity.patch
 Patch18:  Fix-use-after-free-with-validating-reader.patch
 Patch19:  Never-expand-parameter-entities-in-text-declaration.patch
+Patch20:  Fix-integer-overflow-in-xmlFAParseQuantExact.patch
+Patch21:  Report-error-for-invalid-regexp-quantifiers.patch
+Patch22:  Add-regexp-regression-tests.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -217,6 +220,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Mon Aug 3 2020 Liquor <lirui130@huawei.com> - 2.9.10-4
+- Fix integer overflow in xmlFAParseQuantExact
+
 * Tue Jul 28 2020 shenyangyang <shenyangyang4@huawei.com> - 2.9.10-3
 - Fix-use-after-free-with-validating-reader and
   Never-expand-parameter-entities-in-text-declaration
