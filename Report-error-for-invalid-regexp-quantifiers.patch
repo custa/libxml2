@@ -1,0 +1,26 @@
+From f8329fdc234a43b858271acc75ea70881e35fcae Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 2 Jul 2020 11:51:31 +0200
+Subject: [PATCH] Report error for invalid regexp quantifiers
+
+---
+ xmlregexp.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/xmlregexp.c b/xmlregexp.c
+index 0272dcab..687290e2 100644
+--- a/xmlregexp.c
++++ b/xmlregexp.c
+@@ -5268,6 +5268,9 @@ xmlFAParseQuantifier(xmlRegParserCtxtPtr ctxt) {
+ 	cur = xmlFAParseQuantExact(ctxt);
+ 	if (cur >= 0)
+ 	    min = cur;
++        else {
++            ERROR("Improper quantifier");
++        }
+ 	if (CUR == ',') {
+ 	    NEXT;
+ 	    if (CUR == '}')
+-- 
+2.23.0
+
