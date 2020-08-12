@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 4
+Release: 5
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -29,6 +29,8 @@ Patch19:  Never-expand-parameter-entities-in-text-declaration.patch
 Patch20:  Fix-integer-overflow-in-xmlFAParseQuantExact.patch
 Patch21:  Report-error-for-invalid-regexp-quantifiers.patch
 Patch22:  Add-regexp-regression-tests.patch
+Patch23:  Limit-regexp-nesting-depth.patch
+Patch24:  Fix-exponential-runtime-in-xmlFARecurseDeterminism.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -220,6 +222,10 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Wed Aug 12 2020 Liquor <lirui130@huawei.com> - 2.9.10-5
+- Limit regexp nesting depth
+- Fix exponential runtime in xmlFARecurseDeterminism
+
 * Mon Aug 3 2020 Liquor <lirui130@huawei.com> - 2.9.10-4
 - Fix integer overflow in xmlFAParseQuantExact
 
