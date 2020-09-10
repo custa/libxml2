@@ -1,0 +1,33 @@
+From ff009f991314ce8711f8a6a7f99107c10fb0a807 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 30 May 2020 15:32:25 +0200
+Subject: [PATCH 042/139] Fix memory leak in xmlXIncludeLoadDoc error path
+
+Found by OSS-Fuzz.
+---
+ xinclude.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/xinclude.c b/xinclude.c
+index 5d44df4..baeb8db 100644
+--- a/xinclude.c
++++ b/xinclude.c
+@@ -1608,6 +1608,7 @@ loaded:
+ 		               XML_XINCLUDE_XPTR_RESULT,
+ 			       "XPointer is not a range: #%s\n",
+ 			       fragment);
++                xmlXPathFreeObject(xptr);
+ 		xmlXPathFreeContext(xptrctxt);
+ 		xmlFree(URL);
+ 		xmlFree(fragment);
+@@ -1615,6 +1616,7 @@ loaded:
+ 	    case XPATH_NODESET:
+ 	        if ((xptr->nodesetval == NULL) ||
+ 		    (xptr->nodesetval->nodeNr <= 0)) {
++                    xmlXPathFreeObject(xptr);
+ 		    xmlXPathFreeContext(xptrctxt);
+ 		    xmlFree(URL);
+ 		    xmlFree(fragment);
+-- 
+1.8.3.1
+

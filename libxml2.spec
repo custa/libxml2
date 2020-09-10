@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 6
+Release: 7
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -33,6 +33,27 @@ Patch23:  Limit-regexp-nesting-depth.patch
 Patch24:  Fix-exponential-runtime-in-xmlFARecurseDeterminism.patch
 Patch25:  Fix-more-quadratic-runtime-issues-in-HTML-push-parse.patch
 Patch26:  Reset-HTML-parser-input-before-reporting-error.patch
+Patch27:  Fix-memory-leak-when-shared-libxml-dll-is-unloaded.patch
+Patch28:  Fix-memory-leak-in-xmlXIncludeLoadDoc-error-path.patch
+Patch29:  Fix-undefined-behavior-in-xmlXPathTryStreamCompile.patch
+Patch30:  Fix-integer-overflow-in-htmlParseCharRef.patch
+Patch31:  Fix-another-memory-leak-in-xmlSchemaValAtomicType.patch
+Patch32:  Fix-integer-overflow-when-parsing-min-max-Occurs.patch
+Patch33:  Fix-integer-overflow-in-_xmlSchemaParseGYear.patch
+Patch34:  Fix-quadratic-runtime-when-parsing-HTML-script-conte.patch
+Patch35:  Fix-UTF-8-decoder-in-HTML-parser.patch
+Patch36:  Don-t-try-to-handle-namespaces-when-building-HTML-do.patch
+Patch37:  Fix-integer-overflow-when-comparing-schema-dates.patch
+Patch38:  Fix-memory-leak-in-xmlXIncludeIncludeNode-error-path.patch
+Patch39:  Don-t-recurse-into-xi-include-children-in-xmlXInclud.patch
+Patch40:  Don-t-process-siblings-of-root-in-xmlXIncludeProcess.patch
+Patch41:  Fix-exponential-runtime-and-memory-in-xi-fallback-pr.patch
+Patch42:  Fuzz-XInclude-engine.patch
+Patch43:  Fix-memory-leak-in-runtest.c.patch
+Patch44:  Fix-XInclude-regression-introduced-with-recent-commi.patch
+Patch45:  Fix-memory-leak-in-xmlXIncludeAddNode-error-paths.patch
+Patch46:  Fix-double-free-in-XML-reader-with-XIncludes.patch
+Patch47:  Limit-size-of-free-lists-in-XML-reader-when-fuzzing.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -224,6 +245,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Thu Sep 10 2020 yangzhuangzhuang <yangzhuangzhuang1@huawei.com> - 2.9.10-7
+- Fixed some issues found in fuzzing testcases
+
 * Fri Aug 28 2020 zoulin <zoulin13@huawei.com> - 2.9.10-6
 - Fix more quadratic runtime issues in HTML push parse
 - Fix reset HTML parser input before reporting error
