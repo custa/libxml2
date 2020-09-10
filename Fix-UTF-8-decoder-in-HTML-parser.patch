@@ -1,0 +1,58 @@
+From 1493130ef24f8af2e1e70fdf12827374f670f7bf Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 15 Jul 2020 12:54:25 +0200
+Subject: [PATCH 085/139] Fix UTF-8 decoder in HTML parser
+
+Reject sequences starting with a continuation byte as well as overlong
+sequences like the XML parser.
+
+Also fixes an infinite loop in connection with previous commit 50078922
+since htmlCurrentChar would return 0 even if not at the end of the
+buffer.
+
+Found by OSS-Fuzz.
+---
+ HTMLparser.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index 26ed124..d31e2ec 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -439,6 +439,8 @@ htmlCurrentChar(xmlParserCtxtPtr ctxt, int *len) {
+ 
+ 	c = *cur;
+ 	if (c & 0x80) {
++	    if ((c & 0x40) == 0)
++		goto encoding_error;
+ 	    if (cur[1] == 0) {
+ 		xmlParserInputGrow(ctxt->input, INPUT_CHUNK);
+                 cur = ctxt->input->cur;
+@@ -467,18 +469,24 @@ htmlCurrentChar(xmlParserCtxtPtr ctxt, int *len) {
+ 		    val |= (cur[1] & 0x3f) << 12;
+ 		    val |= (cur[2] & 0x3f) << 6;
+ 		    val |= cur[3] & 0x3f;
++		    if (val < 0x10000)
++			goto encoding_error;
+ 		} else {
+ 		  /* 3-byte code */
+ 		    *len = 3;
+ 		    val = (cur[0] & 0xf) << 12;
+ 		    val |= (cur[1] & 0x3f) << 6;
+ 		    val |= cur[2] & 0x3f;
++		    if (val < 0x800)
++			goto encoding_error;
+ 		}
+ 	    } else {
+ 	      /* 2-byte code */
+ 		*len = 2;
+ 		val = (cur[0] & 0x1f) << 6;
+ 		val |= cur[1] & 0x3f;
++		if (val < 0x80)
++		    goto encoding_error;
+ 	    }
+ 	    if (!IS_CHAR(val)) {
+ 	        htmlParseErrInt(ctxt, XML_ERR_INVALID_CHAR,
+-- 
+1.8.3.1
+
