@@ -1,0 +1,57 @@
+From 3da8d947df1f84e54b12145ca2cfa1ff6456f532 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 9 Jul 2020 16:08:38 +0200
+Subject: [PATCH] Fix more quadratic runtime issues in HTML push parser
+
+Make sure that checkIndex is set when returning without match from
+inside a comment. Also track parser state in htmlParseLookupChars.
+
+Found by OSS-Fuzz.
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index 366c19b..9b12dd1 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -5205,7 +5205,7 @@ htmlParseLookupSequence(htmlParserCtxtPtr ctxt, xmlChar first,
+         }
+         if (incomment) {
+             if (base + 3 > len)
+-                return (-1);
++                break;
+             if ((buf[base] == '-') && (buf[base + 1] == '-') &&
+                 (buf[base + 2] == '>')) {
+                 incomment = 0;
+@@ -5294,8 +5294,11 @@ htmlParseLookupChars(htmlParserCtxtPtr ctxt, const xmlChar * stop,
+     if (base < 0)
+         return (-1);
+ 
+-    if (ctxt->checkIndex > base)
++    if (ctxt->checkIndex > base) {
+         base = ctxt->checkIndex;
++        /* Abuse hasPErefs member to restore current state. */
++        incomment = ctxt->hasPErefs & 1 ? 1 : 0;
++    }
+ 
+     if (in->buf == NULL) {
+         buf = in->base;
+@@ -5316,7 +5319,7 @@ htmlParseLookupChars(htmlParserCtxtPtr ctxt, const xmlChar * stop,
+         }
+         if (incomment) {
+             if (base + 3 > len)
+-                return (-1);
++                break;
+             if ((buf[base] == '-') && (buf[base + 1] == '-') &&
+                 (buf[base + 2] == '>')) {
+                 incomment = 0;
+@@ -5332,6 +5335,8 @@ htmlParseLookupChars(htmlParserCtxtPtr ctxt, const xmlChar * stop,
+         }
+     }
+     ctxt->checkIndex = base;
++    /* Abuse hasPErefs member to track current state. */
++    ctxt->hasPErefs = incomment;
+     return (-1);
+ }
+ 
+-- 
+1.8.3.1
+

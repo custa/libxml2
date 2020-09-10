@@ -1,0 +1,55 @@
+From 070d635e771a24f33e8480fa60689a881c9fa636 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 21 Jun 2020 16:26:38 +0200
+Subject: [PATCH 059/139] Fix integer overflow when parsing {min,max}Occurs
+
+Clamp value to INT_MAX.
+
+Found with libFuzzer and UBSan.
+---
+ xmlschemas.c | 22 ++++++++++++++++++++--
+ 1 file changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/xmlschemas.c b/xmlschemas.c
+index 81c47bc..cc20063 100644
+--- a/xmlschemas.c
++++ b/xmlschemas.c
+@@ -6074,7 +6074,16 @@ xmlGetMaxOccurs(xmlSchemaParserCtxtPtr ctxt, xmlNodePtr node,
+ 	return (def);
+     }
+     while ((*cur >= '0') && (*cur <= '9')) {
+-        ret = ret * 10 + (*cur - '0');
++        if (ret > INT_MAX / 10) {
++            ret = INT_MAX;
++        } else {
++            int digit = *cur - '0';
++            ret *= 10;
++            if (ret > INT_MAX - digit)
++                ret = INT_MAX;
++            else
++                ret += digit;
++        }
+         cur++;
+     }
+     while (IS_BLANK_CH(*cur))
+@@ -6126,7 +6135,16 @@ xmlGetMinOccurs(xmlSchemaParserCtxtPtr ctxt, xmlNodePtr node,
+         return (def);
+     }
+     while ((*cur >= '0') && (*cur <= '9')) {
+-        ret = ret * 10 + (*cur - '0');
++        if (ret > INT_MAX / 10) {
++            ret = INT_MAX;
++        } else {
++            int digit = *cur - '0';
++            ret *= 10;
++            if (ret > INT_MAX - digit)
++                ret = INT_MAX;
++            else
++                ret += digit;
++        }
+         cur++;
+     }
+     while (IS_BLANK_CH(*cur))
+-- 
+1.8.3.1
+
