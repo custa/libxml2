@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 6
+Release: 7
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -42,7 +42,7 @@ Patch32:  Fix-integer-overflow-when-parsing-min-max-Occurs.patch
 Patch33:  Fix-integer-overflow-in-_xmlSchemaParseGYear.patch
 Patch34:  Fix-quadratic-runtime-when-parsing-HTML-script-conte.patch
 Patch35:  Fix-UTF-8-decoder-in-HTML-parser.patch
-Patch36:  Don-t-try-to-handle-namespaces-when-building-HTML-do.patch
+#Patch36:  Don-t-try-to-handle-namespaces-when-building-HTML-do.patch
 Patch37:  Fix-integer-overflow-when-comparing-schema-dates.patch
 Patch38:  Fix-memory-leak-in-xmlXIncludeIncludeNode-error-path.patch
 Patch39:  Don-t-recurse-into-xi-include-children-in-xmlXInclud.patch
@@ -245,6 +245,11 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Sat Sep 12 2020 solarhu <solar.hu@huawei.com> - 2.9.10-7
+- rubygem-nokogiri test case fail,beacuse patch36 remove xml namespace function 
+- remove patch36
+
+
 * Thu Sep 10 2020 yangzhuangzhuang <yangzhuangzhuang1@huawei.com> - 2.9.10-6
 - Fixed some issues found in fuzzing testcases
 - Fix more quadratic runtime issues in HTML push parse
