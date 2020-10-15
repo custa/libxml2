@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 6
+Release: 7
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -33,6 +33,7 @@ Patch23:  Limit-regexp-nesting-depth.patch
 Patch24:  Fix-exponential-runtime-in-xmlFARecurseDeterminism.patch
 Patch25:  Fix-more-quadratic-runtime-issues-in-HTML-push-parse.patch
 Patch26:  Reset-HTML-parser-input-before-reporting-error.patch
+Patch27:  Fix-integer-overflow-when-comparing-schema-dates.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -224,6 +225,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Thu Oct 15 2020 yangzhuangzhuang <yangzhuangzhuang1@huawei.com> - 2.9.10-7
+- Fix CVE-2020-24977
+
 * Fri Aug 28 2020 zoulin <zoulin13@huawei.com> - 2.9.10-6
 - Fix more quadratic runtime issues in HTML push parse
 - Fix reset HTML parser input before reporting error
