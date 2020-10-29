@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 8
+Release: 9
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -55,7 +55,6 @@ Patch45:  Fix-double-free-in-XML-reader-with-XIncludes.patch
 Patch46:  Limit-size-of-free-lists-in-XML-reader-when-fuzzing.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
-BuildRequires: python2-devel
 BuildRequires: python3-devel
 BuildRequires: zlib-devel
 BuildRequires: pkgconfig
@@ -95,24 +94,6 @@ In this case one can use the built-in XPath and XPointer implementation
 to select sub nodes or ranges. A flexible Input/Output mechanism is
 available, with existing HTTP and FTP modules and combined to an
 URI library.
-
-%package -n python2-%{name}
-%{?python_provide:%python_provide python-%{name}}
-Summary: Python bindings for the libxml2 library
-Group: Development/Libraries
-Requires: libxml2 = %{version}-%{release}
-Obsoletes: %{name}-python < %{version}-%{release}
-Provides: %{name}-python = %{version}-%{release}
-
-%description -n python2-%{name}
-The libxml2-python package contains a Python 2 module that permits applications
-written in the Python programming language, version 2, to use the interface
-supplied by the libxml2 library to manipulate XML files.
-
-This library allows to manipulate XML files. It includes support
-to read, modify and write XML and HTML files. There is DTDs support
-this includes parsing and validation even with complex DTDs, either
-at parse time or later once the document has been modified.
 
 %package -n python3-%{name}
 Summary: Python 3 bindings for the libxml2 library
@@ -212,18 +193,6 @@ rm -fr %{buildroot}
 
 %{_libdir}/*a
 
-%files -n python2-%{name}
-%defattr(-, root, root)
-
-%{_libdir}/python2*/site-packages/libxml2.py*
-%{_libdir}/python2*/site-packages/drv_libxml2.py*
-%{_libdir}/python2*/site-packages/libxml2mod*
-%doc python/TODO
-%doc python/libxml2class.txt
-%doc python/tests/*.py
-%doc doc/*.py
-%doc doc/python.html
-
 %files -n python3-%{name}
 %defattr(-, root, root)
 
@@ -244,6 +213,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Thu Oct 29 2020 panxiaohe <panxiaohe@huawei.com> - 2.9.10-9
+- remove subpackage python2-libxml2
+
 * Mon Sep 14 2020 yangzhuangzhuang <yangzhuangzhuang1@huawei.com> - 2.9.10-8
 - revert Don-t-try-to-handle-namespaces-when-building-HTML-do.patch.
   rubygem-nokogoro test case fail,because this patch remove xml namespace function.
