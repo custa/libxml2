@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 7
+Release: 8
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -42,6 +42,7 @@ BuildRequires: zlib-devel
 BuildRequires: pkgconfig
 BuildRequires: xz-devel
 BuildRequires: libtool
+Requires: libxml2-help
 URL: http://xmlsoft.org/
 
 %description
@@ -225,6 +226,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Fri Nov 6 2020 panxiaohe <panxiaohe@huawei.com> - 2.9.10-8
+- add libxml2-help requires
+
 * Thu Oct 15 2020 yangzhuangzhuang <yangzhuangzhuang1@huawei.com> - 2.9.10-7
 - Fix CVE-2020-24977
 
