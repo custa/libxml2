@@ -1,0 +1,120 @@
+From e6ec58ecf7adf73335cfb40f0d5bc673681f766b Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 21 Sep 2020 12:49:36 +0200
+Subject: [PATCH] Fix null deref in XPointer expression error path
+
+Make sure that the filter functions introduced with commit c2f4da1a
+return node-sets without NULL pointers also in the error case.
+
+Found by OSS-Fuzz.
+---
+ xpath.c | 38 +++++++++++++++++++-------------------
+ 1 file changed, 19 insertions(+), 19 deletions(-)
+
+diff --git a/xpath.c b/xpath.c
+index 311997fe..6ee7e57e 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -11677,11 +11677,11 @@ xmlXPathNodeSetFilter(xmlXPathParserContextPtr ctxt,
+         res = xmlXPathCompOpEvalToBoolean(ctxt, filterOp, 1);
+ 
+         if (ctxt->error != XPATH_EXPRESSION_OK)
+-            goto exit;
++            break;
+         if (res < 0) {
+             /* Shouldn't happen */
+             xmlXPathErr(ctxt, XPATH_EXPR_ERROR);
+-            goto exit;
++            break;
+         }
+ 
+         if ((res != 0) && ((pos >= minPos) && (pos <= maxPos))) {
+@@ -11700,15 +11700,7 @@ xmlXPathNodeSetFilter(xmlXPathParserContextPtr ctxt,
+ 
+         if (res != 0) {
+             if (pos == maxPos) {
+-                /* Clear remaining nodes and exit loop. */
+-                if (hasNsNodes) {
+-                    for (i++; i < set->nodeNr; i++) {
+-                        node = set->nodeTab[i];
+-                        if ((node != NULL) &&
+-                            (node->type == XML_NAMESPACE_DECL))
+-                            xmlXPathNodeSetFreeNs((xmlNsPtr) node);
+-                    }
+-                }
++                i += 1;
+                 break;
+             }
+ 
+@@ -11716,6 +11708,15 @@ xmlXPathNodeSetFilter(xmlXPathParserContextPtr ctxt,
+         }
+     }
+ 
++    /* Free remaining nodes. */
++    if (hasNsNodes) {
++        for (; i < set->nodeNr; i++) {
++            xmlNodePtr node = set->nodeTab[i];
++            if ((node != NULL) && (node->type == XML_NAMESPACE_DECL))
++                xmlXPathNodeSetFreeNs((xmlNsPtr) node);
++        }
++    }
++
+     set->nodeNr = j;
+ 
+     /* If too many elements were removed, shrink table to preserve memory. */
+@@ -11736,7 +11737,6 @@ xmlXPathNodeSetFilter(xmlXPathParserContextPtr ctxt,
+         }
+     }
+ 
+-exit:
+     xpctxt->node = oldnode;
+     xpctxt->doc = olddoc;
+     xpctxt->contextSize = oldcs;
+@@ -11801,11 +11801,11 @@ xmlXPathLocationSetFilter(xmlXPathParserContextPtr ctxt,
+         res = xmlXPathCompOpEvalToBoolean(ctxt, filterOp, 1);
+ 
+         if (ctxt->error != XPATH_EXPRESSION_OK)
+-            goto exit;
++            break;
+         if (res < 0) {
+             /* Shouldn't happen */
+             xmlXPathErr(ctxt, XPATH_EXPR_ERROR);
+-            goto exit;
++            break;
+         }
+ 
+         if ((res != 0) && ((pos >= minPos) && (pos <= maxPos))) {
+@@ -11823,10 +11823,7 @@ xmlXPathLocationSetFilter(xmlXPathParserContextPtr ctxt,
+ 
+         if (res != 0) {
+             if (pos == maxPos) {
+-                /* Clear remaining nodes and exit loop. */
+-                for (i++; i < locset->locNr; i++) {
+-                    xmlXPathFreeObject(locset->locTab[i]);
+-                }
++                i += 1;
+                 break;
+             }
+ 
+@@ -11834,6 +11831,10 @@ xmlXPathLocationSetFilter(xmlXPathParserContextPtr ctxt,
+         }
+     }
+ 
++    /* Free remaining nodes. */
++    for (; i < locset->locNr; i++)
++        xmlXPathFreeObject(locset->locTab[i]);
++
+     locset->locNr = j;
+ 
+     /* If too many elements were removed, shrink table to preserve memory. */
+@@ -11854,7 +11855,6 @@ xmlXPathLocationSetFilter(xmlXPathParserContextPtr ctxt,
+         }
+     }
+ 
+-exit:
+     xpctxt->node = oldnode;
+     xpctxt->doc = olddoc;
+     xpctxt->contextSize = oldcs;
+-- 
+2.27.0
+

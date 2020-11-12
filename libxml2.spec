@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 10
+Release: 11
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -53,6 +53,9 @@ Patch43:  Fix-XInclude-regression-introduced-with-recent-commi.patch
 Patch44:  Fix-memory-leak-in-xmlXIncludeAddNode-error-paths.patch
 Patch45:  Fix-double-free-in-XML-reader-with-XIncludes.patch
 Patch46:  Limit-size-of-free-lists-in-XML-reader-when-fuzzing.patch
+Patch47:  Fix-cleanup-of-attributes-in-XML-reader.patch
+Patch48:  Fix-null-deref-in-XPointer-expression-error-path.patch
+Patch49:  Fix-use-after-free-when-XIncluding-text-from-Reader.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -61,7 +64,7 @@ BuildRequires: zlib-devel
 BuildRequires: pkgconfig
 BuildRequires: xz-devel
 BuildRequires: libtool
-Requires: libxml2-help
+Recommends: libxml2-help = %{version}-%{release}
 URL: http://xmlsoft.org/
 
 %description
@@ -245,6 +248,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Thu Nov 12 2020 Liquor <lirui130@huawei.com> - 2.9.10-11
+- fix problems detected by oss-fuzz test
+
 * Thu Nov 12 2020 yangzhuangzhuang <yangzhuangzhuang1@huawei.com> - 2.9.10-10
 - revert Don-t-try-to-handle-namespaces-when-building-HTML-do.patch.
   rubygem-nokogoro test case fail,because this patch remove xml namespace function.
