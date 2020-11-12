@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 8
+Release: 9
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -53,6 +53,9 @@ Patch43:  Fix-XInclude-regression-introduced-with-recent-commi.patch
 Patch44:  Fix-memory-leak-in-xmlXIncludeAddNode-error-paths.patch
 Patch45:  Fix-double-free-in-XML-reader-with-XIncludes.patch
 Patch46:  Limit-size-of-free-lists-in-XML-reader-when-fuzzing.patch
+Patch47:  Fix-cleanup-of-attributes-in-XML-reader.patch
+Patch48:  Fix-null-deref-in-XPointer-expression-error-path.patch
+Patch49:  Fix-use-after-free-when-XIncluding-text-from-Reader.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -244,6 +247,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Thu Nov 12 2020 Liquor <lirui130@huawei.com> - 2.9.10-9
+- fix problems detected by oss-fuzz test
+
 * Mon Sep 14 2020 yangzhuangzhuang <yangzhuangzhuang1@huawei.com> - 2.9.10-8
 - revert Don-t-try-to-handle-namespaces-when-building-HTML-do.patch.
   rubygem-nokogoro test case fail,because this patch remove xml namespace function.
