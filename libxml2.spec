@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 10
+Release: 11
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -56,6 +56,8 @@ Patch46:  Limit-size-of-free-lists-in-XML-reader-when-fuzzing.patch
 Patch47:  Fix-cleanup-of-attributes-in-XML-reader.patch
 Patch48:  Fix-null-deref-in-XPointer-expression-error-path.patch
 Patch49:  Fix-use-after-free-when-XIncluding-text-from-Reader.patch
+patch50:  0001-xmlschemastypes.c-xmlSchemaGetFacetValueAsULong-add-.patch
+patch52:  0002-encoding-fix-memleak-in-xmlRegisterCharEncodingHandl.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -216,6 +218,10 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Dec  1 2020 Xiaoming Ni <nixiaoming@huawei.com> 2.9.10-11
+- xmlschemastypes.c: xmlSchemaGetFacetValueAsULong add check "facet->val"
+- encoding: fix memleak in xmlRegisterCharEncodingHandler()
+
 * Thu Nov 12 2020 Liquor <lirui130@huawei.com> - 2.9.10-10
 - fix problems detected by oss-fuzz test
 

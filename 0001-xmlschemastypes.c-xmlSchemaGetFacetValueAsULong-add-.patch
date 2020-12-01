@@ -1,0 +1,33 @@
+From 7e0350ffd1a9e008f5bb9a47541733c29e6ba5fb Mon Sep 17 00:00:00 2001
+From: Xiaoming Ni <nixiaoming@huawei.com>
+Date: Tue, 24 Nov 2020 11:18:15 +0800
+Subject: [PATCH 1/2] xmlschemastypes.c: xmlSchemaGetFacetValueAsULong add
+ check "facet->val"
+
+The xmlSchemaGetFacetValueAsUlong() API is an external API.
+The validity of external input parameters must be strictly verified.
+Before accessing "facet->val->value", we need check whether "facet->val" is
+a null pointer.
+
+Signed-off-by: wuqing <wuqing30@huawei.com>
+Signed-off-by: Xiaoming Ni <nixiaoming@huawei.com>
+---
+ xmlschemastypes.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/xmlschemastypes.c b/xmlschemastypes.c
+index e7764d9..e7fb83f 100644
+--- a/xmlschemastypes.c
++++ b/xmlschemastypes.c
+@@ -5069,7 +5069,7 @@ xmlSchemaGetFacetValueAsULong(xmlSchemaFacetPtr facet)
+     /*
+     * TODO: Check if this is a decimal.
+     */
+-    if (facet == NULL)
++    if (facet == NULL || facet->val == NULL)
+         return 0;
+     return ((unsigned long) facet->val->value.decimal.lo);
+ }
+-- 
+2.27.0
+
