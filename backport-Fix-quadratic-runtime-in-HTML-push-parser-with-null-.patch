@@ -1,0 +1,33 @@
+From 94c2e415a9bc1b9e7b7210a9c73817106bb1f175 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 6 Dec 2020 16:38:00 +0100
+Subject: [PATCH] Fix quadratic runtime in HTML push parser with null bytes
+
+Null bytes in the input stream do not necessarily signal an EOF
+condition. Check the stream pointers for EOF to avoid quadratic
+rescanning of input data.
+
+Note that the CUR_CHAR macro used in functions like htmlParseCharData
+calls htmlCurrentChar which translates null bytes.
+
+Found by OSS-Fuzz.
+---
+ HTMLparser.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index de624f8d..26a1cdc2 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -5832,7 +5832,7 @@ htmlParseTryOrFinish(htmlParserCtxtPtr ctxt, int terminate) {
+ 			xmlGenericError(xmlGenericErrorContext,
+ 				"HPP: Parsing char data\n");
+ #endif
+-                        while ((cur != '<') && (cur != 0)) {
++                        while ((cur != '<') && (in->cur < in->end)) {
+                             if (cur == '&') {
+ 			        htmlParseReference(ctxt);
+                             } else {
+-- 
+2.27.0
+
