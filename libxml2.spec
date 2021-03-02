@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 9
+Release: 10
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -56,6 +56,18 @@ Patch46:  Limit-size-of-free-lists-in-XML-reader-when-fuzzing.patch
 Patch47:  Fix-cleanup-of-attributes-in-XML-reader.patch
 Patch48:  Fix-null-deref-in-XPointer-expression-error-path.patch
 Patch49:  Fix-use-after-free-when-XIncluding-text-from-Reader.patch
+
+Patch50: backport-Add-test-case-for-recursive-external-parsed-entities.patch
+Patch51: backport-Fix-timeout-when-handling-recursive-entities.patch
+Patch52: backport-Avoid-call-stack-overflow-with-XML-reader-and-recurs.patch
+Patch53: backport-Reset-HTML-parser-input-before-reporting-encoding-er.patch
+Patch54: backport-Fix-quadratic-runtime-in-HTML-parser.patch
+Patch55: backport-Fix-regression-introduced-with-477c7f6a.patch
+Patch56: backport-Fix-HTML-push-parser-lookahead.patch
+Patch57: backport-Fix-quadratic-runtime-when-push-parsing-HTML-entity-.patch
+Patch58: backport-Fix-quadratic-runtime-in-HTML-push-parser-with-null-.patch
+Patch59: backport-Fix-infinite-loop-in-HTML-parser-introduced-with-rec.patch
+Patch60: backport-Fix-integer-overflow-in-xmlSchemaGetParticleTotalRan.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -247,6 +259,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Mar 2 2020 Lirui <lirui130@huawei.com> - 2.9.10-10
+- fix problems detected by oss-fuzz test
+
 * Thu Nov 12 2020 Liquor <lirui130@huawei.com> - 2.9.10-9
 - fix problems detected by oss-fuzz test
 
