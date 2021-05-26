@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 11
+Release: 12
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -68,6 +68,8 @@ Patch57: backport-Fix-quadratic-runtime-when-push-parsing-HTML-entity-.patch
 Patch58: backport-Fix-quadratic-runtime-in-HTML-push-parser-with-null-.patch
 Patch59: backport-Fix-infinite-loop-in-HTML-parser-introduced-with-rec.patch
 Patch60: backport-Fix-integer-overflow-in-xmlSchemaGetParticleTotalRan.patch
+
+Patch61: backport-CVE-2021-3537.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -228,6 +230,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Wed May 26 2021 yangkang <yangkang90@huawei.com> - 2.9.10-12
+- Type:bugfix
+- ID:CVE-2021-3537
+- SUG:NA
+- DESC:fix CVE-2021-3537
+
 * Tue Mar 2 2020 Lirui <lirui130@huawei.com> - 2.9.10-11
 - fix problems detected by oss-fuzz test
 
