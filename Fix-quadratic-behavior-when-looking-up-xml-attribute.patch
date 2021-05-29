@@ -1,0 +1,44 @@
+From 688b41a0fb06cf1ab5173308f6a8db5089ba6e14 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 1 Mar 2021 14:17:42 +0100
+Subject: [PATCH] Fix quadratic behavior when looking up xml:* attributes
+
+Add a special case for the predefined XML namespace when looking up DTD
+attribute defaults in xmlGetPropNodeInternal to avoid calling
+xmlGetNsList.
+
+This fixes quadratic behavior in
+
+- xmlNodeGetBase
+- xmlNodeGetLang
+- xmlNodeGetSpacePreserve
+
+Found by OSS-Fuzz.
+---
+ tree.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/tree.c b/tree.c
+index d6ea704..617e818 100644
+--- a/tree.c
++++ b/tree.c
+@@ -6589,6 +6589,16 @@ xmlGetPropNodeInternal(const xmlNode *node, const xmlChar *name,
+ 		attrDecl = xmlGetDtdQAttrDesc(doc->extSubset,
+ 		    elemQName, name, NULL);
+ 	    }
++        } else if (xmlStrEqual(nsName, XML_XML_NAMESPACE)) {
++	    /*
++	    * The XML namespace must be bound to prefix 'xml'.
++	    */
++	    attrDecl = xmlGetDtdQAttrDesc(doc->intSubset,
++		elemQName, name, BAD_CAST "xml");
++	    if ((attrDecl == NULL) && (doc->extSubset != NULL)) {
++		attrDecl = xmlGetDtdQAttrDesc(doc->extSubset,
++		    elemQName, name, BAD_CAST "xml");
++	    }
+ 	} else {
+ 	    xmlNsPtr *nsList, *cur;
+ 
+-- 
+1.8.3.1
+
