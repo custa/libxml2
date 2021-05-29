@@ -1,0 +1,54 @@
+From a6e6498fb1d11f08c394ecbf69add6cfff815db0 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 2 Mar 2021 13:09:06 +0100
+Subject: [PATCH] Stop checking attributes for UTF-8 validity
+
+I can't see a reason to check attribute content for UTF-8 validity.
+Other parts of the API like xmlNewText have always assumed valid UTF-8
+as extra checks only slow down processing.
+
+Besides, setting doc->encoding to "ISO-8859-1" seems pointless, and not
+freeing the old encoding would cause a memory leak.
+
+Note that this was last changed in 2008 with commit 6f8611fd which
+removed unnecessary encoding/decoding steps. Setting attributes should
+be even faster now.
+
+Found by OSS-Fuzz.
+---
+ tree.c | 12 ------------
+ 1 file changed, 12 deletions(-)
+
+diff --git a/tree.c b/tree.c
+index 617e818..17db445 100644
+--- a/tree.c
++++ b/tree.c
+@@ -1901,12 +1901,6 @@ xmlNewPropInternal(xmlNodePtr node, xmlNsPtr ns,
+     if (value != NULL) {
+         xmlNodePtr tmp;
+ 
+-        if(!xmlCheckUTF8(value)) {
+-            xmlTreeErr(XML_TREE_NOT_UTF8, (xmlNodePtr) doc,
+-                       NULL);
+-            if (doc != NULL)
+-                doc->encoding = xmlStrdup(BAD_CAST "ISO-8859-1");
+-        }
+         cur->children = xmlNewDocText(doc, value);
+         cur->last = NULL;
+         tmp = cur->children;
+@@ -6945,12 +6939,6 @@ xmlSetNsProp(xmlNodePtr node, xmlNsPtr ns, const xmlChar *name,
+ 	if (value != NULL) {
+ 	    xmlNodePtr tmp;
+ 
+-	    if(!xmlCheckUTF8(value)) {
+-	        xmlTreeErr(XML_TREE_NOT_UTF8, (xmlNodePtr) node->doc,
+-	                   NULL);
+-                if (node->doc != NULL)
+-                    node->doc->encoding = xmlStrdup(BAD_CAST "ISO-8859-1");
+-	    }
+ 	    prop->children = xmlNewDocText(node->doc, value);
+ 	    prop->last = NULL;
+ 	    tmp = prop->children;
+-- 
+1.8.3.1
+
