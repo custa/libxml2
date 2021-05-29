@@ -1,0 +1,33 @@
+From 683de7efe4a4178d62fab85d8c5f4c3bed36b984 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 4 Mar 2021 19:06:04 +0100
+Subject: [PATCH] Fix duplicate xmlStrEqual calls in htmlParseEndTag
+
+---
+ HTMLparser.c | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index e63e9b7..adefb3b 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -4207,12 +4207,10 @@ htmlParseEndTag(htmlParserCtxtPtr ctxt)
+      * With the exception that the autoclose may have popped stuff out
+      * of the stack.
+      */
+-    if (!xmlStrEqual(name, ctxt->name)) {
+-        if ((ctxt->name != NULL) && (!xmlStrEqual(ctxt->name, name))) {
+-            htmlParseErr(ctxt, XML_ERR_TAG_NAME_MISMATCH,
+-	                 "Opening and ending tag mismatch: %s and %s\n",
+-			 name, ctxt->name);
+-        }
++    if ((ctxt->name != NULL) && (!xmlStrEqual(ctxt->name, name))) {
++        htmlParseErr(ctxt, XML_ERR_TAG_NAME_MISMATCH,
++                     "Opening and ending tag mismatch: %s and %s\n",
++                     name, ctxt->name);
+     }
+ 
+     /*
+-- 
+1.8.3.1
+
