@@ -1,0 +1,25 @@
+From 72b3c067cedbb80dbbac755cca79ff502c858ad5 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 22 Apr 2021 19:24:50 +0200
+Subject: [PATCH] Fix dangling pointer with `xmllint --dropdtd`
+
+Reset doc->intSubset when dropping the DTD.
+---
+ xmllint.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/xmllint.c b/xmllint.c
+index dbef273..a3fe10a 100644
+--- a/xmllint.c
++++ b/xmllint.c
+@@ -2426,6 +2426,7 @@ static void parseAndPrintFile(char *filename, xmlParserCtxtPtr rectxt) {
+ 	dtd = xmlGetIntSubset(doc);
+ 	if (dtd != NULL) {
+ 	    xmlUnlinkNode((xmlNodePtr)dtd);
++            doc->intSubset = NULL;
+ 	    xmlFreeDtd(dtd);
+ 	}
+     }
+-- 
+1.8.3.1
+
