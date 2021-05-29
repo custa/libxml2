@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 13
+Release: 14
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -72,6 +72,17 @@ Patch60: backport-Fix-integer-overflow-in-xmlSchemaGetParticleTotalRan.patch
 Patch61: backport-CVE-2021-3537.patch
 Patch62: CVE-2021-3517.patch
 Patch63: CVE-2021-3518.patch
+Patch64: Fix-handling-of-unexpected-EOF-in-xmlParseContent.patch
+Patch65: Fix-line-numbers-in-error-messages-for-mismatched-ta.patch
+Patch66: Fix-null-deref-in-legacy-SAX1-parser.patch
+Patch67: update-for-xsd-language-type-check.patch
+Patch68: Fix-dangling-pointer-with-xmllint-dropdtd.patch
+Patch69: Fix-duplicate-xmlStrEqual-calls-in-htmlParseEndTag.patch
+Patch70: Fix-exponential-behavior-with-recursive-entities.patch
+Patch71: Fix-quadratic-behavior-when-looking-up-xml-attribute.patch
+Patch72: Fix-use-after-free-with-xmllint-html-push.patch
+Patch73: Fix-xmlGetNodePath-with-invalid-node-types.patch
+Patch74: Stop-checking-attributes-for-UTF-8-validity.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -232,6 +243,23 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Sat May 29 2021 zoulin <zoulin13@huawei.com> - 2.9.10-14
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:[add] patches from upstream
+       Fix-handling-of-unexpected-EOF-in-xmlParseContent.patch
+       Fix-line-numbers-in-error-messages-for-mismatched-ta.patch
+       Fix-null-deref-in-legacy-SAX1-parser.patch
+       update-for-xsd-language-type-check.patch
+       Fix-dangling-pointer-with-xmllint-dropdtd.patch
+       Fix-duplicate-xmlStrEqual-calls-in-htmlParseEndTag.patch
+       Fix-exponential-behavior-with-recursive-entities.patch
+       Fix-quadratic-behavior-when-looking-up-xml-attribute.patch
+       Fix-use-after-free-with-xmllint-html-push.patch
+       Fix-xmlGetNodePath-with-invalid-node-types.patch
+       Stop-checking-attributes-for-UTF-8-validity.patch
+
 * Fri May 28 2021 guoxiaoqi <guoxiaoqi2@huawei.com> - 2.9.10-13
 - Type:CVE
 - ID:CVE-2021-3537, CVE-2021-3517
