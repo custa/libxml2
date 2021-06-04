@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 14
+Release: 15
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -83,6 +83,7 @@ Patch71: Fix-quadratic-behavior-when-looking-up-xml-attribute.patch
 Patch72: Fix-use-after-free-with-xmllint-html-push.patch
 Patch73: Fix-xmlGetNodePath-with-invalid-node-types.patch
 Patch74: Stop-checking-attributes-for-UTF-8-validity.patch
+Patch75: CVE-2021-3541.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -243,6 +244,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Wed Jun 2 2021 guoxiaoqi <guoxiaoqi2@huawei.com> - 2.9.10-15
+- Type:CVE
+- ID:CVE-2021-3541
+- SUG:NA
+- DESC:fix CVE-2021-3541
+
 * Sat May 29 2021 zoulin <zoulin13@huawei.com> - 2.9.10-14
 - Type:bugfix
 - ID:NA
@@ -262,7 +269,7 @@ rm -fr %{buildroot}
 
 * Fri May 28 2021 guoxiaoqi <guoxiaoqi2@huawei.com> - 2.9.10-13
 - Type:CVE
-- ID:CVE-2021-3537, CVE-2021-3517
+- ID:CVE-2021-3517, CVE-2021-3518
 - SUG:NA
 - DESC:fix CVE-2021-3517 and CVE-2021-3518
 
