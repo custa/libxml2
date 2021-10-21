@@ -1,0 +1,38 @@
+From 00a86d414ba9a9e1cd588182b87518e4e3af9466 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 16 Aug 2020 23:38:00 +0200
+Subject: [PATCH] Don't add formatting newlines to XInclude nodes
+
+---
+ xmlsave.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/xmlsave.c b/xmlsave.c
+index f1d40b9..2225628 100644
+--- a/xmlsave.c
++++ b/xmlsave.c
+@@ -1049,7 +1049,9 @@ xmlNodeDumpOutputInternal(xmlSaveCtxtPtr ctxt, xmlNodePtr cur) {
+         while (1) {
+             if (cur == root)
+                 return;
+-            if (ctxt->format == 1) {
++            if ((ctxt->format == 1) &&
++                (cur->type != XML_XINCLUDE_START) &&
++                (cur->type != XML_XINCLUDE_END)) {
+                 xmlOutputBufferWrite(buf, 1, "\n");
+             }
+             if (cur->next != NULL) {
+@@ -1224,7 +1226,9 @@ xmlDocContentDumpOutput(xmlSaveCtxtPtr ctxt, xmlDocPtr cur) {
+ 		else
+ #endif
+ 		    xmlNodeDumpOutputInternal(ctxt, child);
+-		xmlOutputBufferWrite(buf, 1, "\n");
++                if ((child->type != XML_XINCLUDE_START) &&
++                    (child->type != XML_XINCLUDE_END))
++                    xmlOutputBufferWrite(buf, 1, "\n");
+ 		child = child->next;
+ 	    }
+ 	}
+-- 
+1.8.3.1
+
