@@ -1,0 +1,97 @@
+From 87d20b554c6a90e7ece1cc7391c005089bf85b78 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 19 Aug 2020 13:52:08 +0200
+Subject: [PATCH] Fix regression introduced with commit 74dcc10b
+
+The code wasn't dead after all, but I can see no reason in delaying
+the XPointer evaluation. This could lead to nodes included earlier
+appearing in XPointer results.
+---
+ result/XInclude/ns1.xml     | 10 ++++++++++
+ result/XInclude/ns1.xml.rdr | 23 +++++++++++++++++++++++
+ test/XInclude/docs/ns1.xml  | 12 ++++++++++++
+ xinclude.c                  |  2 +-
+ 4 files changed, 46 insertions(+), 1 deletion(-)
+ create mode 100644 result/XInclude/ns1.xml
+ create mode 100644 result/XInclude/ns1.xml.rdr
+ create mode 100644 test/XInclude/docs/ns1.xml
+
+diff --git a/result/XInclude/ns1.xml b/result/XInclude/ns1.xml
+new file mode 100644
+index 0000000..ab41fb7
+--- /dev/null
++++ b/result/XInclude/ns1.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0"?>
++<doc xmlns:xi="http://www.w3.org/2001/XInclude">
++    <ns:elem xmlns:ns="urn:foo" xml:id="a"/>
++    <elem xmlns:ns="urn:foo">
++        <ns:elem xml:id="a"/>
++    </elem>
++    
++            <ns:elem xmlns:ns="urn:bar"/>
++        
++</doc>
+diff --git a/result/XInclude/ns1.xml.rdr b/result/XInclude/ns1.xml.rdr
+new file mode 100644
+index 0000000..f23702f
+--- /dev/null
++++ b/result/XInclude/ns1.xml.rdr
+@@ -0,0 +1,23 @@
++0 1 doc 0 0
++1 14 #text 0 1 
++    
++1 1 ns:elem 1 0
++1 14 #text 0 1 
++    
++1 1 elem 0 0
++2 14 #text 0 1 
++        
++2 1 ns:elem 1 0
++2 14 #text 0 1 
++    
++1 15 elem 0 0
++1 14 #text 0 1 
++    
++1 14 #text 0 1 
++            
++1 1 ns:elem 1 0
++1 14 #text 0 1 
++        
++1 14 #text 0 1 
++
++0 15 doc 0 0
+diff --git a/test/XInclude/docs/ns1.xml b/test/XInclude/docs/ns1.xml
+new file mode 100644
+index 0000000..7523f4a
+--- /dev/null
++++ b/test/XInclude/docs/ns1.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0"?>
++<doc xmlns:xi="http://www.w3.org/2001/XInclude">
++    <xi:include href="#a"/>
++    <elem xmlns:ns="urn:foo">
++        <ns:elem xml:id="a"/>
++    </elem>
++    <xi:include href="b.xml">
++        <xi:fallback xmlns:ns="urn:bar">
++            <ns:elem/>
++        </xi:fallback>
++    </xi:include>
++</doc>
+diff --git a/xinclude.c b/xinclude.c
+index aac30d5..c92b32b 100644
+--- a/xinclude.c
++++ b/xinclude.c
+@@ -1464,7 +1464,7 @@ xmlXIncludeLoadDoc(xmlXIncludeCtxtPtr ctxt, const xmlChar *url, int nr) {
+      */
+     if ((URL[0] == 0) || (URL[0] == '#') ||
+ 	((ctxt->doc != NULL) && (xmlStrEqual(URL, ctxt->doc->URL)))) {
+-	doc = NULL;
++	doc = ctxt->doc;
+         goto loaded;
+     }
+ 
+-- 
+1.8.3.1
+
