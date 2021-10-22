@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 15
+Release: 16
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -84,6 +84,17 @@ Patch72: Fix-use-after-free-with-xmllint-html-push.patch
 Patch73: Fix-xmlGetNodePath-with-invalid-node-types.patch
 Patch74: Stop-checking-attributes-for-UTF-8-validity.patch
 Patch75: CVE-2021-3541.patch
+
+Patch76: Fix-corner-case-with-empty-xi-fallback.patch
+Patch77: Fix-quadratic-runtime-in-xi-fallback-processing.patch
+Patch78: Fix-error-reporting-with-xi-fallback.patch
+Patch79: Revert-Fix-quadratic-runtime-in-xi-fallback-processi.patch
+Patch80: Remove-dead-code-in-xinclude.c.patch
+Patch81: Fix-regression-introduced-with-commit-74dcc10b.patch
+Patch82: Fix-regression-introduced-with-commit-d88df4b.patch
+Patch83: Make-xmlNodeDumpOutputInternal-non-recursive.patch
+Patch84: Don-t-add-formatting-newlines-to-XInclude-nodes.patch
+Patch85: Make-htmlNodeDumpFormatOutput-non-recursive.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -244,6 +255,15 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Thu Oct 21 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.10-16
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:fix fuzz issues
+       fix heap-use-after-free in xmlXIncludeIncludeNode
+       fix stack overflow in xmlDocDumpMemory
+       fix stack overflow in htmlDocContentDumpOutput
+
 * Wed Jun 2 2021 guoxiaoqi <guoxiaoqi2@huawei.com> - 2.9.10-15
 - Type:CVE
 - ID:CVE-2021-3541
