@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 17
+Release: 18
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -95,6 +95,11 @@ Patch82: Fix-regression-introduced-with-commit-d88df4b.patch
 Patch83: Make-xmlNodeDumpOutputInternal-non-recursive.patch
 Patch84: Don-t-add-formatting-newlines-to-XInclude-nodes.patch
 Patch85: Make-htmlNodeDumpFormatOutput-non-recursive.patch
+Patch86: Fix-memory-leaks-in-XPointer-string-range-function.patch
+Patch87: Fix-null-pointer-deref-in-xmlXPtrRangeInsideFunction.patch
+Patch88: Stop-using-maxParserDepth-in-xpath.c.patch
+Patch89: Hardcode-maximum-XPath-recursion-depth.patch
+Patch90: Fix-XPath-recursion-limit.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -287,6 +292,17 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Sat Oct 23 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.10-18
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:fix fuzz issues
+       fix memory leaks in XPointer string-range function
+       fix null pointer deref in xmlXPtrRangeInsideFunction
+       stop using maxParserDepth in xpath.c
+       hardcode maximum XPath recursion depth
+       fix XPath recursion limit
+
 * Thu Oct 21 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.10-17
 - Type:bugfix
 - ID:NA
