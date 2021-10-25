@@ -1,0 +1,41 @@
+From a218ff0ec0ca6da74236b1419e841848a249f011 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 6 Dec 2020 17:26:36 +0100
+Subject: [PATCH] Fix null pointer deref in xmlXPtrRangeInsideFunction
+
+Found by OSS-Fuzz.
+---
+ xpointer.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/xpointer.c b/xpointer.c
+index ad2c288..3e3c8b8 100644
+--- a/xpointer.c
++++ b/xpointer.c
+@@ -2200,7 +2200,6 @@ xmlXPtrRangeInsideFunction(xmlXPathParserContextPtr ctxt, int nargs) {
+ 	     XP_ERROR(XPATH_MEMORY_ERROR)
+ 	set = tmp;
+     }
+-    oldset = (xmlLocationSetPtr) set->user;
+ 
+     /*
+      * The loop is to compute the covering range for each item and add it
+@@ -2210,9 +2209,12 @@ xmlXPtrRangeInsideFunction(xmlXPathParserContextPtr ctxt, int nargs) {
+ 	xmlXPathFreeObject(set);
+         XP_ERROR(XPATH_MEMORY_ERROR);
+     }
+-    for (i = 0;i < oldset->locNr;i++) {
+-	xmlXPtrLocationSetAdd(newset,
+-		xmlXPtrInsideRange(ctxt, oldset->locTab[i]));
++    oldset = (xmlLocationSetPtr) set->user;
++    if (oldset != NULL) {
++        for (i = 0;i < oldset->locNr;i++) {
++            xmlXPtrLocationSetAdd(newset,
++                    xmlXPtrInsideRange(ctxt, oldset->locTab[i]));
++        }
+     }
+ 
+     /*
+-- 
+1.8.3.1
+
