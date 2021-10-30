@@ -1,0 +1,36 @@
+From c3ae53279a37369d8b100b016126136dea05b44b Mon Sep 17 00:00:00 2001
+From: huangduirong <huangduirong@huawei.com>
+Date: Sat, 30 Oct 2021 15:21:01 +0800
+Subject: [PATCH] fix null-deref in xmlSchemaGetComponentTargetNs
+
+---
+ xmlschemas.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/xmlschemas.c b/xmlschemas.c
+index 5387c8e..17aa6df 100644
+--- a/xmlschemas.c
++++ b/xmlschemas.c
+@@ -1329,6 +1329,9 @@ xmlSchemaFormatQNameNs(xmlChar **buf, xmlNsPtr ns, const xmlChar *localName)
+ static const xmlChar *
+ xmlSchemaGetComponentName(xmlSchemaBasicItemPtr item)
+ {
++    if (item == NULL) {
++        return (NULL);
++    }
+     switch (item->type) {
+ 	case XML_SCHEMA_TYPE_ELEMENT:
+ 	    return (((xmlSchemaElementPtr) item)->name);
+@@ -1384,6 +1387,9 @@ xmlSchemaGetQNameRefTargetNs(void *ref)
+ static const xmlChar *
+ xmlSchemaGetComponentTargetNs(xmlSchemaBasicItemPtr item)
+ {
++    if (item == NULL) {
++        return (NULL);
++    }
+     switch (item->type) {
+ 	case XML_SCHEMA_TYPE_ELEMENT:
+ 	    return (((xmlSchemaElementPtr) item)->targetNamespace);
+-- 
+1.8.3.1
+
