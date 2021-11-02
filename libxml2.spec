@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 19
+Release: 20
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -101,6 +101,7 @@ Patch88: Stop-using-maxParserDepth-in-xpath.c.patch
 Patch89: Hardcode-maximum-XPath-recursion-depth.patch
 Patch90: Fix-XPath-recursion-limit.patch
 Patch91: Fix-Null-deref-in-xmlSchemaGetComponentTargetNs.patch
+Patch92: Fix-memleaks-in-xmlXIncludeProcessFlags.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -293,6 +294,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Nov 9 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.10-20
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:fix memleaks in xmlXIncludeProcessFlags
+
 * Sat Oct 30 2021 huangduirong <huangduirong@huawei.com> - 2.9.10-19
 - Type:bugfix
 - ID:NA
