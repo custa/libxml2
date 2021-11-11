@@ -1,0 +1,55 @@
+From 649d02eaa419fa72ae6b131718a4ac77063d7a5a Mon Sep 17 00:00:00 2001
+From: Xiaoming Ni <nixiaoming@huawei.com>
+Date: Mon, 7 Dec 2020 20:19:53 +0800
+Subject: [PATCH] encoding: fix memleak in xmlRegisterCharEncodingHandler()
+
+The return type of xmlRegisterCharEncodingHandler() is void. The invoker
+cannot determine whether xmlRegisterCharEncodingHandler() is executed
+successfully. when nbCharEncodingHandler >= MAX_ENCODING_HANDLERS, the
+"handler" is not added to the array "handlers". As a result, the memory
+of "handler" cannot be managed and released: memory leakage.
+
+so add "xmlfree(handler)" to fix memory leakage on the failure branch of
+xmlRegisterCharEncodingHandler().
+
+Reported-by: wuqing <wuqing30@huawei.com>
+Signed-off-by: Xiaoming Ni <nixiaoming@huawei.com>
+---
+ encoding.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/encoding.c b/encoding.c
+index 264f60b..d67c16d 100644
+--- a/encoding.c
++++ b/encoding.c
+@@ -1488,16 +1488,25 @@ xmlRegisterCharEncodingHandler(xmlCharEncodingHandlerPtr handler) {
+     if ((handler == NULL) || (handlers == NULL)) {
+         xmlEncodingErr(XML_I18N_NO_HANDLER,
+ 		"xmlRegisterCharEncodingHandler: NULL handler !\n", NULL);
+-	return;
++        goto free_handler;
+     }
+ 
+     if (nbCharEncodingHandler >= MAX_ENCODING_HANDLERS) {
+         xmlEncodingErr(XML_I18N_EXCESS_HANDLER,
+ 	"xmlRegisterCharEncodingHandler: Too many handler registered, see %s\n",
+ 	               "MAX_ENCODING_HANDLERS");
+-	return;
++        goto free_handler;
+     }
+     handlers[nbCharEncodingHandler++] = handler;
++    return;
++
++free_handler:
++    if (handler != NULL) {
++        if (handler->name != NULL) {
++            xmlFree(handler->name);
++        }
++        xmlFree(handler);
++    }
+ }
+ 
+ /**
+-- 
+1.8.3.1
+
