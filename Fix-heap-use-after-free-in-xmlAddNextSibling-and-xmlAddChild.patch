@@ -1,0 +1,31 @@
+From ace5aece17b5ecaafee286fc943616fdee03d885 Mon Sep 17 00:00:00 2001
+From: panxiaohe <panxiaohe@huawei.com>
+Date: Thu, 11 Nov 2021 16:45:04 +0800
+Subject: [PATCH] Fix heap-use-after-free in xmlAddNextSibling and xmlAddChild
+
+---
+ xinclude.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/xinclude.c b/xinclude.c
+index b2e6ea1..d39ff7d 100644
+--- a/xinclude.c
++++ b/xinclude.c
+@@ -1103,12 +1103,11 @@ xmlXIncludeCopyRange(xmlXIncludeCtxtPtr ctxt, xmlDocPtr target,
+ 	    }
+ 	    if (tmp != NULL) {
+ 		if (level == lastLevel)
+-		    xmlAddNextSibling(last, tmp);
++		    last = xmlAddNextSibling(last, tmp);
+ 		else {
+-		    xmlAddChild(last, tmp);
++		    last = xmlAddChild(last, tmp);
+ 		    lastLevel = level;
+ 		}
+-		last = tmp;
+ 	    }
+ 	}
+ 	/*
+-- 
+1.8.3.1
+
