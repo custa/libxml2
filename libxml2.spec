@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 21
+Release: 22
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -103,6 +103,13 @@ Patch90: Fix-XPath-recursion-limit.patch
 Patch91: Fix-Null-deref-in-xmlSchemaGetComponentTargetNs.patch
 Patch92: Fix-memleaks-in-xmlXIncludeProcessFlags.patch
 Patch93: Fix-heap-use-after-free-in-xmlAddNextSibling-and-xmlAddChild.patch
+Patch94: Fix-unsigned-integer-overflow-in-htmlParseTryOrFinis.patch
+Patch95: Fix-undefined-behavior-in-UTF16LEToUTF8.patch
+Patch96: Fix-SEGV-in-xmlSAXParseFileWithData.patch
+Patch97: encoding-fix-memleak-in-xmlRegisterCharEncodingHandl.patch
+Patch98: Fix-null-deref-in-xmlStringGetNodeList.patch
+Patch99: Fix-memory-leak-in-xmlParseElementMixedContentDecl.patch
+Patch100:Fix-slow-parsing-of-HTML-with-encoding-errors.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -295,6 +302,19 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Thu Nov 11 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.10-22
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:fix following issues:
+       fix unsigned integer overflow in htmlParseTryOrFinish
+       fix undefined behavior in UTF16LEToUTF8
+       fix SEGV in xmlSAXParseFileWithData
+       encoding: fix memleak in xmlRegisterCharEncodingHandler()
+       fix null deref in xmlStringGetNodeList
+       fix memory leak in xmlParseElementMixedContentDecl
+       fix slow parsing of HTML with encoding errors
+
 * Thu Nov 11 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.10-21
 - Type:bugfix
 - ID:NA
