@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.12
-Release: 2
+Release: 3
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -11,6 +11,11 @@ Patch1: Fix-XPath-recursion-limit.patch
 Patch2: Fix-Null-deref-in-xmlSchemaGetComponentTargetNs.patch
 Patch3: Fix-memleaks-in-xmlXIncludeProcessFlags.patch
 Patch4: Fix-heap-use-after-free-in-xmlAddNextSibling-and-xmlAddChild.patch
+Patch5: Work-around-lxml-API-abuse.patch
+Patch6: Fix-regression-in-xmlNodeDumpOutputInternal.patch
+Patch7: Fix-whitespace-when-serializing-empty-HTML-documents.patch
+Patch8: Patch-to-forbid-epsilon-reduction-of-final-states.patch
+Patch9: Fix-buffering-in-xmlOutputBufferWrite.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -171,6 +176,17 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Fri Nov 12 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.12-3
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:add backport bug fixes.
+       work around lxml API abuse
+       fix regression in xmlNodeDumpOutputInternal
+       fix whitespace when serializing empty HTML documents
+       forbid epsilon-reduction of final states
+       fix buffering in xmlOutputBufferWrite
+
 * Thu Nov 11 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.12-2
 - Type:bugfix
 - ID:NA
