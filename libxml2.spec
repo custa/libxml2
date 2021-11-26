@@ -1,108 +1,21 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
-Version: 2.9.10
-Release: 20
+Version: 2.9.12
+Release: 3
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
-Patch0:         libxml2-multilib.patch
-# upstream patches
-Patch1:   backport-Fix-memory-leak-in-xmlSchemaValidateStream.patch
-Patch2:   backport-fix-infinite-loop-in-xmlStringLenDecodeEntities.patch
-Patch3:   backport-Updated-python-tests-tstLastError.py.patch
-Patch4:   Null-pointer-handling-in-catalog-c.patch 
-Patch5:   Fix-overflow-handling-in-xmlBufBackToBuffer.patch
-Patch6:   Fix-memory-leak-in-error-path-of-XPath-expr-parser.patch
-Patch7:   Fix-memory-leaks-of-encoding-handlers-in-xmlsave-c.patch
-Patch8:   Use-random-seed-in-xmlDictComputeFastKey.patch 
-Patch9:   Fix-more-memory-leaks-in-error-paths-of-XPath-parser.patch
-Patch10:  Fix-freeing-of-nested-documents.patch
-Patch11:  Fix-overflow-check-in-xmlNodeDump.patch
-Patch12:  Check-for-overflow-when-allocating-two-dimensional-arrays.patch
-Patch13:  Fix-integer-overflow-in-xmlBufferResize.patch
-Patch14:  Fix-copying-of-entities-in-xmlParseReference.patch
-Patch15:  Copy-some-XMLReader-option-flags-to-parser-context.patch
-Patch16:  Merge-code-paths-loading-external-entities.patch
-Patch17:  Don-t-load-external-entity-from-xmlSAX2GetEntity.patch
-Patch18:  Fix-use-after-free-with-validating-reader.patch
-Patch19:  Never-expand-parameter-entities-in-text-declaration.patch
-Patch20:  Fix-integer-overflow-in-xmlFAParseQuantExact.patch
-Patch21:  Report-error-for-invalid-regexp-quantifiers.patch
-Patch22:  Add-regexp-regression-tests.patch
-Patch23:  Limit-regexp-nesting-depth.patch
-Patch24:  Fix-exponential-runtime-in-xmlFARecurseDeterminism.patch
-Patch25:  Fix-more-quadratic-runtime-issues-in-HTML-push-parse.patch
-Patch26:  Reset-HTML-parser-input-before-reporting-error.patch
-Patch27:  Fix-memory-leak-when-shared-libxml-dll-is-unloaded.patch
-Patch28:  Fix-memory-leak-in-xmlXIncludeLoadDoc-error-path.patch
-Patch29:  Fix-undefined-behavior-in-xmlXPathTryStreamCompile.patch
-Patch30:  Fix-integer-overflow-in-htmlParseCharRef.patch
-Patch31:  Fix-another-memory-leak-in-xmlSchemaValAtomicType.patch
-Patch32:  Fix-integer-overflow-when-parsing-min-max-Occurs.patch
-Patch33:  Fix-integer-overflow-in-_xmlSchemaParseGYear.patch
-Patch34:  Fix-quadratic-runtime-when-parsing-HTML-script-conte.patch
-Patch35:  Fix-UTF-8-decoder-in-HTML-parser.patch
-Patch36:  Fix-integer-overflow-when-comparing-schema-dates.patch
-Patch37:  Fix-memory-leak-in-xmlXIncludeIncludeNode-error-path.patch
-Patch38:  Don-t-recurse-into-xi-include-children-in-xmlXInclud.patch
-Patch39:  Don-t-process-siblings-of-root-in-xmlXIncludeProcess.patch
-Patch40:  Fix-exponential-runtime-and-memory-in-xi-fallback-pr.patch
-Patch41:  Fuzz-XInclude-engine.patch
-Patch42:  Fix-memory-leak-in-runtest.c.patch
-Patch43:  Fix-XInclude-regression-introduced-with-recent-commi.patch
-Patch44:  Fix-memory-leak-in-xmlXIncludeAddNode-error-paths.patch
-Patch45:  Fix-double-free-in-XML-reader-with-XIncludes.patch
-Patch46:  Limit-size-of-free-lists-in-XML-reader-when-fuzzing.patch
-Patch47:  Fix-cleanup-of-attributes-in-XML-reader.patch
-Patch48:  Fix-null-deref-in-XPointer-expression-error-path.patch
-Patch49:  Fix-use-after-free-when-XIncluding-text-from-Reader.patch
 
-Patch50: backport-Add-test-case-for-recursive-external-parsed-entities.patch
-Patch51: backport-Fix-timeout-when-handling-recursive-entities.patch
-Patch52: backport-Avoid-call-stack-overflow-with-XML-reader-and-recurs.patch
-Patch53: backport-Reset-HTML-parser-input-before-reporting-encoding-er.patch
-Patch54: backport-Fix-quadratic-runtime-in-HTML-parser.patch
-Patch55: backport-Fix-regression-introduced-with-477c7f6a.patch
-Patch56: backport-Fix-HTML-push-parser-lookahead.patch
-Patch57: backport-Fix-quadratic-runtime-when-push-parsing-HTML-entity-.patch
-Patch58: backport-Fix-quadratic-runtime-in-HTML-push-parser-with-null-.patch
-Patch59: backport-Fix-infinite-loop-in-HTML-parser-introduced-with-rec.patch
-Patch60: backport-Fix-integer-overflow-in-xmlSchemaGetParticleTotalRan.patch
-
-Patch61: backport-CVE-2021-3537.patch
-Patch62: CVE-2021-3517.patch
-Patch63: CVE-2021-3518.patch
-Patch64: Fix-handling-of-unexpected-EOF-in-xmlParseContent.patch
-Patch65: Fix-line-numbers-in-error-messages-for-mismatched-ta.patch
-Patch66: Fix-null-deref-in-legacy-SAX1-parser.patch
-Patch67: update-for-xsd-language-type-check.patch
-Patch68: Fix-dangling-pointer-with-xmllint-dropdtd.patch
-Patch69: Fix-duplicate-xmlStrEqual-calls-in-htmlParseEndTag.patch
-Patch70: Fix-exponential-behavior-with-recursive-entities.patch
-Patch71: Fix-quadratic-behavior-when-looking-up-xml-attribute.patch
-Patch72: Fix-use-after-free-with-xmllint-html-push.patch
-Patch73: Fix-xmlGetNodePath-with-invalid-node-types.patch
-Patch74: Stop-checking-attributes-for-UTF-8-validity.patch
-Patch75: CVE-2021-3541.patch
-
-Patch76: Fix-corner-case-with-empty-xi-fallback.patch
-Patch77: Fix-quadratic-runtime-in-xi-fallback-processing.patch
-Patch78: Fix-error-reporting-with-xi-fallback.patch
-Patch79: Revert-Fix-quadratic-runtime-in-xi-fallback-processi.patch
-Patch80: Remove-dead-code-in-xinclude.c.patch
-Patch81: Fix-regression-introduced-with-commit-74dcc10b.patch
-Patch82: Fix-regression-introduced-with-commit-d88df4b.patch
-Patch83: Make-xmlNodeDumpOutputInternal-non-recursive.patch
-Patch84: Don-t-add-formatting-newlines-to-XInclude-nodes.patch
-Patch85: Make-htmlNodeDumpFormatOutput-non-recursive.patch
-Patch86: Fix-memory-leaks-in-XPointer-string-range-function.patch
-Patch87: Fix-null-pointer-deref-in-xmlXPtrRangeInsideFunction.patch
-Patch88: Stop-using-maxParserDepth-in-xpath.c.patch
-Patch89: Hardcode-maximum-XPath-recursion-depth.patch
-Patch90: Fix-XPath-recursion-limit.patch
-Patch91: Fix-Null-deref-in-xmlSchemaGetComponentTargetNs.patch
-Patch92: Fix-memleaks-in-xmlXIncludeProcessFlags.patch
-Patch93: Fix-heap-use-after-free-in-xmlAddNextSibling-and-xmlAddChild.patch
+Patch0: libxml2-multilib.patch
+Patch1: Fix-XPath-recursion-limit.patch
+Patch2: Fix-Null-deref-in-xmlSchemaGetComponentTargetNs.patch
+Patch3: Fix-memleaks-in-xmlXIncludeProcessFlags.patch
+Patch4: Fix-heap-use-after-free-in-xmlAddNextSibling-and-xmlAddChild.patch
+Patch5: Work-around-lxml-API-abuse.patch
+Patch6: Fix-regression-in-xmlNodeDumpOutputInternal.patch
+Patch7: Fix-whitespace-when-serializing-empty-HTML-documents.patch
+Patch8: Patch-to-forbid-epsilon-reduction-of-final-states.patch
+Patch9: Fix-buffering-in-xmlOutputBufferWrite.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -263,11 +176,28 @@ rm -fr %{buildroot}
 
 
 %changelog
-* Thu Nov 11 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.10-20
+* Fri Nov 12 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.12-3
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:add backport bug fixes.
+       work around lxml API abuse
+       fix regression in xmlNodeDumpOutputInternal
+       fix whitespace when serializing empty HTML documents
+       forbid epsilon-reduction of final states
+       fix buffering in xmlOutputBufferWrite
+
+* Thu Nov 11 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.12-2
 - Type:bugfix
 - ID:NA
 - SUG:NA
 - DESC:fix heap-use-after-free in xmlAddNextSibling and xmlAddChild
+
+* Wed Nov 10 2021 Zhipeng Xie <xiezhipeng1@huawei.com> - 2.9.12-1
+- Type:enhancement
+- ID:NA
+- SUG:NA
+- DESC:upgrade to upstream v2.9.12
 
 * Tue Nov 9 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.10-19
 - Type:bugfix
