@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 22
+Release: 23
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -85,16 +85,6 @@ Patch73: Fix-xmlGetNodePath-with-invalid-node-types.patch
 Patch74: Stop-checking-attributes-for-UTF-8-validity.patch
 Patch75: CVE-2021-3541.patch
 
-Patch76: Fix-corner-case-with-empty-xi-fallback.patch
-Patch77: Fix-quadratic-runtime-in-xi-fallback-processing.patch
-Patch78: Fix-error-reporting-with-xi-fallback.patch
-Patch79: Revert-Fix-quadratic-runtime-in-xi-fallback-processi.patch
-Patch80: Remove-dead-code-in-xinclude.c.patch
-Patch81: Fix-regression-introduced-with-commit-74dcc10b.patch
-Patch82: Fix-regression-introduced-with-commit-d88df4b.patch
-Patch83: Make-xmlNodeDumpOutputInternal-non-recursive.patch
-Patch84: Don-t-add-formatting-newlines-to-XInclude-nodes.patch
-Patch85: Make-htmlNodeDumpFormatOutput-non-recursive.patch
 Patch86: Fix-memory-leaks-in-XPointer-string-range-function.patch
 Patch87: Fix-null-pointer-deref-in-xmlXPtrRangeInsideFunction.patch
 Patch88: Stop-using-maxParserDepth-in-xpath.c.patch
@@ -302,6 +292,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Sat Nov 27 2021 Wentao Fan <fanwentao@huawei.com> - 2.9.10-23
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:revert patches
+
 * Thu Nov 11 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.10-22
 - Type:bugfix
 - ID:NA
