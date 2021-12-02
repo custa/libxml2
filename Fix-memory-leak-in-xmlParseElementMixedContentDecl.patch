@@ -1,0 +1,42 @@
+From 45da175c1431d69e74e05a115f0b14cc8c97d886 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 18 Dec 2020 12:14:52 +0100
+Subject: [PATCH] Fix memory leak in xmlParseElementMixedContentDecl
+
+Free parsed content if malloc fails to avoid a memory leak.
+
+Found with libFuzzer.
+---
+ parser.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/parser.c b/parser.c
+index 85494df..43b8835 100644
+--- a/parser.c
++++ b/parser.c
+@@ -6082,14 +6082,20 @@ xmlParseElementMixedContentDecl(xmlParserCtxtPtr ctxt, int inputchk) {
+ 	    NEXT;
+ 	    if (elem == NULL) {
+ 	        ret = xmlNewDocElementContent(ctxt->myDoc, NULL, XML_ELEMENT_CONTENT_OR);
+-		if (ret == NULL) return(NULL);
++		if (ret == NULL) {
++		    xmlFreeDocElementContent(ctxt->myDoc, cur);
++                    return(NULL);
++                }
+ 		ret->c1 = cur;
+ 		if (cur != NULL)
+ 		    cur->parent = ret;
+ 		cur = ret;
+ 	    } else {
+ 	        n = xmlNewDocElementContent(ctxt->myDoc, NULL, XML_ELEMENT_CONTENT_OR);
+-		if (n == NULL) return(NULL);
++		if (n == NULL) {
++		    xmlFreeDocElementContent(ctxt->myDoc, ret);
++                    return(NULL);
++                }
+ 		n->c1 = xmlNewDocElementContent(ctxt->myDoc, elem, XML_ELEMENT_CONTENT_ELEMENT);
+ 		if (n->c1 != NULL)
+ 		    n->c1->parent = n;
+-- 
+1.8.3.1
+

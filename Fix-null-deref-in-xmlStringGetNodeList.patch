@@ -1,0 +1,30 @@
+From 1d73f07d67e32d8eaccd85bc46c5d277a1dc00c9 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 18 Dec 2020 00:55:00 +0100
+Subject: [PATCH] Fix null deref in xmlStringGetNodeList
+
+Check for malloc failure to avoid null deref.
+
+Found with libFuzzer.
+---
+ tree.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/tree.c b/tree.c
+index 64572d9..2130d55 100644
+--- a/tree.c
++++ b/tree.c
+@@ -1649,6 +1649,10 @@ xmlStringGetNodeList(const xmlDoc *doc, const xmlChar *value) {
+ 
+     if (!xmlBufIsEmpty(buf)) {
+ 	node = xmlNewDocText(doc, NULL);
++        if (node == NULL) {
++            xmlBufFree(buf);
++            return(NULL);
++        }
+ 	node->content = xmlBufDetach(buf);
+ 
+ 	if (last == NULL) {
+-- 
+1.8.3.1
+
