@@ -1,0 +1,50 @@
+From 0b3c64d9f2f3e9ce1a98d8f19ee7a763c87e27d5 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 29 Sep 2020 18:08:37 +0200
+Subject: [PATCH] Handle dumps of corrupted documents more gracefully
+
+Check parent pointers for NULL after the non-recursive rewrite of the
+serialization code. This avoids segfaults with corrupted documents
+which can apparently be seen with lxml, see issue #187.
+---
+ HTMLtree.c |  6 ++++++
+ xmlsave.c  | 12 ++++++++++++
+ 2 files changed, 18 insertions(+)
+
+diff --git a/HTMLtree.c b/HTMLtree.c
+index cdb7f86..8d0c779 100644
+--- a/HTMLtree.c
++++ b/HTMLtree.c
+@@ -903,6 +903,12 @@ htmlNodeDumpFormatOutput(xmlOutputBufferPtr buf, xmlDocPtr doc,
+                 break;
+             }
+ 
++            /*
++             * The parent should never be NULL here but we want to handle
++             * corrupted documents gracefully.
++             */
++            if (cur->parent == NULL)
++                return;
+             cur = cur->parent;
+ 
+             if ((cur->type == XML_HTML_DOCUMENT_NODE) ||
+diff --git a/xmlsave.c b/xmlsave.c
+index 2225628..61a4045 100644
+--- a/xmlsave.c
++++ b/xmlsave.c
+@@ -1058,6 +1058,12 @@ xmlNodeDumpOutputInternal(xmlSaveCtxtPtr ctxt, xmlNodePtr cur) {
+                 break;
+             }
+ 
++            /*
++             * The parent should never be NULL here but we want to handle
++             * corrupted documents gracefully.
++             */
++            if (cur->parent == NULL)
++                return;
+             cur = cur->parent;
+ 
+             if (cur->type == XML_ELEMENT_NODE) {
+-- 
+1.8.3.1
+

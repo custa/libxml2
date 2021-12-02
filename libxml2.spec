@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 23
+Release: 24
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -84,7 +84,16 @@ Patch72: Fix-use-after-free-with-xmllint-html-push.patch
 Patch73: Fix-xmlGetNodePath-with-invalid-node-types.patch
 Patch74: Stop-checking-attributes-for-UTF-8-validity.patch
 Patch75: CVE-2021-3541.patch
-
+Patch76: Fix-corner-case-with-empty-xi-fallback.patch
+Patch77: Fix-quadratic-runtime-in-xi-fallback-processing.patch
+Patch78: Fix-error-reporting-with-xi-fallback.patch
+Patch79: Revert-Fix-quadratic-runtime-in-xi-fallback-processi.patch
+Patch80: Remove-dead-code-in-xinclude.c.patch
+Patch81: Fix-regression-introduced-with-commit-74dcc10b.patch
+Patch82: Fix-regression-introduced-with-commit-d88df4b.patch
+Patch83: Make-xmlNodeDumpOutputInternal-non-recursive.patch
+Patch84: Fix-NodeDumpOutput-functions.patch
+Patch85: Make-htmlNodeDumpFormatOutput-non-recursive.patch
 Patch86: Fix-memory-leaks-in-XPointer-string-range-function.patch
 Patch87: Fix-null-pointer-deref-in-xmlXPtrRangeInsideFunction.patch
 Patch88: Stop-using-maxParserDepth-in-xpath.c.patch
@@ -100,6 +109,13 @@ Patch97: encoding-fix-memleak-in-xmlRegisterCharEncodingHandl.patch
 Patch98: Fix-null-deref-in-xmlStringGetNodeList.patch
 Patch99: Fix-memory-leak-in-xmlParseElementMixedContentDecl.patch
 Patch100:Fix-slow-parsing-of-HTML-with-encoding-errors.patch
+
+Patch101:More-NodeDumpOutput-fixes.patch
+Patch102:Don-t-add-formatting-newlines-to-XInclude-nodes.patch
+Patch103:Handle-dumps-of-corrupted-documents-more-gracefully.patch
+Patch104:Remove-unused-encoding-parameter-of-HTML-output-func.patch
+Patch105:Work-around-lxml-API-abuse.patch
+Patch106:Fix-regression-in-xmlNodeDumpOutputInternal.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -292,6 +308,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Thu Dec 2 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.10-24
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:backport upstream patches
+
 * Sat Nov 27 2021 Wentao Fan <fanwentao@huawei.com> - 2.9.10-23
 - Type:bugfix
 - ID:NA
