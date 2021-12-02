@@ -1,0 +1,66 @@
+From 7b2e5172616406edcb5b84d048fa590c997784b3 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 28 Jul 2020 21:52:55 +0200
+Subject: [PATCH] Fix *NodeDumpOutput functions
+
+Only output end tag for elements. Should fix serialization of document
+fragments.
+---
+ xmlsave.c | 54 ++++++++++++++++++++++++++++++------------------------
+ 1 file changed, 30 insertions(+), 24 deletions(-)
+
+diff --git a/xmlsave.c b/xmlsave.c
+index 2235c8f..f2e0ea8 100644
+--- a/xmlsave.c
++++ b/xmlsave.c
+@@ -1049,9 +1049,8 @@ xmlNodeDumpOutputInternal(xmlSaveCtxtPtr ctxt, xmlNodePtr cur) {
+         while (1) {
+             if (cur == root)
+                 return;
+-            if (ctxt->format == 1) {
++            if (ctxt->format == 1)
+                 xmlOutputBufferWrite(buf, 1, "\n");
+-            }
+             if (cur->next != NULL) {
+                 cur = cur->next;
+                 break;
+@@ -1065,21 +1064,25 @@ xmlNodeDumpOutputInternal(xmlSaveCtxtPtr ctxt, xmlNodePtr cur) {
+                                      (ctxt->level > ctxt->indent_nr ?
+                                       ctxt->indent_nr : ctxt->level),
+                                      ctxt->indent);
++
++            if (cur->type == XML_ELEMENT_NODE) {
++                xmlOutputBufferWrite(buf, 2, "</");
++                if ((cur->ns != NULL) && (cur->ns->prefix != NULL)) {
++                    xmlOutputBufferWriteString(buf,
++                            (const char *)cur->ns->prefix);
++                    xmlOutputBufferWrite(buf, 1, ":");
++                }
++
++                xmlOutputBufferWriteString(buf, (const char *)cur->name);
++                if (ctxt->format == 2)
++                    xmlOutputBufferWriteWSNonSig(ctxt, 0);
++                xmlOutputBufferWrite(buf, 1, ">");
++            }
++
+             if (cur == unformattedNode) {
+                 ctxt->format = format;
+                 unformattedNode = NULL;
+             }
+-
+-            xmlOutputBufferWrite(buf, 2, "</");
+-            if ((cur->ns != NULL) && (cur->ns->prefix != NULL)) {
+-                xmlOutputBufferWriteString(buf, (const char *)cur->ns->prefix);
+-                xmlOutputBufferWrite(buf, 1, ":");
+-            }
+-
+-            xmlOutputBufferWriteString(buf, (const char *)cur->name);
+-            if (ctxt->format == 2)
+-                xmlOutputBufferWriteWSNonSig(ctxt, 0);
+-            xmlOutputBufferWrite(buf, 1, ">");
+         }
+     }
+ }
+-- 
+1.8.3.1
+
