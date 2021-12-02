@@ -1,0 +1,100 @@
+From dcb80b92da0417bc5b3d97ab8a61381973f1711b Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 20 Feb 2021 20:30:43 +0100
+Subject: [PATCH] Fix slow parsing of HTML with encoding errors
+
+Under certain circumstances, the HTML parser would try to guess and
+switch input encodings multiple times, leading to slow processing of
+documents with encoding errors. The repeated scanning of the input
+buffer when guessing encodings could even lead to quadratic behavior.
+
+The code htmlCurrentChar probably assumed that if there's an encoding
+handler, it is guaranteed to produce valid UTF-8. This holds true in
+general, but if the detected encoding was "UTF-8", the UTF8ToUTF8
+encoding handler simply invoked memcpy without checking for invalid
+UTF-8. This still must be fixed, preferably by not using this handler
+at all.
+
+Also leave a note that switching encodings twice seems impossible to
+implement correctly. Add a check when handling UTF-8 encoding errors
+in htmlCurrentChar to avoid this situation, even if encoders produce
+invalid UTF-8.
+
+Found by OSS-Fuzz.
+---
+ HTMLparser.c      | 18 ++++++++++++++++--
+ encoding.c        |  5 +++++
+ parserInternals.c |  5 +++++
+ 3 files changed, 26 insertions(+), 2 deletions(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index 14cc56f..c9a64c7 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -457,7 +457,12 @@ htmlCurrentChar(xmlParserCtxtPtr ctxt, int *len) {
+             ctxt->input->encoding = guess;
+             handler = xmlFindCharEncodingHandler((const char *) guess);
+             if (handler != NULL) {
+-                xmlSwitchToEncoding(ctxt, handler);
++                /*
++                 * Don't use UTF-8 encoder which isn't required and
++                 * can produce invalid UTF-8.
++                 */
++                if (!xmlStrEqual(BAD_CAST handler->name, BAD_CAST "UTF-8"))
++                    xmlSwitchToEncoding(ctxt, handler);
+             } else {
+                 htmlParseErr(ctxt, XML_ERR_INVALID_ENCODING,
+                              "Unsupported encoding %s", guess, NULL);
+@@ -570,7 +575,16 @@ encoding_error:
+ 		     BAD_CAST buffer, NULL);
+     }
+ 
+-    ctxt->charset = XML_CHAR_ENCODING_8859_1;
++    /*
++     * Don't switch encodings twice. Note that if there's an encoder, we
++     * shouldn't receive invalid UTF-8 anyway.
++     *
++     * Note that if ctxt->input->buf == NULL, switching encodings is
++     * impossible, see Gitlab issue #34.
++     */
++    if ((ctxt->input->buf != NULL) &&
++        (ctxt->input->buf->encoder == NULL))
++        xmlSwitchEncoding(ctxt, XML_CHAR_ENCODING_8859_1);
+     *len = 1;
+     return((int) *ctxt->input->cur);
+ }
+diff --git a/encoding.c b/encoding.c
+index d67c16d..cdff6ae 100644
+--- a/encoding.c
++++ b/encoding.c
+@@ -373,6 +373,11 @@ UTF8ToUTF8(unsigned char* out, int *outlen,
+     if (len < 0)
+ 	return(-1);
+ 
++    /*
++     * FIXME: Conversion functions must assure valid UTF-8, so we have
++     * to check for UTF-8 validity. Preferably, this converter shouldn't
++     * be used at all.
++     */
+     memcpy(out, inb, len);
+ 
+     *outlen = len;
+diff --git a/parserInternals.c b/parserInternals.c
+index b0629ef..cbcfde0 100644
+--- a/parserInternals.c
++++ b/parserInternals.c
+@@ -1153,6 +1153,11 @@ xmlSwitchInputEncodingInt(xmlParserCtxtPtr ctxt, xmlParserInputPtr input,
+              * Note: this is a bit dangerous, but that's what it
+              * takes to use nearly compatible signature for different
+              * encodings.
++             *
++             * FIXME: Encoders might buffer partial byte sequences, so
++             * this probably can't work. We should return an error and
++             * make sure that callers never try to switch the encoding
++             * twice.
+              */
+             xmlCharEncCloseFunc(input->buf->encoder);
+             input->buf->encoder = handler;
+-- 
+1.8.3.1
+
