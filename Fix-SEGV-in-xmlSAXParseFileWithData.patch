@@ -1,0 +1,26 @@
+From 7929f05710134b9b243952019b6c14066cd3ac9e Mon Sep 17 00:00:00 2001
+From: yanjinjq <jiqin.ji@huawei.com>
+Date: Sun, 30 Aug 2020 10:34:01 +0000
+Subject: [PATCH] Fix SEGV in xmlSAXParseFileWithData
+
+Fixes #181.
+---
+ parser.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/parser.c b/parser.c
+index be14c32..f779eb6 100644
+--- a/parser.c
++++ b/parser.c
+@@ -14077,7 +14077,7 @@ xmlSAXParseFileWithData(xmlSAXHandlerPtr sax, const char *filename,
+ 
+     if ((ctxt->wellFormed) || recovery) {
+         ret = ctxt->myDoc;
+-	if (ret != NULL) {
++	if ((ret != NULL) && (ctxt->input->buf != NULL)) {
+ 	    if (ctxt->input->buf->compressed > 0)
+ 		ret->compression = 9;
+ 	    else
+-- 
+1.8.3.1
+
