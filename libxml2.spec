@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 21
+Release: 22
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -93,7 +93,7 @@ Patch80: Remove-dead-code-in-xinclude.c.patch
 Patch81: Fix-regression-introduced-with-commit-74dcc10b.patch
 Patch82: Fix-regression-introduced-with-commit-d88df4b.patch
 Patch83: Make-xmlNodeDumpOutputInternal-non-recursive.patch
-Patch84: Don-t-add-formatting-newlines-to-XInclude-nodes.patch
+Patch84: Fix-NodeDumpOutput-functions.patch
 Patch85: Make-htmlNodeDumpFormatOutput-non-recursive.patch
 Patch86: Fix-memory-leaks-in-XPointer-string-range-function.patch
 Patch87: Fix-null-pointer-deref-in-xmlXPtrRangeInsideFunction.patch
@@ -103,6 +103,20 @@ Patch90: Fix-XPath-recursion-limit.patch
 Patch91: Fix-Null-deref-in-xmlSchemaGetComponentTargetNs.patch
 Patch92: Fix-memleaks-in-xmlXIncludeProcessFlags.patch
 Patch93: Fix-heap-use-after-free-in-xmlAddNextSibling-and-xmlAddChild.patch
+Patch94: Fix-unsigned-integer-overflow-in-htmlParseTryOrFinis.patch
+Patch95: Fix-undefined-behavior-in-UTF16LEToUTF8.patch
+Patch96: Fix-SEGV-in-xmlSAXParseFileWithData.patch
+Patch97: encoding-fix-memleak-in-xmlRegisterCharEncodingHandl.patch
+Patch98: Fix-null-deref-in-xmlStringGetNodeList.patch
+Patch99: Fix-memory-leak-in-xmlParseElementMixedContentDecl.patch
+Patch100:Fix-slow-parsing-of-HTML-with-encoding-errors.patch
+
+Patch101:More-NodeDumpOutput-fixes.patch
+Patch102:Don-t-add-formatting-newlines-to-XInclude-nodes.patch
+Patch103:Handle-dumps-of-corrupted-documents-more-gracefully.patch
+Patch104:Remove-unused-encoding-parameter-of-HTML-output-func.patch
+Patch105:Work-around-lxml-API-abuse.patch
+Patch106:Fix-regression-in-xmlNodeDumpOutputInternal.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -295,6 +309,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Thu Dec 2 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.10-22
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:backport upstream patches
+
 * Thu Nov 11 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.10-21
 - Type:bugfix
 - ID:NA

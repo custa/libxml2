@@ -1,0 +1,39 @@
+From 2f9382033e4c398dd1c9aae4d24fa9f649fbf23d Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 15 Jun 2020 15:45:47 +0200
+Subject: [PATCH] Fix undefined behavior in UTF16LEToUTF8
+
+Don't perform arithmetic on null pointer.
+
+Found with libFuzzer and UBSan.
+---
+ encoding.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/encoding.c b/encoding.c
+index 8b6f349..1a6386a 100644
+--- a/encoding.c
++++ b/encoding.c
+@@ -496,13 +496,18 @@ UTF16LEToUTF8(unsigned char* out, int *outlen,
+ {
+     unsigned char* outstart = out;
+     const unsigned char* processed = inb;
+-    unsigned char* outend = out + *outlen;
++    unsigned char* outend;
+     unsigned short* in = (unsigned short*) inb;
+     unsigned short* inend;
+     unsigned int c, d, inlen;
+     unsigned char *tmp;
+     int bits;
+ 
++    if (*outlen == 0) {
++        *inlenb = 0;
++        return(0);
++    }
++    outend = out + *outlen;
+     if ((*inlenb % 2) == 1)
+         (*inlenb)--;
+     inlen = *inlenb / 2;
+-- 
+1.8.3.1
+

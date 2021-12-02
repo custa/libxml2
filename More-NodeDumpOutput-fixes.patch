@@ -1,0 +1,55 @@
+From 1a360c1c2ec950f478d55b31722ecf78f5698e97 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 29 Jul 2020 00:39:15 +0200
+Subject: [PATCH] More *NodeDumpOutput fixes
+
+When leaving nodes, restrict more operations to XML_ELEMENT_NODEs.
+---
+ xmlsave.c | 44 ++++++++++++++++++++++----------------------
+ 1 file changed, 22 insertions(+), 22 deletions(-)
+
+diff --git a/xmlsave.c b/xmlsave.c
+index f2e0ea8..f1d40b9 100644
+--- a/xmlsave.c
++++ b/xmlsave.c
+@@ -1058,14 +1058,14 @@ xmlNodeDumpOutputInternal(xmlSaveCtxtPtr ctxt, xmlNodePtr cur) {
+ 
+             cur = cur->parent;
+ 
+-            if (ctxt->level > 0) ctxt->level--;
+-            if ((xmlIndentTreeOutput) && (ctxt->format == 1))
+-                xmlOutputBufferWrite(buf, ctxt->indent_size *
+-                                     (ctxt->level > ctxt->indent_nr ?
+-                                      ctxt->indent_nr : ctxt->level),
+-                                     ctxt->indent);
+-
+             if (cur->type == XML_ELEMENT_NODE) {
++                if (ctxt->level > 0) ctxt->level--;
++                if ((xmlIndentTreeOutput) && (ctxt->format == 1))
++                    xmlOutputBufferWrite(buf, ctxt->indent_size *
++                                         (ctxt->level > ctxt->indent_nr ?
++                                          ctxt->indent_nr : ctxt->level),
++                                         ctxt->indent);
++
+                 xmlOutputBufferWrite(buf, 2, "</");
+                 if ((cur->ns != NULL) && (cur->ns->prefix != NULL)) {
+                     xmlOutputBufferWriteString(buf,
+@@ -1077,11 +1077,11 @@ xmlNodeDumpOutputInternal(xmlSaveCtxtPtr ctxt, xmlNodePtr cur) {
+                 if (ctxt->format == 2)
+                     xmlOutputBufferWriteWSNonSig(ctxt, 0);
+                 xmlOutputBufferWrite(buf, 1, ">");
+-            }
+ 
+-            if (cur == unformattedNode) {
+-                ctxt->format = format;
+-                unformattedNode = NULL;
++                if (cur == unformattedNode) {
++                    ctxt->format = format;
++                    unformattedNode = NULL;
++                }
+             }
+         }
+     }
+-- 
+1.8.3.1
+
