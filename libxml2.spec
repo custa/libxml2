@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.12
-Release: 3
+Release: 4
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -10,7 +10,7 @@ Patch0: libxml2-multilib.patch
 Patch1: Fix-XPath-recursion-limit.patch
 Patch2: Fix-Null-deref-in-xmlSchemaGetComponentTargetNs.patch
 Patch3: Fix-memleaks-in-xmlXIncludeProcessFlags.patch
-Patch4: Fix-heap-use-after-free-in-xmlAddNextSibling-and-xmlAddChild.patch
+Patch4: xmlAddChild-and-xmlAddNextSibling-may-not-attach-the.patch
 Patch5: Work-around-lxml-API-abuse.patch
 Patch6: Fix-regression-in-xmlNodeDumpOutputInternal.patch
 Patch7: Fix-whitespace-when-serializing-empty-HTML-documents.patch
@@ -176,6 +176,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Fri Feb 11 2022 fuanan <fuanan3@h-partners.com> - 2.9.12-4
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:use upstream patch refix heap-use-after-free in xmlAddNextSibling and xmlAddChild
+
 * Fri Nov 12 2021 panxiaohe <panxiaohe@huawei.com> - 2.9.12-3
 - Type:bugfix
 - ID:NA
