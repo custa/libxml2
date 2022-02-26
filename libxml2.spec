@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 12
+Release: 13
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -72,6 +72,8 @@ Patch60: backport-Fix-integer-overflow-in-xmlSchemaGetParticleTotalRan.patch
 Patch61: backport-CVE-2021-3537.patch
 Patch62: CVE-2021-3517.patch
 Patch63: CVE-2021-3518.patch
+Patch64: backport-Revert-Fix-memory-leak-in-xmlParseBalancedChunkMemor.patch
+Patch65: backport-xmlParseBalancedChunkMemory-must-not-be-called-with-.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -263,6 +265,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Sat Feb 26 2022 fuanan <fuanan3@h-partners.com> - 2.9.10-13
+- fix valgrind errors in xmlParseBalancedChunkMemoryRecover
+
 * Fri May 28 2021 guoxiaoqi <guoxiaoqi2@huawei.com> - 2.9.10-12
 - Type:CVE
 - ID:CVE-2021-3537, CVE-2021-3517
