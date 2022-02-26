@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 22
+Release: 23
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -117,6 +117,8 @@ Patch103:Handle-dumps-of-corrupted-documents-more-gracefully.patch
 Patch104:Remove-unused-encoding-parameter-of-HTML-output-func.patch
 Patch105:Work-around-lxml-API-abuse.patch
 Patch106:Fix-regression-in-xmlNodeDumpOutputInternal.patch
+Patch107:backport-Revert-Fix-memory-leak-in-xmlParseBalancedChunkMemor.patch
+Patch108:backport-xmlParseBalancedChunkMemory-must-not-be-called-with-.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -277,6 +279,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Sat Feb 26 2022 fuanan <fuanan3@h-partners.com> - 2.9.10-23
+- fix valgrind errors in xmlParseBalancedChunkMemoryRecover
+
 * Fri Feb 11 2022 fuanan <fuanan3@h-partners.com> - 2.9.10-22
 - Type:bugfix
 - ID:NA
