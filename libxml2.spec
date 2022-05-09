@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.12
-Release: 5
+Release: 6
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -17,6 +17,7 @@ Patch7: Fix-whitespace-when-serializing-empty-HTML-documents.patch
 Patch8: Patch-to-forbid-epsilon-reduction-of-final-states.patch
 Patch9: Fix-buffering-in-xmlOutputBufferWrite.patch
 Patch10:backport-CVE-2022-23308-Use-after-free-of-ID-and-IDREF-attrib.patch
+Patch11:backport-CVE-2022-29824-Fix-integer-overflows-in-xmlBuf-and-xmlBuffer.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -177,6 +178,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Mon May 09 2022 fuanan <fuanan3@h-partners.com> - 2.9.12-6
+- Type:CVE
+- ID:CVE-2022-29824
+- SUG:NA
+- DESC:fix CVE-2022-29824
+
 * Wed Mar 09 2022 fuanan <fuanan3@h-partners.com> - 2.9.12-5
 - Type:CVE
 - ID:CVE-2022-23308
