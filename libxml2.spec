@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.12
-Release: 7
+Release: 8
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -19,6 +19,7 @@ Patch9: Fix-buffering-in-xmlOutputBufferWrite.patch
 Patch10:backport-CVE-2022-23308-Use-after-free-of-ID-and-IDREF-attrib.patch
 Patch11:backport-CVE-2022-29824-Fix-integer-overflows-in-xmlBuf-and-xmlBuffer.patch
 Patch12:Fix-memory-leaks-for-xmlACatalogAdd.patch
+Patch13:Fix-memory-leaks-in-xmlACatalogAdd-when-xmlHashAddEntry-failed.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -179,6 +180,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Fri Jun 24 2022 fuanan <fuanan3@h-partners.com> - 2.9.12-8
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:Fix memory leaks in xmlACatalogAdd when xmlHashAddEntry failed
+
 * Thu Jun 16 2022 fuanan <fuanan3@h-partners.com> - 2.9.12-7
 - Type:bugfix
 - ID:NA
