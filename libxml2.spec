@@ -1,25 +1,16 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
-Version: 2.9.12
-Release: 8
+Version: 2.9.13
+Release: 1
 License: MIT
 Group: Development/Libraries
-Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
+Source: https://download.gnome.org/sources/%{name}/2.9/%{name}-%{version}.tar.xz
 
 Patch0: libxml2-multilib.patch
-Patch1: Fix-XPath-recursion-limit.patch
-Patch2: Fix-Null-deref-in-xmlSchemaGetComponentTargetNs.patch
-Patch3: Fix-memleaks-in-xmlXIncludeProcessFlags.patch
-Patch4: xmlAddChild-and-xmlAddNextSibling-may-not-attach-the.patch
-Patch5: Work-around-lxml-API-abuse.patch
-Patch6: Fix-regression-in-xmlNodeDumpOutputInternal.patch
-Patch7: Fix-whitespace-when-serializing-empty-HTML-documents.patch
-Patch8: Patch-to-forbid-epsilon-reduction-of-final-states.patch
-Patch9: Fix-buffering-in-xmlOutputBufferWrite.patch
-Patch10:backport-CVE-2022-23308-Use-after-free-of-ID-and-IDREF-attrib.patch
-Patch11:backport-CVE-2022-29824-Fix-integer-overflows-in-xmlBuf-and-xmlBuffer.patch
-Patch12:Fix-memory-leaks-for-xmlACatalogAdd.patch
-Patch13:Fix-memory-leaks-in-xmlACatalogAdd-when-xmlHashAddEntry-failed.patch
+Patch1: Fix-memleaks-in-xmlXIncludeProcessFlags.patch
+Patch2: backport-CVE-2022-29824-Fix-integer-overflows-in-xmlBuf-and-xmlBuffer.patch
+Patch3: Fix-memory-leaks-for-xmlACatalogAdd.patch
+Patch4: Fix-memory-leaks-in-xmlACatalogAdd-when-xmlHashAddEntry-failed.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -102,13 +93,8 @@ sed -i 's|#!/usr/bin/python |#!%{__python3} |' py3doc/*.py
 find doc -type f -exec chmod 0644 \{\} \;
 
 %install
-%make_install
-
-make clean
-# for python3
 %configure --with-python=%{__python3}
 %make_install
-
 
 rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
 rm -f $RPM_BUILD_ROOT%{_libdir}/python*/site-packages/*.a
@@ -131,7 +117,7 @@ rm -fr %{buildroot}
 %files
 %defattr(-, root, root)
 
-%doc AUTHORS NEWS README Copyright TODO
+%doc %{_datadir}/doc/libxml2
 
 %{_libdir}/lib*.so.*
 %{_bindir}/xmllint
@@ -140,12 +126,12 @@ rm -fr %{buildroot}
 %files devel
 %defattr(-, root, root)
 
-%doc AUTHORS NEWS README Copyright
+%doc NEWS README.md Copyright
 %doc doc/*.html doc/html doc/*.gif doc/*.png
 %doc doc/tutorial doc/libxml2-api.xml.gz
 %doc doc/examples
 %doc %dir %{_datadir}/gtk-doc/html/libxml2
-%doc %{_datadir}/gtk-doc/html/libxml2/*.devhelp
+%doc %{_datadir}/gtk-doc/html/libxml2/*.devhelp2
 %doc %{_datadir}/gtk-doc/html/libxml2/*.html
 %doc %{_datadir}/gtk-doc/html/libxml2/*.png
 %doc %{_datadir}/gtk-doc/html/libxml2/*.css
@@ -178,8 +164,13 @@ rm -fr %{buildroot}
 %doc %{_mandir}/man1/xmlcatalog.1*
 %doc %{_mandir}/man3/libxml.3*
 
-
 %changelog
+* Tue Jul 12 2022 fuanan <fuanan3@h-partners.com> - 2.9.13-1
+- Type:enhancement
+- ID:NA
+- SUG:NA
+- DESC:Upgrade to upstream v2.9.13 and Cleanup duplicate installation
+
 * Fri Jun 24 2022 fuanan <fuanan3@h-partners.com> - 2.9.12-8
 - Type:bugfix
 - ID:NA
