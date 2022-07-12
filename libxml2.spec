@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.12
-Release: 8
+Release: 9
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -102,13 +102,8 @@ sed -i 's|#!/usr/bin/python |#!%{__python3} |' py3doc/*.py
 find doc -type f -exec chmod 0644 \{\} \;
 
 %install
-%make_install
-
-make clean
-# for python3
 %configure --with-python=%{__python3}
 %make_install
-
 
 rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
 rm -f $RPM_BUILD_ROOT%{_libdir}/python*/site-packages/*.a
@@ -180,6 +175,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Jul 12 2022 fuanan <fuanan3@h-partners.com> - 2.9.12-9
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:Cleanup duplicate installation
+
 * Fri Jun 24 2022 fuanan <fuanan3@h-partners.com> - 2.9.12-8
 - Type:bugfix
 - ID:NA
