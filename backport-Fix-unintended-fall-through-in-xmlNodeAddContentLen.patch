@@ -1,0 +1,31 @@
+From 2464652537fa5f3b89e71c31eed777b42fa64708 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 18 May 2022 02:16:34 +0200
+Subject: [PATCH] Fix unintended fall-through in xmlNodeAddContentLen
+
+---
+ tree.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/tree.c b/tree.c
+index 2392b994..923432f0 100644
+--- a/tree.c
++++ b/tree.c
+@@ -5912,10 +5912,11 @@ xmlNodeAddContentLen(xmlNodePtr cur, const xmlChar *content, int len) {
+ 		    cur->content = xmlStrncatNew(cur->content, content, len);
+ 		    cur->properties = NULL;
+ 		    cur->nsDef = NULL;
+-		    break;
+-		}
+-		cur->content = xmlStrncat(cur->content, content, len);
++		} else {
++		    cur->content = xmlStrncat(cur->content, content, len);
++                }
+             }
++	    break;
+         case XML_DOCUMENT_NODE:
+         case XML_DTD_NODE:
+         case XML_HTML_DOCUMENT_NODE:
+-- 
+2.27.0
+

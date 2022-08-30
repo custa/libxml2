@@ -1,0 +1,48 @@
+From 145170125af959c814d33899bebb57f2da2f541b Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 23 Apr 2022 19:19:33 +0200
+Subject: [PATCH] Fix parsing of subtracted regex character classes
+
+Fixes #370.
+---
+ result/regexp/issue370 | 3 +++
+ test/regexp/issue370   | 3 +++
+ xmlregexp.c            | 2 +-
+ 3 files changed, 7 insertions(+), 1 deletion(-)
+ create mode 100644 result/regexp/issue370
+ create mode 100644 test/regexp/issue370
+
+diff --git a/result/regexp/issue370 b/result/regexp/issue370
+new file mode 100644
+index 00000000..42a74ec2
+--- /dev/null
++++ b/result/regexp/issue370
+@@ -0,0 +1,3 @@
++Regexp: [A-Za-[G]]
++G: Fail
++a: Ok
+diff --git a/test/regexp/issue370 b/test/regexp/issue370
+new file mode 100644
+index 00000000..626b38e0
+--- /dev/null
++++ b/test/regexp/issue370
+@@ -0,0 +1,3 @@
++=>[A-Za-[G]]
++G
++a
+diff --git a/xmlregexp.c b/xmlregexp.c
+index b29298d1..a2a36c49 100644
+--- a/xmlregexp.c
++++ b/xmlregexp.c
+@@ -5166,7 +5166,7 @@ xmlFAParseCharRange(xmlRegParserCtxtPtr ctxt) {
+     }
+     NEXTL(len);
+     cur = CUR;
+-    if ((cur != '-') || (NXT(1) == ']')) {
++    if ((cur != '-') || (NXT(1) == '[') || (NXT(1) == ']')) {
+         xmlRegAtomAddRange(ctxt, ctxt->atom, ctxt->neg,
+ 		              XML_REGEXP_CHARVAL, start, end, NULL);
+ 	return;
+-- 
+2.27.0
+
