@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.12
-Release: 9
+Release: 10
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -20,6 +20,23 @@ Patch10:backport-CVE-2022-23308-Use-after-free-of-ID-and-IDREF-attrib.patch
 Patch11:backport-CVE-2022-29824-Fix-integer-overflows-in-xmlBuf-and-xmlBuffer.patch
 Patch12:Fix-memory-leaks-for-xmlACatalogAdd.patch
 Patch13:Fix-memory-leaks-in-xmlACatalogAdd-when-xmlHashAddEntry-failed.patch
+Patch14:backport-fix-xmlXPathParserContext-could-be-double-delete-in-.patch
+Patch15:backport-Fix-leak-of-xmlElementContent.patch
+Patch16:backport-Use-UPDATE_COMPAT-consistently-in-buf.c.patch
+Patch17:backport-Prevent-integer-overflow-in-htmlSkipBlankChars-and-x.patch
+Patch18:backport-Fix-parsing-of-subtracted-regex-character-classes.patch
+Patch19:backport-Restore-behavior-of-htmlDocContentDumpFormatOutput.patch
+Patch20:backport-Fix-use-after-free-bugs-when-calling-xmlTextReaderCl.patch
+Patch21:backport-Use-xmlNewDocText-in-xmlXIncludeCopyRange.patch
+Patch22:backport-xmlBufAvail-should-return-length-without-including-a.patch
+Patch23:backport-Fix-integer-overflow-in-xmlBufferDump.patch
+Patch24:backport-Fix-missing-NUL-terminators-in-xmlBuf-and-xmlBuffer-.patch
+Patch25:backport-Reserve-byte-for-NUL-terminator-and-report-errors-co.patch
+Patch26:backport-Fix-unintended-fall-through-in-xmlNodeAddContentLen.patch
+Patch27:backport-Don-t-reset-nsDef-when-changing-node-content.patch
+Patch28:backport-Avoid-double-free-if-malloc-fails-in-inputPush.patch
+Patch29:backport-Fix-memory-leak-in-xmlLoadEntityContent-error-path.patch
+Patch30:backport-Reset-nsNr-in-xmlCtxtReset.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -175,6 +192,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Aug 30 2022 fuanan <fuanan3@h-partners.com> - 2.9.12-10
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:backport patches from upstream
+
 * Tue Jul 12 2022 fuanan <fuanan3@h-partners.com> - 2.9.12-9
 - Type:bugfix
 - ID:NA

@@ -1,0 +1,31 @@
+From b7e8e4c7f7ddb6a962e5fa406e774301bc713be7 Mon Sep 17 00:00:00 2001
+From: David Kilzer <ddkilzer@apple.com>
+Date: Wed, 6 Apr 2022 18:05:20 -0700
+Subject: [PATCH] Fix leak of xmlElementContent
+
+* valid.c:
+(xmlCopyDocElementContent):
+- Set `tmp->parent` properly to fix a leak that occurs in
+  xmlFreeDocElementContent().
+- Appears to be a regresion from cee2b3a5f1.
+
+Found by OSS-Fuzz Issue 44509.
+---
+ valid.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/valid.c b/valid.c
+index 825a3cfc..1da812ea 100644
+--- a/valid.c
++++ b/valid.c
+@@ -1039,6 +1039,7 @@ xmlCopyDocElementContent(xmlDocPtr doc, xmlElementContentPtr cur) {
+ 	    tmp->type = cur->type;
+ 	    tmp->ocur = cur->ocur;
+ 	    prev->c2 = tmp;
++	    tmp->parent = prev;
+ 	    if (cur->name != NULL) {
+ 		if (dict)
+ 		    tmp->name = xmlDictLookup(dict, cur->name, -1);
+-- 
+2.27.0
+
