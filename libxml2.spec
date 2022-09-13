@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.14
-Release: 1
+Release: 2
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.9/%{name}-%{version}.tar.xz
@@ -37,7 +37,7 @@ Requires: libxml2 = %{version}-%{release}
 Requires: zlib-devel
 Requires: xz-devel
 Requires: pkgconfig
-Obsoletes: %{name}-static
+Obsoletes: %{name}-static < %{version}-%{release}
 Provides:  %{name}-static
 
 %description devel
@@ -165,6 +165,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Sep 13 2022 fuanan <fuanan3@h-partners.com> - 2.9.14-2
+- Fix Obsoletes in spec
+
 * Wed Jul 13 2022 fuanan <fuanan3@h-partners.com> - 2.9.14-1
 - Type:enhancement
 - ID:NA
