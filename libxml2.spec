@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 29
+Release: 30
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -153,7 +153,7 @@ Requires: libxml2 = %{version}-%{release}
 Requires: zlib-devel
 Requires: xz-devel
 Requires: pkgconfig
-Obsoletes: %{name}-static
+Obsoletes: %{name}-static < %{version}-%{release}
 Provides:  %{name}-static
 
 %description devel
@@ -316,6 +316,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Sep 13 2022 fuanan <fuanan3@h-partners.com> - 2.9.10-30
+- Fix Obsoletes in spec
+
 * Mon Aug 08 2022 fuanan <fuanan3@h-partners.com> - 2.9.10-29
 - Type:CVE
 - CVE:CVE-2016-3709
