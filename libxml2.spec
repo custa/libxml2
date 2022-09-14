@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 32
+Release: 33
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -131,7 +131,6 @@ BuildRequires: zlib-devel
 BuildRequires: pkgconfig
 BuildRequires: xz-devel
 BuildRequires: libtool
-Recommends: libxml2-help = %{version}-%{release}
 URL: http://xmlsoft.org/
 
 %description
@@ -315,6 +314,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Wed Sep 14 2022 hubin <hubin73@huawei.com> - 2.9.10-33
+- remove recommend in spec
+
 * Tue Sep 13 2022 fuanan <fuanan3@h-partners.com> - 2.9.10-32
 - Fix Obsoletes in spec
 
