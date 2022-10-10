@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.12
-Release: 11
+Release: 12
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -37,6 +37,15 @@ Patch27:backport-Don-t-reset-nsDef-when-changing-node-content.patch
 Patch28:backport-Avoid-double-free-if-malloc-fails-in-inputPush.patch
 Patch29:backport-Fix-memory-leak-in-xmlLoadEntityContent-error-path.patch
 Patch30:backport-Reset-nsNr-in-xmlCtxtReset.patch
+Patch31:backport-Fix-htmlReadMemory-mixing-up-XML-and-HTML-functions.patch
+Patch32:backport-Don-t-initialize-SAX-handler-in-htmlReadMemory.patch
+Patch33:backport-Fix-HTML-parser-with-threads-and-without-legacy.patch
+Patch34:backport-Fix-xmlCtxtReadDoc-with-encoding.patch
+Patch35:backport-Use-xmlStrlen-in-CtxtReadDoc.patch
+Patch36:backport-Create-stream-with-buffer-in-xmlNewStringInputStream.patch
+Patch37:backport-Use-xmlStrlen-in-xmlNewStringInputStream.patch
+Patch38:backport-Fix-memory-leak-with-invalid-XSD.patch
+Patch39:backport-Make-XPath-depth-check-work-with-recursive-invocatio.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -192,6 +201,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Mon Oct 10 2022 chenziyang <chenziyang4@huawei.com> - 2.9.12-12
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:backport patches from upstream
+
 * Tue Sep 13 2022 fuanan <fuanan3@h-partners.com> - 2.9.12-11
 - Fix Obsoletes in spec
 
