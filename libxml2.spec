@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 31
+Release: 32
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -124,6 +124,9 @@ Patch110:backport-CVE-2022-29824-Fix-integer-overflows-in-xmlBuf-and-xmlBuffer.p
 Patch111:Fix-memory-leaks-for-xmlACatalogAdd.patch
 Patch112:Fix-memory-leaks-in-xmlACatalogAdd-when-xmlHashAddEntry-failed.patch
 Patch113:backport-CVE-2016-3709.patch
+Patch114:backport-pre-CVE-2022-40303-Remove-useless-comparisons.patch
+Patch115:backport-CVE-2022-40303-Fix-integer-overflows-with-XML_PARSE_.patch
+Patch116:backport-CVE-2022-40304-Fix-dict-corruption-caused-by-entity-.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -315,6 +318,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Nov 08 2022 fuanan <fuanan3@h-partners.com> - 2.9.10-32
+- fix CVE-2022-40303 CVE-2022-40304
+
 * Wed Sep 14 2022 hubin <hubin73@huawei.com> - 2.9.10-31
 - remove recommend in spec
 
