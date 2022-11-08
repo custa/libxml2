@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.14
-Release: 2
+Release: 3
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.9/%{name}-%{version}.tar.xz
@@ -10,6 +10,8 @@ Patch0: libxml2-multilib.patch
 Patch1: Fix-memleaks-in-xmlXIncludeProcessFlags.patch
 Patch2: Fix-memory-leaks-for-xmlACatalogAdd.patch
 Patch3: Fix-memory-leaks-in-xmlACatalogAdd-when-xmlHashAddEntry-failed.patch
+Patch4: backport-CVE-2022-40303-Fix-integer-overflows-with-XML_PARSE_.patch
+Patch5: backport-CVE-2022-40304-Fix-dict-corruption-caused-by-entity-.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -165,6 +167,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Nov 08 2022 fuanan <fuanan3@h-partners.com> - 2.9.14-3
+- fix CVE-2022-40303 CVE-2022-40304
+
 * Tue Sep 13 2022 fuanan <fuanan3@h-partners.com> - 2.9.14-2
 - Fix Obsoletes in spec
 
