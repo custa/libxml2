@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.14
-Release: 6
+Release: 7
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.9/%{name}-%{version}.tar.xz
@@ -10,13 +10,15 @@ Patch0: libxml2-multilib.patch
 Patch1: backport-Rework-validation-context-flags.patch
 Patch2: backport-Remove-unneeded-code-in-xmlreader.c.patch
 Patch3: backport-Don-t-add-IDs-containing-unexpanded-entity-reference.patch
-Patch4: Fix-memleaks-in-xmlXIncludeProcessFlags.patch
-Patch5: Fix-memory-leaks-for-xmlACatalogAdd.patch
-Patch6: Fix-memory-leaks-in-xmlACatalogAdd-when-xmlHashAddEntry-failed.patch
-Patch7: backport-CVE-2022-40303-Fix-integer-overflows-with-XML_PARSE_.patch
-Patch8: backport-CVE-2022-40304-Fix-dict-corruption-caused-by-entity-.patch
-Patch9: backport-schemas-Fix-null-pointer-deref-in-xmlSchemaCheckCOSS.patch
-Patch10: backport-parser-Fix-potential-memory-leak-in-xmlParseAttValue.patch
+Patch4: backport-Only-warn-on-invalid-redeclarations-of-predefined-en.patch
+Patch5: backport-Add-XML_DEPRECATED-macro.patch
+Patch6: Fix-memleaks-in-xmlXIncludeProcessFlags.patch
+Patch7: Fix-memory-leaks-for-xmlACatalogAdd.patch
+Patch8: Fix-memory-leaks-in-xmlACatalogAdd-when-xmlHashAddEntry-failed.patch
+Patch9: backport-CVE-2022-40303-Fix-integer-overflows-with-XML_PARSE_.patch
+Patch10: backport-CVE-2022-40304-Fix-dict-corruption-caused-by-entity-.patch
+Patch11: backport-schemas-Fix-null-pointer-deref-in-xmlSchemaCheckCOSS.patch
+Patch12: backport-parser-Fix-potential-memory-leak-in-xmlParseAttValue.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -172,6 +174,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Nov 29 2022 Zhipeng Xie <xiezhipeng1@huawei.com> - 2.9.14-7
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:backport upstream patches
+
 * Tue Nov 29 2022 Zhipeng Xie <xiezhipeng1@huawei.com> - 2.9.14-6
 - Type:bugfix
 - CVE:NA
