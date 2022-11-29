@@ -1,15 +1,15 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.14
-Release: 5
+Release: 6
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.9/%{name}-%{version}.tar.xz
 
 Patch0: libxml2-multilib.patch
-Patch1: Rework-validation-context-flags.patch
-Patch2: Remove-unneeded-code-in-xmlreader.c.patch
-Patch3: Don-t-add-IDs-containing-unexpanded-entity-reference.patch
+Patch1: backport-Rework-validation-context-flags.patch
+Patch2: backport-Remove-unneeded-code-in-xmlreader.c.patch
+Patch3: backport-Don-t-add-IDs-containing-unexpanded-entity-reference.patch
 Patch4: Fix-memleaks-in-xmlXIncludeProcessFlags.patch
 Patch5: Fix-memory-leaks-for-xmlACatalogAdd.patch
 Patch6: Fix-memory-leaks-in-xmlACatalogAdd-when-xmlHashAddEntry-failed.patch
@@ -172,6 +172,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Nov 29 2022 Zhipeng Xie <xiezhipeng1@huawei.com> - 2.9.14-6
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:modify patch names
+
 * Tue Nov 29 2022 Wentao Fan <fanwentao@huawei.com> - 2.9.14-5
 - Type:bugfix
 - CVE:NA
