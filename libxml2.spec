@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.12
-Release: 14
+Release: 15
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -50,6 +50,12 @@ Patch40:backport-CVE-2022-40303-Fix-integer-overflows-with-XML_PARSE_HUGE.patch
 Patch41:backport-CVE-2022-40304-Fix-dict-corruption-caused-by-entity-reference-cycles.patch
 Patch42:backport-schemas-Fix-null-pointer-deref-in-xmlSchemaCheckCOSS.patch
 Patch43:backport-parser-Fix-potential-memory-leak-in-xmlParseAttValue.patch
+Patch44:backport-io-Fix-buffer-full-error-with-certain-buffer-sizes.patch
+Patch45:backport-io-Check-for-memory-buffer-early-in-xmlParserInputGrow.patch
+Patch46:backport-io-Remove-xmlInputReadCallbackNop.patch
+Patch47:backport-xmlParseStartTag2-contains-typo-when-checking-for-default.patch
+Patch48:backport-parser-Fix-integer-overflow-of-input-ID.patch
+Patch49:backport-parser-Don-t-increase-depth-twice-when-parsing-internal.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -205,6 +211,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Jan 31 2023 hubin<hubin73@huawei.com> - 2.9.12-15
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:backport upstream patches
+
 * Mon Nov 21 2022 fuanan <fuanan3@h-partners.com> - 2.9.12-14
 - Type:bugfix
 - CVE:NA
