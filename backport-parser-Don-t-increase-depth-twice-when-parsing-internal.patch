@@ -1,0 +1,30 @@
+From d5dfc1ca95cc026e150c2ecea09ea0aeebfb2d2b Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 23 Dec 2022 21:53:30 +0100
+Subject: [PATCH 5/5] parser: Don't increase depth twice when parsing internal
+ entities
+
+Fix xmlParseBalancedChunkMemoryInternal.
+
+Reference:https://github.com/GNOME/libxml2/commit/dd62e541ecd142ebfb16cb7abe3d3ef4ee6617bd
+Conflict:NA
+---
+ parser.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/parser.c b/parser.c
+index 65c3d70..af54059 100644
+--- a/parser.c
++++ b/parser.c
+@@ -13390,7 +13390,7 @@ xmlParseBalancedChunkMemoryInternal(xmlParserCtxtPtr oldctxt,
+     xmlAddChild((xmlNodePtr) ctxt->myDoc, newRoot);
+     nodePush(ctxt, ctxt->myDoc->children);
+     ctxt->instate = XML_PARSER_CONTENT;
+-    ctxt->depth = oldctxt->depth + 1;
++    ctxt->depth = oldctxt->depth;
+ 
+     ctxt->validate = 0;
+     ctxt->loadsubset = oldctxt->loadsubset;
+-- 
+2.33.0
+
