@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.12
-Release: 15
+Release: 16
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -56,6 +56,8 @@ Patch46:backport-io-Remove-xmlInputReadCallbackNop.patch
 Patch47:backport-xmlParseStartTag2-contains-typo-when-checking-for-default.patch
 Patch48:backport-parser-Fix-integer-overflow-of-input-ID.patch
 Patch49:backport-parser-Don-t-increase-depth-twice-when-parsing-internal.patch
+Patch50:backport-CVE-2023-28484-Fix-null-deref-in-xmlSchemaFixupCompl.patch
+Patch51:backport-CVE-2023-29469-Hashing-of-empty-dict-strings-isn-t-d.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -211,6 +213,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Thu Apr 20 2023 BruceGW <gyl93216@163.com> - 2.9.12-16
+- Type:CVE
+- CVE:CVE-2023-28484 CVE-2023-29469
+- SUG:NA
+- DESC:fix CVE-2023-28484CVE-2023-29469
+
 * Tue Jan 31 2023 hubin<hubin73@huawei.com> - 2.9.12-15
 - Type:bugfix
 - CVE:NA
