@@ -1,0 +1,68 @@
+From 3cc900f0989908f50d5544f00ede0f0236c4f350 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 16 Feb 2023 11:50:52 +0100
+Subject: [PATCH] encoding: Cast toupper argument to unsigned char
+
+Fixes undefined behavior.
+
+Also cast return value explicitly to fix implicit-integer-sign-change
+checks.
+
+Reference:https://github.com/GNOME/libxml2/commit/3cc900f0989908f50d5544f00ede0f0236c4f350
+Conflict:NA
+---
+ encoding.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/encoding.c b/encoding.c
+index 8b98f7d..d43361a 100644
+--- a/encoding.c
++++ b/encoding.c
+@@ -1038,7 +1038,7 @@ xmlGetEncodingAlias(const char *alias) {
+ 	return(NULL);
+ 
+     for (i = 0;i < 99;i++) {
+-        upper[i] = toupper(alias[i]);
++        upper[i] = (char) toupper((unsigned char) alias[i]);
+ 	if (upper[i] == 0) break;
+     }
+     upper[i] = 0;
+@@ -1073,7 +1073,7 @@ xmlAddEncodingAlias(const char *name, const char *alias) {
+ 	return(-1);
+ 
+     for (i = 0;i < 99;i++) {
+-        upper[i] = toupper(alias[i]);
++        upper[i] = (char) toupper((unsigned char) alias[i]);
+ 	if (upper[i] == 0) break;
+     }
+     upper[i] = 0;
+@@ -1175,7 +1175,7 @@ xmlParseCharEncoding(const char* name)
+ 	name = alias;
+ 
+     for (i = 0;i < 499;i++) {
+-        upper[i] = toupper(name[i]);
++        upper[i] = (char) toupper((unsigned char) name[i]);
+ 	if (upper[i] == 0) break;
+     }
+     upper[i] = 0;
+@@ -1351,7 +1351,7 @@ xmlNewCharEncodingHandler(const char *name,
+ 	return(NULL);
+     }
+     for (i = 0;i < 499;i++) {
+-        upper[i] = toupper(name[i]);
++        upper[i] = (char) toupper((unsigned char) name[i]);
+ 	if (upper[i] == 0) break;
+     }
+     upper[i] = 0;
+@@ -1689,7 +1689,7 @@ xmlFindCharEncodingHandler(const char *name) {
+      * Check first for directly registered encoding names
+      */
+     for (i = 0;i < 99;i++) {
+-        upper[i] = toupper(name[i]);
++        upper[i] = (char) toupper((unsigned char) name[i]);
+ 	if (upper[i] == 0) break;
+     }
+     upper[i] = 0;
+-- 
+2.27.0
+

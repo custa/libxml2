@@ -1,0 +1,44 @@
+From 1061537efdf3874c91fd50d18f98c4b8a3518e52 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 26 Mar 2023 22:40:54 +0200
+Subject: [PATCH] malloc-fail: Fix buffer overread with HTML doctype
+ declarations
+
+Found by OSS-Fuzz, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/1061537efdf3874c91fd50d18f98c4b8a3518e52
+Conflict:NA
+
+---
+ HTMLparser.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index 42d1b29..5e4f289 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -3008,9 +3008,9 @@ htmlParseSystemLiteral(htmlParserCtxtPtr ctxt) {
+         htmlParseErr(ctxt, XML_ERR_LITERAL_NOT_FINISHED,
+                      "Unfinished SystemLiteral\n", NULL, NULL);
+     } else {
+-        NEXT;
+         if (err == 0)
+             ret = xmlStrndup((BASE_PTR+startPosition), len);
++        NEXT;
+     }
+ 
+     return(ret);
+@@ -3063,9 +3063,9 @@ htmlParsePubidLiteral(htmlParserCtxtPtr ctxt) {
+         htmlParseErr(ctxt, XML_ERR_LITERAL_NOT_FINISHED,
+                      "Unfinished PubidLiteral\n", NULL, NULL);
+     } else {
+-        NEXT;
+         if (err == 0)
+             ret = xmlStrndup((BASE_PTR + startPosition), len);
++        NEXT;
+     }
+ 
+     return(ret);
+-- 
+2.27.0
+

@@ -1,0 +1,42 @@
+From d038d7177668030f0c54fa1772d3f174cf6527f1 Mon Sep 17 00:00:00 2001
+From: Alex Richardson <Alexander.Richardson@cl.cam.ac.uk>
+Date: Thu, 1 Dec 2022 12:58:11 +0000
+Subject: [PATCH 26/28] Correctly relocate internal pointers after realloc()
+
+Adding an offset to a deallocated pointer and assuming that it can be
+dereferenced is undefined behaviour. When running libxml2 on CHERI-enabled
+systems such as Arm Morello this results in the creation of an out-of-bounds
+pointer that cannot be dereferenced and therefore crashes at runtime.
+
+The effect of this UB is not just limited to architectures such as CHERI,
+incorrect relocation of pointers after realloc can in fact cause
+FORTIFY_SOURCE errors with recent GCC:
+https://developers.redhat.com/articles/2022/09/17/gccs-new-fortification-level
+
+Reference: https://github.com/GNOME/libxml2/commit/c62c0d82ccacc2000c45f211166f008687fb97a0
+Conflict: NA
+---
+ parser.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/parser.c b/parser.c
+index 9d50138..adc449c 100644
+--- a/parser.c
++++ b/parser.c
+@@ -9514,10 +9514,10 @@ next_attr:
+              * Arithmetic on dangling pointers is technically undefined
+              * behavior, but well...
+              */
+-            ptrdiff_t offset = ctxt->input->base - atts[i+2];
++            const xmlChar *old = atts[i+2];
+             atts[i+2]  = NULL;    /* Reset repurposed namespace URI */
+-            atts[i+3] += offset;  /* value */
+-            atts[i+4] += offset;  /* valuend */
++            atts[i+3] = ctxt->input->base + (atts[i+3] - old);  /* value */
++            atts[i+4] = ctxt->input->base + (atts[i+4] - old);  /* valuend */
+         }
+     }
+ 
+-- 
+2.27.0
+

@@ -1,0 +1,28 @@
+From f3e62035d8b80a6dba92639f2470f02258822a0a Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 16 Feb 2023 14:49:06 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in htmlCreatePushParserCtxt
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/f3e62035d8b80a6dba92639f2470f02258822a0a
+Conflict:NA
+---
+ HTMLparser.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index 7ea2e62..5272c25 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -6355,7 +6355,7 @@ htmlCreatePushParserCtxt(htmlSAXHandlerPtr sax, void *user_data,
+     inputStream = htmlNewInputStream(ctxt);
+     if (inputStream == NULL) {
+ 	xmlFreeParserCtxt(ctxt);
+-	xmlFree(buf);
++	xmlFreeParserInputBuffer(buf);
+ 	return(NULL);
+     }
+ 
+-- 
+2.27.0

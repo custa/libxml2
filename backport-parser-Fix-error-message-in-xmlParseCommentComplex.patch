@@ -1,0 +1,29 @@
+From 418e9677092d10bcf45fa3d8776a2c1277d76201 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 4 Nov 2022 14:03:31 +0100
+Subject: [PATCH 13/28] parser: Fix error message in xmlParseCommentComplex
+
+Fixes #421.
+
+Reference: https://github.com/GNOME/libxml2/commit/a70f7d47152a3b34b4c9932aaeedcdcb90039cd0
+Conflict: NA
+---
+ parser.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/parser.c b/parser.c
+index 334a0aa..7553f86 100644
+--- a/parser.c
++++ b/parser.c
+@@ -4793,7 +4793,7 @@ xmlParseCommentComplex(xmlParserCtxtPtr ctxt, xmlChar *buf,
+     if (!IS_CHAR(r)) {
+         xmlFatalErrMsgInt(ctxt, XML_ERR_INVALID_CHAR,
+                           "xmlParseComment: invalid xmlChar value %d\n",
+-	                  q);
++	                  r);
+ 	xmlFree (buf);
+ 	return;
+     }
+-- 
+2.27.0
+

@@ -1,0 +1,59 @@
+From 6fd8904108f23810699d3a242e3612c4ec2f9cf2 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 22 Jan 2023 19:42:41 +0100
+Subject: [PATCH] malloc-fail: Fix use-after-free in xmlParseStartTag2
+
+Fix error handling in xmlCtxtGrowAttrs.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/6fd8904108f23810699d3a242e3612c4ec2f9cf2
+Conflict:NA
+---
+ parser.c | 26 +++++++++++---------------
+ 1 file changed, 11 insertions(+), 15 deletions(-)
+
+diff --git a/parser.c b/parser.c
+index 88f04e4..3aea3e2 100644
+--- a/parser.c
++++ b/parser.c
+@@ -1715,25 +1715,21 @@ xmlCtxtGrowAttrs(xmlParserCtxtPtr ctxt, int nr) {
+     int *attallocs;
+     int maxatts;
+ 
+-    if (ctxt->atts == NULL) {
+-	maxatts = 55; /* allow for 10 attrs by default */
+-	atts = (const xmlChar **)
+-	       xmlMalloc(maxatts * sizeof(xmlChar *));
+-	if (atts == NULL) goto mem_error;
+-	ctxt->atts = atts;
+-	attallocs = (int *) xmlMalloc((maxatts / 5) * sizeof(int));
+-	if (attallocs == NULL) goto mem_error;
+-	ctxt->attallocs = attallocs;
+-	ctxt->maxatts = maxatts;
+-    } else if (nr + 5 > ctxt->maxatts) {
+-	maxatts = (nr + 5) * 2;
+-	atts = (const xmlChar **) xmlRealloc((void *) ctxt->atts,
++    if (nr + 5 > ctxt->maxatts) {
++	maxatts = ctxt->maxatts == 0 ? 55 : (nr + 5) * 2;
++	atts = (const xmlChar **) xmlMalloc(
+ 				     maxatts * sizeof(const xmlChar *));
+ 	if (atts == NULL) goto mem_error;
+-	ctxt->atts = atts;
+ 	attallocs = (int *) xmlRealloc((void *) ctxt->attallocs,
+ 	                             (maxatts / 5) * sizeof(int));
+-	if (attallocs == NULL) goto mem_error;
++	if (attallocs == NULL) {
++            xmlFree(atts);
++            goto mem_error;
++        }
++        if (ctxt->maxatts > 0)
++            memcpy(atts, ctxt->atts, ctxt->maxatts * sizeof(const xmlChar *));
++        xmlFree(ctxt->atts);
++	ctxt->atts = atts;
+ 	ctxt->attallocs = attallocs;
+ 	ctxt->maxatts = maxatts;
+     }
+-- 
+2.27.0
+

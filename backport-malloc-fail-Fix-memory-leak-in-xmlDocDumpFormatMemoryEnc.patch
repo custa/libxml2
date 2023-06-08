@@ -1,0 +1,29 @@
+From c82701ff0b24bc56c6814e690198599cfc8c273a Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 14 Feb 2023 15:13:06 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlDocDumpFormatMemoryEnc
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/c82701ff0b24bc56c6814e690198599cfc8c273a
+Conflict:NA
+---
+ xmlsave.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/xmlsave.c b/xmlsave.c
+index 489505f..90e1856 100644
+--- a/xmlsave.c
++++ b/xmlsave.c
+@@ -2402,6 +2402,7 @@ xmlDocDumpFormatMemoryEnc(xmlDocPtr out_doc, xmlChar **doc_txt_ptr,
+ 
+     if ((out_buff = xmlAllocOutputBuffer(conv_hdlr)) == NULL ) {
+         xmlSaveErrMemory("creating buffer");
++        xmlCharEncCloseFunc(conv_hdlr);
+         return;
+     }
+ 
+-- 
+2.27.0
+
+

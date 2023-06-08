@@ -1,0 +1,30 @@
+From 0ec9c91064a58ce2932498a55ae63a85f43975f5 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 16 Feb 2023 14:57:24 +0100
+Subject: [PATCH] malloc-fail: Fix infinite loop in htmlParseStartTag
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/0ec9c91064a58ce2932498a55ae63a85f43975f5
+Conflict:NA
+---
+ HTMLparser.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index f90053a..ca551d9 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -4087,7 +4087,8 @@ htmlParseStartTag(htmlParserCtxtPtr ctxt) {
+ 	     * the end of the tag. */
+ 	    while ((CUR != 0) &&
+ 	           !(IS_BLANK_CH(CUR)) && (CUR != '>') &&
+-		   ((CUR != '/') || (NXT(1) != '>')))
++		   ((CUR != '/') || (NXT(1) != '>')) &&
++                   (ctxt->instate != XML_PARSER_EOF))
+ 		NEXT;
+ 	}
+ 
+-- 
+2.27.0
+

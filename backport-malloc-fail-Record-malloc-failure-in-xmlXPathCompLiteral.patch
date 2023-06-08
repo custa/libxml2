@@ -1,0 +1,34 @@
+From 755344013e161ab7c982290c6c78903bd9bd300e Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 30 Jan 2023 15:40:23 +0100
+Subject: [PATCH] malloc-fail: Record malloc failure in xmlXPathCompLiteral
+
+Avoid OOB array access.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/755344013e161ab7c982290c6c78903bd9bd300e
+Conflict:NA
+---
+ xpath.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/xpath.c b/xpath.c
+index fcbc7e3..fe0e1e2 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -10245,7 +10245,10 @@ xmlXPathCompLiteral(xmlXPathParserContextPtr ctxt) {
+     } else {
+ 	XP_ERROR(XPATH_START_LITERAL_ERROR);
+     }
+-    if (ret == NULL) return;
++    if (ret == NULL) {
++        xmlXPathPErrMemory(ctxt, NULL);
++        return;
++    }
+     lit = xmlXPathCacheNewString(ctxt->context, ret);
+     if (lit == NULL) {
+ 	ctxt->error = XPATH_MEMORY_ERROR;
+-- 
+2.27.0
+

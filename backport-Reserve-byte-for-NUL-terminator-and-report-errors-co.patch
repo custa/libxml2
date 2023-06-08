@@ -1,0 +1,153 @@
+From 6ef16dee7ac8af32b8a0dd793445b1148e240364 Mon Sep 17 00:00:00 2001
+From: David Kilzer <ddkilzer@apple.com>
+Date: Fri, 13 May 2022 14:43:33 -0700
+Subject: [PATCH 300/300] Reserve byte for NUL terminator and report errors
+ consistently in xmlBuf and xmlBuffer
+
+This is a follow-up to commit 6c283d83.
+
+* buf.c:
+(xmlBufGrowInternal):
+- Call xmlBufMemoryError() when the buffer size would overflow.
+- Account for NUL terminator byte when using XML_MAX_TEXT_LENGTH.
+- Do not include NUL terminator byte when returning length.
+(xmlBufAdd):
+- Call xmlBufMemoryError() when the buffer size would overflow.
+
+* tree.c:
+(xmlBufferGrow):
+- Call xmlTreeErrMemory() when the buffer size would overflow.
+- Do not include NUL terminator byte when returning length.
+(xmlBufferResize):
+- Update error message in xmlTreeErrMemory() to be consistent
+  with other similar messages.
+(xmlBufferAdd):
+- Call xmlTreeErrMemory() when the buffer size would overflow.
+(xmlBufferAddHead):
+- Add overflow checks similar to those in xmlBufferAdd().
+
+Reference:https://github.com/GNOME/libxml2/commit/6ef16dee7ac8af32b8a0dd793445b1148e240364
+Conflict:NA
+
+---
+ buf.c  | 15 ++++++++++-----
+ tree.c | 22 ++++++++++++++++------
+ 2 files changed, 26 insertions(+), 11 deletions(-)
+
+diff --git a/buf.c b/buf.c
+index da765f6..e851364 100644
+--- a/buf.c
++++ b/buf.c
+@@ -440,9 +440,11 @@ xmlBufGrowInternal(xmlBufPtr buf, size_t len) {
+ 
+     if (buf->alloc == XML_BUFFER_ALLOC_IMMUTABLE) return(0);
+     if (len < buf->size - buf->use)
+-        return(buf->size - buf->use);
+-    if (len > SIZE_MAX - buf->use)
++        return(buf->size - buf->use - 1);
++    if (len >= SIZE_MAX - buf->use) {
++        xmlBufMemoryError(buf, "growing buffer past SIZE_MAX");
+         return(0);
++    }
+ 
+     if (buf->size > (size_t) len) {
+         size = buf->size > SIZE_MAX / 2 ? SIZE_MAX : buf->size * 2;
+@@ -455,7 +457,7 @@ xmlBufGrowInternal(xmlBufPtr buf, size_t len) {
+         /*
+ 	 * Used to provide parsing limits
+ 	 */
+-        if ((buf->use + len >= XML_MAX_TEXT_LENGTH) ||
++        if ((buf->use + len + 1 >= XML_MAX_TEXT_LENGTH) ||
+ 	    (buf->size >= XML_MAX_TEXT_LENGTH)) {
+ 	    xmlBufMemoryError(buf, "buffer error: text too long\n");
+ 	    return(0);
+@@ -483,7 +485,7 @@ xmlBufGrowInternal(xmlBufPtr buf, size_t len) {
+     }
+     buf->size = size;
+     UPDATE_COMPAT(buf)
+-    return(buf->size - buf->use);
++    return(buf->size - buf->use - 1);
+ }
+ 
+ /**
+@@ -883,9 +885,12 @@ xmlBufAdd(xmlBufPtr buf, const xmlChar *str, int len) {
+     if (len < 0) return -1;
+     if (len == 0) return 0;
+ 
++    /* Note that both buf->size and buf->use can be zero here. */
+     if ((size_t) len >= buf->size - buf->use) {
+-        if ((size_t) len >= SIZE_MAX - buf->use)
++        if ((size_t) len >= SIZE_MAX - buf->use) {
++            xmlBufMemoryError(buf, "growing buffer past SIZE_MAX");
+             return(-1);
++        }
+         needSize = buf->use + len + 1;
+ 	if (buf->alloc == XML_BUFFER_ALLOC_BOUNDED) {
+ 	    /*
+diff --git a/tree.c b/tree.c
+index e275671..ed0a838 100644
+--- a/tree.c
++++ b/tree.c
+@@ -7338,8 +7338,10 @@ xmlBufferGrow(xmlBufferPtr buf, unsigned int len) {
+     if (buf->alloc == XML_BUFFER_ALLOC_IMMUTABLE) return(0);
+     if (len < buf->size - buf->use)
+         return(0);
+-    if (len > UINT_MAX - buf->use)
++    if (len >= UINT_MAX - buf->use) {
++        xmlTreeErrMemory("growing buffer past UINT_MAX");
+         return(-1);
++    }
+ 
+     if (buf->size > (size_t) len) {
+         size = buf->size > UINT_MAX / 2 ? UINT_MAX : buf->size * 2;
+@@ -7367,7 +7369,7 @@ xmlBufferGrow(xmlBufferPtr buf, unsigned int len) {
+ 	buf->content = newbuf;
+     }
+     buf->size = size;
+-    return(buf->size - buf->use);
++    return(buf->size - buf->use - 1);
+ }
+ 
+ /**
+@@ -7464,7 +7466,7 @@ xmlBufferResize(xmlBufferPtr buf, unsigned int size)
+         return 1;
+ 
+     if (size > UINT_MAX - 10) {
+-        xmlTreeErrMemory("growing buffer");
++        xmlTreeErrMemory("growing buffer past UINT_MAX");
+         return 0;
+     }
+ 
+@@ -7592,9 +7594,12 @@ xmlBufferAdd(xmlBufferPtr buf, const xmlChar *str, int len) {
+     if (len < 0) return -1;
+     if (len == 0) return 0;
+ 
++    /* Note that both buf->size and buf->use can be zero here. */
+     if ((unsigned) len >= buf->size - buf->use) {
+-        if ((unsigned) len >= UINT_MAX - buf->use)
++        if ((unsigned) len >= UINT_MAX - buf->use) {
++            xmlTreeErrMemory("growing buffer past UINT_MAX");
+             return XML_ERR_NO_MEMORY;
++        }
+         needSize = buf->use + len + 1;
+         if (!xmlBufferResize(buf, needSize)){
+ 	    xmlTreeErrMemory("growing buffer");
+@@ -7663,8 +7668,13 @@ xmlBufferAddHead(xmlBufferPtr buf, const xmlChar *str, int len) {
+ 	    return(0);
+ 	}
+     }
+-    needSize = buf->use + len + 2;
+-    if (needSize > buf->size){
++    /* Note that both buf->size and buf->use can be zero here. */
++    if ((unsigned) len >= buf->size - buf->use) {
++        if ((unsigned) len >= UINT_MAX - buf->use) {
++            xmlTreeErrMemory("growing buffer past UINT_MAX");
++            return(-1);
++        }
++        needSize = buf->use + len + 1;
+         if (!xmlBufferResize(buf, needSize)){
+ 	    xmlTreeErrMemory("growing buffer");
+             return XML_ERR_NO_MEMORY;
+-- 
+2.27.0
+
