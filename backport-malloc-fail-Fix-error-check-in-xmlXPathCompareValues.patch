@@ -1,0 +1,46 @@
+From 621c222efe87946ad8e53f59e28c782979d340c8 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 30 Jan 2023 15:48:11 +0100
+Subject: [PATCH] malloc-fail: Fix error check in xmlXPathCompareValues
+
+Avoid null deref.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/621c222efe87946ad8e53f59e28c782979d340c8
+Conflict:NA
+---
+ xpath.c | 12 ++----------
+ 1 file changed, 2 insertions(+), 10 deletions(-)
+
+diff --git a/xpath.c b/xpath.c
+index 77d5434..fcbc7e3 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -7367,21 +7367,13 @@ xmlXPathCompareValues(xmlXPathParserContextPtr ctxt, int inf, int strict) {
+ 	valuePush(ctxt, arg1);
+ 	xmlXPathNumberFunction(ctxt, 1);
+ 	arg1 = valuePop(ctxt);
+-    }
+-    if (arg1->type != XPATH_NUMBER) {
+-	xmlXPathFreeObject(arg1);
+-	xmlXPathFreeObject(arg2);
+-	XP_ERROR0(XPATH_INVALID_OPERAND);
++        CHECK_ERROR0;
+     }
+     if (arg2->type != XPATH_NUMBER) {
+ 	valuePush(ctxt, arg2);
+ 	xmlXPathNumberFunction(ctxt, 1);
+ 	arg2 = valuePop(ctxt);
+-    }
+-    if (arg2->type != XPATH_NUMBER) {
+-	xmlXPathReleaseObject(ctxt->context, arg1);
+-	xmlXPathReleaseObject(ctxt->context, arg2);
+-	XP_ERROR0(XPATH_INVALID_OPERAND);
++        CHECK_ERROR0;
+     }
+     /*
+      * Add tests for infinity and nan
+-- 
+2.27.0
+

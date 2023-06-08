@@ -1,0 +1,75 @@
+From d08fd8306e224c48dedc1a9b549376ae1d4c7f6c Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 17 Feb 2023 15:53:07 +0100
+Subject: [PATCH] malloc-fail: Fix OOB read after xmlRegGetCounter
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/1743c4c3fc58cf38ecce68db9de51d0f3651e033
+Conflict:xmlregexp.c
+
+---
+ xmlregexp.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/xmlregexp.c b/xmlregexp.c
+index 360916f..e7c48a4 100644
+--- a/xmlregexp.c
++++ b/xmlregexp.c
+@@ -1681,6 +1681,8 @@ xmlFAGenerateTransitions(xmlRegParserCtxtPtr ctxt, xmlRegStatePtr from,
+                     }
+ 		    inter = ctxt->state;
+ 		    counter = xmlRegGetCounter(ctxt);
++                    if (counter < 0)
++                        return(-1);
+ 		    ctxt->counters[counter].min = atom->min - 1;
+ 		    ctxt->counters[counter].max = atom->max - 1;
+ 		    /* count the number of times we see it again */
+@@ -1699,6 +1701,8 @@ xmlFAGenerateTransitions(xmlRegParserCtxtPtr ctxt, xmlRegStatePtr from,
+ 		     * epsilon transition.
+ 		     */
+ 		    counter = xmlRegGetCounter(ctxt);
++                    if (counter < 0)
++                        return(-1);
+ 		    ctxt->counters[counter].min = atom->min - 1;
+ 		    ctxt->counters[counter].max = atom->max - 1;
+ 		    /* allow a way out based on the count */
+@@ -6025,6 +6029,8 @@ xmlAutomataNewCountTrans2(xmlAutomataPtr am, xmlAutomataStatePtr from,
+      * associate a counter to the transition.
+      */
+     counter = xmlRegGetCounter(am);
++    if (counter < 0)
++        goto error;
+     am->counters[counter].min = min;
+     am->counters[counter].max = max;
+ 
+@@ -6099,6 +6105,8 @@ xmlAutomataNewCountTrans(xmlAutomataPtr am, xmlAutomataStatePtr from,
+      * associate a counter to the transition.
+      */
+     counter = xmlRegGetCounter(am);
++    if (counter < 0)
++        goto error;
+     am->counters[counter].min = min;
+     am->counters[counter].max = max;
+ 
+@@ -6191,6 +6199,8 @@ xmlAutomataNewOnceTrans2(xmlAutomataPtr am, xmlAutomataStatePtr from,
+      * associate a counter to the transition.
+      */
+     counter = xmlRegGetCounter(am);
++    if (counter < 0)
++        goto error;
+     am->counters[counter].min = 1;
+     am->counters[counter].max = 1;
+ 
+@@ -6256,6 +6266,8 @@ xmlAutomataNewOnceTrans(xmlAutomataPtr am, xmlAutomataStatePtr from,
+      * associate a counter to the transition.
+      */
+     counter = xmlRegGetCounter(am);
++    if (counter < 0)
++        goto error;
+     am->counters[counter].min = 1;
+     am->counters[counter].max = 1;
+ 
+-- 
+2.27.0
+

@@ -1,0 +1,32 @@
+From d1b87856931797c5c527cee16d96e482a45b99ed Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 22 Jan 2023 17:42:09 +0100
+Subject: [PATCH] malloc-fail: Fix infinite loop in xmlParseTextDecl
+
+Memory errors can set `instate` to `XML_PARSER_EOF` which results in
+`NEXT` making no progress.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/d1b87856931797c5c527cee16d96e482a45b99ed
+Conflict:NA
+---
+ parser.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/parser.c b/parser.c
+index 9127deb..fafae15 100644
+--- a/parser.c
++++ b/parser.c
+@@ -6957,6 +6957,8 @@ xmlParseTextDecl(xmlParserCtxtPtr ctxt) {
+      * We must have the encoding declaration
+      */
+     encoding = xmlParseEncodingDecl(ctxt);
++    if (ctxt->instate == XML_PARSER_EOF)
++        return;
+     if (ctxt->errNo == XML_ERR_UNSUPPORTED_ENCODING) {
+ 	/*
+ 	 * The XML REC instructs us to stop parsing right here
+-- 
+2.27.0
+

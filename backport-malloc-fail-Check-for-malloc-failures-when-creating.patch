@@ -1,0 +1,210 @@
+From b1319c902f6e44d08f8cb33f1fc28847f2bc8aeb Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 18 Mar 2023 16:34:01 +0100
+Subject: [PATCH] malloc-fail: Check for malloc failures when creating XPath
+ strings
+
+Prevent null derefs.
+
+Found by OSS-Fuzz, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/b1319c902f6e44d08f8cb33f1fc28847f2bc8aeb
+Conflict:xpath.c
+
+---
+ xpath.c | 111 +++++++++++++++++++++-----------------------------------
+ 1 file changed, 42 insertions(+), 69 deletions(-)
+
+diff --git a/xpath.c b/xpath.c
+index 005a6a2..2eceb5b 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -2476,17 +2476,17 @@ xmlXPathCacheNewNodeSet(xmlXPathContextPtr ctxt, xmlNodePtr val)
+ }
+ 
+ /**
+- * xmlXPathCacheNewCString:
++ * xmlXPathCacheNewString:
+  * @ctxt: the XPath context
+- * @val:  the char * value
++ * @val:  the xmlChar * value
+  *
+- * This is the cached version of xmlXPathNewCString().
++ * This is the cached version of xmlXPathNewString().
+  * Acquire an xmlXPathObjectPtr of type string and of value @val
+  *
+  * Returns the created or reused object.
+  */
+ static xmlXPathObjectPtr
+-xmlXPathCacheNewCString(xmlXPathContextPtr ctxt, const char *val)
++xmlXPathCacheNewString(xmlXPathContextPtr ctxt, const xmlChar *val)
+ {
+     if ((ctxt != NULL) && (ctxt->cache)) {
+ 	xmlXPathContextCachePtr cache = (xmlXPathContextCachePtr) ctxt->cache;
+@@ -2495,12 +2495,20 @@ xmlXPathCacheNewCString(xmlXPathContextPtr ctxt, const char *val)
+ 	    (cache->stringObjs->number != 0))
+ 	{
+ 	    xmlXPathObjectPtr ret;
++            xmlChar *copy;
++
++            if (val == NULL)
++                val = BAD_CAST "";
++            copy = xmlStrdup(val);
++            if (copy == NULL) {
++                xmlXPathErrMemory(ctxt, NULL);
++                return(NULL);
++            }
+ 
+ 	    ret = (xmlXPathObjectPtr)
+ 		cache->stringObjs->items[--cache->stringObjs->number];
+-
+ 	    ret->type = XPATH_STRING;
+-	    ret->stringval = xmlStrdup(BAD_CAST val);
++            ret->stringval = copy;
+ #ifdef XP_DEBUG_OBJ_USAGE
+ 	    xmlXPathDebugObjUsageRequested(ctxt, XPATH_STRING);
+ #endif
+@@ -2509,73 +2517,44 @@ xmlXPathCacheNewCString(xmlXPathContextPtr ctxt, const char *val)
+ 	    (cache->miscObjs->number != 0))
+ 	{
+ 	    xmlXPathObjectPtr ret;
++            xmlChar *copy;
++
++            if (val == NULL)
++                val = BAD_CAST "";
++            copy = xmlStrdup(val);
++            if (copy == NULL) {
++                xmlXPathErrMemory(ctxt, NULL);
++                return(NULL);
++            }
+ 
+ 	    ret = (xmlXPathObjectPtr)
+ 		cache->miscObjs->items[--cache->miscObjs->number];
+ 
+ 	    ret->type = XPATH_STRING;
+-	    ret->stringval = xmlStrdup(BAD_CAST val);
++            ret->stringval = copy;
+ #ifdef XP_DEBUG_OBJ_USAGE
+ 	    xmlXPathDebugObjUsageRequested(ctxt, XPATH_STRING);
+ #endif
+ 	    return(ret);
+ 	}
+     }
+-    return(xmlXPathNewCString(val));
++    return(xmlXPathNewString(val));
+ }
+ 
+ /**
+- * xmlXPathCacheNewString:
++ * xmlXPathCacheNewCString:
+  * @ctxt: the XPath context
+- * @val:  the xmlChar * value
++ * @val:  the char * value
+  *
+- * This is the cached version of xmlXPathNewString().
++ * This is the cached version of xmlXPathNewCString().
+  * Acquire an xmlXPathObjectPtr of type string and of value @val
+  *
+  * Returns the created or reused object.
+  */
+ static xmlXPathObjectPtr
+-xmlXPathCacheNewString(xmlXPathContextPtr ctxt, const xmlChar *val)
++xmlXPathCacheNewCString(xmlXPathContextPtr ctxt, const char *val)
+ {
+-    if ((ctxt != NULL) && (ctxt->cache)) {
+-	xmlXPathContextCachePtr cache = (xmlXPathContextCachePtr) ctxt->cache;
+-
+-	if ((cache->stringObjs != NULL) &&
+-	    (cache->stringObjs->number != 0))
+-	{
+-	    xmlXPathObjectPtr ret;
+-
+-	    ret = (xmlXPathObjectPtr)
+-		cache->stringObjs->items[--cache->stringObjs->number];
+-	    ret->type = XPATH_STRING;
+-	    if (val != NULL)
+-		ret->stringval = xmlStrdup(val);
+-	    else
+-		ret->stringval = xmlStrdup((const xmlChar *)"");
+-#ifdef XP_DEBUG_OBJ_USAGE
+-	    xmlXPathDebugObjUsageRequested(ctxt, XPATH_STRING);
+-#endif
+-	    return(ret);
+-	} else if ((cache->miscObjs != NULL) &&
+-	    (cache->miscObjs->number != 0))
+-	{
+-	    xmlXPathObjectPtr ret;
+-
+-	    ret = (xmlXPathObjectPtr)
+-		cache->miscObjs->items[--cache->miscObjs->number];
+-
+-	    ret->type = XPATH_STRING;
+-	    if (val != NULL)
+-		ret->stringval = xmlStrdup(val);
+-	    else
+-		ret->stringval = xmlStrdup((const xmlChar *)"");
+-#ifdef XP_DEBUG_OBJ_USAGE
+-	    xmlXPathDebugObjUsageRequested(ctxt, XPATH_STRING);
+-#endif
+-	    return(ret);
+-	}
+-    }
+-    return(xmlXPathNewString(val));
++    return xmlXPathCacheNewString(ctxt, BAD_CAST val);
+ }
+ 
+ /**
+@@ -5291,10 +5270,13 @@ xmlXPathNewString(const xmlChar *val) {
+     }
+     memset(ret, 0 , (size_t) sizeof(xmlXPathObject));
+     ret->type = XPATH_STRING;
+-    if (val != NULL)
+-	ret->stringval = xmlStrdup(val);
+-    else
+-	ret->stringval = xmlStrdup((const xmlChar *)"");
++    if (val == NULL)
++        val = BAD_CAST "";
++    ret->stringval = xmlStrdup(val);
++    if (ret->stringval == NULL) {
++        xmlFree(ret);
++        return(NULL);
++    }
+ #ifdef XP_DEBUG_OBJ_USAGE
+     xmlXPathDebugObjUsageRequested(NULL, XPATH_STRING);
+ #endif
+@@ -5340,20 +5322,7 @@ xmlXPathWrapString (xmlChar *val) {
+  */
+ xmlXPathObjectPtr
+ xmlXPathNewCString(const char *val) {
+-    xmlXPathObjectPtr ret;
+-
+-    ret = (xmlXPathObjectPtr) xmlMalloc(sizeof(xmlXPathObject));
+-    if (ret == NULL) {
+-        xmlXPathErrMemory(NULL, "creating string object\n");
+-	return(NULL);
+-    }
+-    memset(ret, 0 , (size_t) sizeof(xmlXPathObject));
+-    ret->type = XPATH_STRING;
+-    ret->stringval = xmlStrdup(BAD_CAST val);
+-#ifdef XP_DEBUG_OBJ_USAGE
+-    xmlXPathDebugObjUsageRequested(NULL, XPATH_STRING);
+-#endif
+-    return(ret);
++    return(xmlXPathNewString(BAD_CAST val));
+ }
+ 
+ /**
+@@ -5427,6 +5396,10 @@ xmlXPathObjectCopy(xmlXPathObjectPtr val) {
+ 	    break;
+ 	case XPATH_STRING:
+ 	    ret->stringval = xmlStrdup(val->stringval);
++            if (ret->stringval == NULL) {
++                xmlFree(ret);
++                return(NULL);
++            }
+ 	    break;
+ 	case XPATH_XSLT_TREE:
+ #if 0
+-- 
+2.27.0
+
