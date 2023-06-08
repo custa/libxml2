@@ -1,0 +1,44 @@
+From 2fe372a0aa2cdeb5cf518cf430defba36647c502 Mon Sep 17 00:00:00 2001
+From: Damjan Jovanovic <damjan.jov@gmail.com>
+Date: Sat, 21 Aug 2021 07:21:50 +0200
+Subject: [PATCH] Properly fold whitespace around the QName value when
+ validating an XSD schema.
+
+(May also need fixing in other places.)
+
+Issue: 239
+
+Conflict:NA
+Reference:https://gitlab.gnome.org/GNOME/libxml2/-/commit/2fe372a0aa2cdeb5cf518cf430defba36647c502
+
+---
+ xmlschemas.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/xmlschemas.c b/xmlschemas.c
+index 2da962b..9da4cd1 100644
+--- a/xmlschemas.c
++++ b/xmlschemas.c
+@@ -24645,6 +24645,7 @@ xmlSchemaValidateQName(xmlSchemaValidCtxtPtr vctxt,
+ 		       int valNeeded)
+ {
+     int ret;
++    xmlChar *stripped;
+     const xmlChar *nsName;
+     xmlChar *local, *prefix = NULL;
+ 
+@@ -24661,7 +24662,10 @@ xmlSchemaValidateQName(xmlSchemaValidCtxtPtr vctxt,
+     * NOTE: xmlSplitQName2 will always return a duplicated
+     * strings.
+     */
+-    local = xmlSplitQName2(value, &prefix);
++    /* TODO: Export and use xmlSchemaStrip instead */
++    stripped = xmlSchemaCollapseString(value);
++    local = xmlSplitQName2(stripped ? stripped : value, &prefix);
++    xmlFree(stripped);
+     if (local == NULL)
+ 	local = xmlStrdup(value);
+     /*
+-- 
+2.27.0
+

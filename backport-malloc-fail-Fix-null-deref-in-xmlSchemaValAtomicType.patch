@@ -1,0 +1,29 @@
+From 7762e8eda184bc755dcc3c2d4aed259f95670ccd Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 5 Mar 2023 14:08:15 +0100
+Subject: [PATCH] malloc-fail: Fix null deref in xmlSchemaValAtomicType
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/7762e8eda184bc755dcc3c2d4aed259f95670ccd
+Conflict:NA
+---
+ xmlschemastypes.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/xmlschemastypes.c b/xmlschemastypes.c
+index ebb0219..d4864b7 100644
+--- a/xmlschemastypes.c
++++ b/xmlschemastypes.c
+@@ -3033,6 +3033,8 @@ xmlSchemaValAtomicType(xmlSchemaTypePtr type, const xmlChar * value,
+ 			    value = norm;
+ 		    }
+ 		    tmpval = xmlStrdup(value);
++                    if (tmpval == NULL)
++                        goto error;
+ 		    for (cur = tmpval; *cur; ++cur) {
+ 			if (*cur < 32 || *cur >= 127 || *cur == ' ' ||
+ 			    *cur == '<' || *cur == '>' || *cur == '"' ||
+-- 
+2.27.0
+

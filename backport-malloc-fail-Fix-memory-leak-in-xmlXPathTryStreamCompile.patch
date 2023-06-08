@@ -1,0 +1,27 @@
+From ac746afd33a938b6704ba32824e076af939665fb Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 15 Feb 2023 13:54:55 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlXPathTryStreamCompile
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/ac746afd33a938b6704ba32824e076af939665fb
+Conflict:NA
+---
+ xpath.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/xpath.c b/xpath.c
+index c1d119b..7833870 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -14121,6 +14121,7 @@ xmlXPathTryStreamCompile(xmlXPathContextPtr ctxt, const xmlChar *str) {
+ 	    comp = xmlXPathNewCompExpr();
+ 	    if (comp == NULL) {
+ 		xmlXPathErrMemory(ctxt, "allocating streamable expression\n");
++	        xmlFreePattern(stream);
+ 		return(NULL);
+ 	    }
+ 	    comp->stream = stream;
+-- 
+2.27.0

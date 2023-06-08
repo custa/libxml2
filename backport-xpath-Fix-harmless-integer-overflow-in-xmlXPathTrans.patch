@@ -1,0 +1,29 @@
+From 524654ed3c85e356261fc52533d86d43005a0420 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 26 Feb 2023 17:19:47 +0100
+Subject: [PATCH] xpath: Fix harmless integer overflow in
+ xmlXPathTranslateFunction
+
+
+Reference:https://github.com/GNOME/libxml2/commit/524654ed3c85e356261fc52533d86d43005a0420
+Conflict:NA
+---
+ xpath.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/xpath.c b/xpath.c
+index b6a3983..d17ad5e 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -9351,7 +9351,7 @@ xmlXPathTranslateFunction(xmlXPathParserContextPtr ctxt, int nargs) {
+     xmlXPathObjectPtr to;
+     xmlBufPtr target;
+     int offset, max;
+-    xmlChar ch;
++    int ch;
+     const xmlChar *point;
+     xmlChar *cptr;
+ 
+-- 
+2.27.0
+

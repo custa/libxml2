@@ -1,0 +1,35 @@
+From 457fc622d5e8e3734d9c294c81d6c1babb9c5dd5 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 13 Mar 2023 16:51:14 +0100
+Subject: [PATCH] malloc-fail: Fix null deref in xmlParserInputShrink
+
+Found by OSS-Fuzz.
+
+Reference:https://github.com/GNOME/libxml2/commit/457fc622d5e8e3734d9c294c81d6c1babb9c5dd5
+Conflict:NA
+
+---
+ parserInternals.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/parserInternals.c b/parserInternals.c
+index dd1dc9c..08d8d55 100644
+--- a/parserInternals.c
++++ b/parserInternals.c
+@@ -380,6 +380,13 @@ xmlParserInputShrink(xmlParserInputPtr in) {
+     }
+ 
+     in->base = xmlBufContent(in->buf->buffer);
++    if (in->base == NULL) {
++        /* TODO: raise error */
++        in->base = BAD_CAST "";
++        in->cur = in->base;
++        in->end = in->base;
++        return;
++    }
+     in->cur = in->base + used;
+     in->end = xmlBufEnd(in->buf->buffer);
+ 
+-- 
+2.27.0
+

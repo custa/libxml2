@@ -1,0 +1,32 @@
+From a6b9e55a9eb78e96f880afaf03ce8819bcd26a34 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 26 Mar 2023 15:42:02 +0200
+Subject: [PATCH] encoding: Fix error code in asciiToUTF8
+
+Use correct error code when invalid ASCII bytes are encountered.
+
+Found by OSS-Fuzz.
+
+Reference:https://github.com/GNOME/libxml2/commit/a6b9e55a9eb78e96f880afaf03ce8819bcd26a34
+Conflict:NA
+
+---
+ encoding.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/encoding.c b/encoding.c
+index d43361a..9a7a611 100644
+--- a/encoding.c
++++ b/encoding.c
+@@ -193,7 +193,7 @@ asciiToUTF8(unsigned char* out, int *outlen,
+ 	} else {
+ 	    *outlen = out - outstart;
+ 	    *inlen = processed - base;
+-	    return(-1);
++	    return(-2);
+ 	}
+ 
+ 	processed = (const unsigned char*) in;
+-- 
+2.27.0
+

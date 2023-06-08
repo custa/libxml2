@@ -1,0 +1,59 @@
+From c81d0d04bfbdbccea0c5199bced95a6af961885a Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 17 Mar 2023 12:39:35 +0100
+Subject: [PATCH] malloc-fail: Add more error checks when parsing names
+
+xmlParseName and similar functions must return NULL if an error occurs.
+
+Found by OSS-Fuzz, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/c81d0d04bfbdbccea0c5199bced95a6af961885a
+Conflict:NA
+
+---
+ parser.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/parser.c b/parser.c
+index 75bd27f..b872d34 100644
+--- a/parser.c
++++ b/parser.c
+@@ -3355,6 +3355,8 @@ xmlParseName(xmlParserCtxtPtr ctxt) {
+                        XML_MAX_NAME_LENGTH;
+ 
+     GROW;
++    if (ctxt->instate == XML_PARSER_EOF)
++        return(NULL);
+ 
+ #ifdef DEBUG
+     nbParseName++;
+@@ -3410,6 +3412,8 @@ xmlParseNCNameComplex(xmlParserCtxtPtr ctxt) {
+      * Handler for more complex cases
+      */
+     GROW;
++    if (ctxt->instate == XML_PARSER_EOF)
++        return(NULL);
+     startPosition = CUR_PTR - BASE_PTR;
+     c = CUR_CHAR(l);
+     if ((c == ' ') || (c == '>') || (c == '/') || /* accelerators */
+@@ -3686,6 +3690,8 @@ xmlParseNmtoken(xmlParserCtxtPtr ctxt) {
+ 	if (count++ > XML_PARSER_CHUNK_SIZE) {
+ 	    count = 0;
+ 	    GROW;
++            if (ctxt->instate == XML_PARSER_EOF)
++                return(NULL);
+ 	}
+ 	COPY_BUF(l,buf,len,c);
+ 	NEXTL(l);
+@@ -8791,6 +8797,8 @@ xmlParseQName(xmlParserCtxtPtr ctxt, const xmlChar **prefix) {
+     const xmlChar *l, *p;
+ 
+     GROW;
++    if (ctxt->instate == XML_PARSER_EOF)
++        return(NULL);
+ 
+     l = xmlParseNCName(ctxt);
+     if (l == NULL) {
+-- 
+2.27.0
+
