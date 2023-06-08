@@ -1,0 +1,66 @@
+From 608c65bb8ebfc12763aee1cc1f3778e17d71596e Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 18 Jan 2023 15:15:41 +0100
+Subject: [PATCH] xpath: number('-') should return NaN
+
+Fixes https://gitlab.gnome.org/GNOME/libxslt/-/issues/81
+
+Reference:https://github.com/GNOME/libxml2/commit/608c65bb8ebfc12763aee1cc1f3778e17d71596e
+Conflict:NA
+---
+ result/XPath/expr/functions | 4 ++++
+ test/XPath/expr/functions   | 1 +
+ xpath.c                     | 6 +++---
+ 3 files changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/result/XPath/expr/functions b/result/XPath/expr/functions
+index e09eb4a..4ff9c58 100644
+--- a/result/XPath/expr/functions
++++ b/result/XPath/expr/functions
+@@ -19,6 +19,10 @@ Object is a number : NaN
+ Expression: -number('abc')
+ Object is a number : NaN
+ 
++========================
++Expression: number('-')
++Object is a number : NaN
++
+ ========================
+ Expression: floor(0.1)
+ Object is a number : 0
+diff --git a/test/XPath/expr/functions b/test/XPath/expr/functions
+index 00b9461..6008a07 100644
+--- a/test/XPath/expr/functions
++++ b/test/XPath/expr/functions
+@@ -3,6 +3,7 @@ false()
+ number("1.5")
+ number('abc')
+ -number('abc')
++number('-')
+ floor(0.1)
+ floor(-0.1)
+ floor(-0)
+diff --git a/xpath.c b/xpath.c
+index 85d7919..fbec21b 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -9987,13 +9987,13 @@ xmlXPathStringEvalNumber(const xmlChar *str) {
+ #endif
+     if (cur == NULL) return(0);
+     while (IS_BLANK_CH(*cur)) cur++;
+-    if ((*cur != '.') && ((*cur < '0') || (*cur > '9')) && (*cur != '-')) {
+-        return(xmlXPathNAN);
+-    }
+     if (*cur == '-') {
+ 	isneg = 1;
+ 	cur++;
+     }
++    if ((*cur != '.') && ((*cur < '0') || (*cur > '9'))) {
++        return(xmlXPathNAN);
++    }
+ 
+ #ifdef __GNUC__
+     /*
+-- 
+2.27.0
+

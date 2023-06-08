@@ -1,0 +1,34 @@
+From e2d37972e41224b11ff76f3a9fd689207b6108a6 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 20 Nov 2022 15:35:49 +0100
+Subject: [PATCH 21/28] parser: Fix push parser with 1-3 byte initial chunk
+
+Make sure that ctxt->charset is initialized properly.
+
+Reference: https://github.com/GNOME/libxml2/commit/55fb8f72ac726b4f760136070e0d2093ffcdb3ac
+Conflict: NA
+---
+ parser.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/parser.c b/parser.c
+index 7553f86..4615db0 100644
+--- a/parser.c
++++ b/parser.c
+@@ -12523,9 +12523,10 @@ xmlCreatePushParserCtxt(xmlSAXHandlerPtr sax, void *user_data,
+      * the encoding, we set the context to XML_CHAR_ENCODING_NONE so
+      * that it can be automatically determined later
+      */
+-    if ((size == 0) || (chunk == NULL)) {
+-	ctxt->charset = XML_CHAR_ENCODING_NONE;
+-    } else if ((ctxt->input != NULL) && (ctxt->input->buf != NULL)) {
++    ctxt->charset = XML_CHAR_ENCODING_NONE;
++
++    if ((size != 0) && (chunk != NULL) &&
++        (ctxt->input != NULL) && (ctxt->input->buf != NULL)) {
+ 	size_t base = xmlBufGetInputBase(ctxt->input->buf->buffer, ctxt->input);
+ 	size_t cur = ctxt->input->cur - ctxt->input->base;
+ 
+-- 
+2.27.0
+

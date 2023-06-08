@@ -1,0 +1,90 @@
+From 4adaddde0ce237da7e8eb5210f1f0eb529c39447 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 24 Nov 2022 16:38:47 +0100
+Subject: [PATCH 25/28] parser: Don't call *DefaultSAXHandlerInit from
+ xmlInitParser
+
+Change the default handler definitions to match the result after calling
+the initialization functions.
+
+This makes sure that no thread-local variables are accessed when calling
+xmlInitParser.
+
+Reference: https://github.com/GNOME/libxml2/commit/cecd364dd2f55810ab27eb0f44b35197a1a358d8
+Conflict: SAX2.c:<xmlDefaultSAXHandlerInit> parser.c:<xmlInitParser>
+---
+ SAX2.c    | 4 ----
+ globals.c | 6 +++---
+ parser.c  | 2 --
+ 3 files changed, 3 insertions(+), 9 deletions(-)
+
+diff --git a/SAX2.c b/SAX2.c
+index 96bbcb3..3eebd2b 100644
+--- a/SAX2.c
++++ b/SAX2.c
+@@ -2910,9 +2910,6 @@ xmlSAX2InitDefaultSAXHandler(xmlSAXHandler *hdlr, int warning)
+ void
+ xmlDefaultSAXHandlerInit(void)
+ {
+-#ifdef LIBXML_SAX1_ENABLED
+-    xmlSAXVersion((xmlSAXHandlerPtr) &xmlDefaultSAXHandler, 1);
+-#endif /* LIBXML_SAX1_ENABLED */
+ }
+ 
+ #ifdef LIBXML_HTML_ENABLED
+@@ -2968,7 +2965,6 @@ xmlSAX2InitHtmlDefaultSAXHandler(xmlSAXHandler *hdlr)
+ void
+ htmlDefaultSAXHandlerInit(void)
+ {
+-    xmlSAX2InitHtmlDefaultSAXHandler((xmlSAXHandlerPtr) &htmlDefaultSAXHandler);
+ }
+ 
+ #endif /* LIBXML_HTML_ENABLED */
+diff --git a/globals.c b/globals.c
+index 893fb73..836bee1 100644
+--- a/globals.c
++++ b/globals.c
+@@ -388,7 +388,7 @@ xmlSAXHandlerV1 xmlDefaultSAXHandler = {
+     xmlSAX2GetParameterEntity,
+     xmlSAX2CDataBlock,
+     xmlSAX2ExternalSubset,
+-    0,
++    1,
+ };
+ #endif /* LIBXML_SAX1_ENABLED */
+ 
+@@ -436,10 +436,10 @@ xmlSAXHandlerV1 htmlDefaultSAXHandler = {
+     xmlParserWarning,
+     xmlParserError,
+     xmlParserError,
+-    xmlSAX2GetParameterEntity,
++    NULL,
+     xmlSAX2CDataBlock,
+     NULL,
+-    0,
++    1,
+ };
+ #endif /* LIBXML_HTML_ENABLED */
+ 
+diff --git a/parser.c b/parser.c
+index 4405a7e..9d50138 100644
+--- a/parser.c
++++ b/parser.c
+@@ -14696,14 +14696,12 @@ xmlInitParser(void) {
+ 	xmlInitMemory();
+         xmlInitializeDict();
+ 	xmlInitCharEncodingHandlers();
+-	xmlDefaultSAXHandlerInit();
+ 	xmlRegisterDefaultInputCallbacks();
+ #ifdef LIBXML_OUTPUT_ENABLED
+ 	xmlRegisterDefaultOutputCallbacks();
+ #endif /* LIBXML_OUTPUT_ENABLED */
+ #ifdef LIBXML_HTML_ENABLED
+ 	htmlInitAutoClose();
+-	htmlDefaultSAXHandlerInit();
+ #endif
+ #ifdef LIBXML_XPATH_ENABLED
+ 	xmlXPathInit();
+-- 
+2.27.0
+
