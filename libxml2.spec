@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.14
-Release: 5
+Release: 6
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.9/%{name}-%{version}.tar.xz
@@ -16,6 +16,8 @@ Patch6: backport-schemas-Fix-null-pointer-deref-in-xmlSchemaCheckCOSS.patch
 Patch7: backport-parser-Fix-potential-memory-leak-in-xmlParseAttValue.patch
 Patch8: backport-CVE-2023-28484-Fix-null-deref-in-xmlSchemaFixupCompl.patch
 Patch9: backport-CVE-2023-29469-Hashing-of-empty-dict-strings-isn-t-d.patch
+
+Patch10: backport-xmllint-Fix-use-after-free-with-maxmem.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -171,6 +173,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Thu Jun 08 2023 zhuofeng <zhuofeng2@huawei.com> - 2.9.14-6
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:backport upstream patches
+
 * Thu Apr 20 2023 BruceGW <gyl93216@163.com> - 2.9.14-5
 - Type:CVE
 - CVE:CVE-2023-28484 CVE-2023-29469
