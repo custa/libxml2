@@ -1,0 +1,29 @@
+From c21e9cd5d955e4d8afa514e1f7736ce6a9bb8f2e Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 20 Aug 2022 17:02:02 +0200
+Subject: [PATCH] Use xmlStrlen in xmlNewStringInputStream
+
+xmlStrlen handles buffers larger than INT_MAX more gracefully.
+
+Reference:https://github.com/GNOME/libxml2/commit/c21e9cd5d955e4d8afa514e1f7736ce6a9bb8f2e
+Conflict:NA
+---
+ parserInternals.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/parserInternals.c b/parserInternals.c
+index 6ef7671..2b05dac 100644
+--- a/parserInternals.c
++++ b/parserInternals.c
+@@ -1476,7 +1476,7 @@ xmlNewStringInputStream(xmlParserCtxtPtr ctxt, const xmlChar *buffer) {
+ 	xmlGenericError(xmlGenericErrorContext,
+ 		"new fixed input: %.30s\n", buffer);
+     buf = xmlParserInputBufferCreateMem((const char *) buffer,
+-                                        strlen((const char *) buffer),
++                                        xmlStrlen(buffer),
+                                         XML_CHAR_ENCODING_NONE);
+     if (buf == NULL) {
+ 	xmlErrMemory(ctxt, NULL);
+-- 
+2.27.0
+

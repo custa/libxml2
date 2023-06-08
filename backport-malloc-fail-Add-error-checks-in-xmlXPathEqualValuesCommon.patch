@@ -1,0 +1,38 @@
+From 7ec314efcd8b3df1d05d793812e54656bf539af8 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 30 Jan 2023 15:59:55 +0100
+Subject: [PATCH] malloc-fail: Add error checks in xmlXPathEqualValuesCommon
+
+Avoid null deref.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/7ec314efcd8b3df1d05d793812e54656bf539af8
+Conflict:NA
+---
+ xpath.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/xpath.c b/xpath.c
+index fbec21b..6d76e43 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -7011,6 +7011,7 @@ xmlXPathEqualValuesCommon(xmlXPathParserContextPtr ctxt,
+ 		    valuePush(ctxt, arg2);
+ 		    xmlXPathNumberFunction(ctxt, 1);
+ 		    arg2 = valuePop(ctxt);
++                    CHECK_ERROR0;
+                     /* Falls through. */
+ 		case XPATH_NUMBER:
+ 		    /* Hand check NaN and Infinity equalities */
+@@ -7074,6 +7075,7 @@ xmlXPathEqualValuesCommon(xmlXPathParserContextPtr ctxt,
+ 		    valuePush(ctxt, arg1);
+ 		    xmlXPathNumberFunction(ctxt, 1);
+ 		    arg1 = valuePop(ctxt);
++                    CHECK_ERROR0;
+ 		    /* Hand check NaN and Infinity equalities */
+ 		    if (xmlXPathIsNaN(arg1->floatval) ||
+ 			    xmlXPathIsNaN(arg2->floatval)) {
+-- 
+2.27.0
+

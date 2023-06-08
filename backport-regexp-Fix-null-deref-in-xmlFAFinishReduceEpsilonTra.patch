@@ -1,0 +1,30 @@
+From a800b7e058b09031aba92949eecf2c76fa030635 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 4 May 2023 12:47:00 +0200
+Subject: [PATCH] regexp: Fix null deref in xmlFAFinishReduceEpsilonTransitions
+
+Short-lived regression found by OSS-Fuzz.
+
+Reference:https://github.com/GNOME/libxml2/commit/a800b7e058b09031aba92949eecf2c76fa030635
+Conflict:NA
+
+---
+ xmlregexp.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/xmlregexp.c b/xmlregexp.c
+index 185fcda..b0111e2 100644
+--- a/xmlregexp.c
++++ b/xmlregexp.c
+@@ -1896,6 +1896,8 @@ xmlFAFinishReduceEpsilonTransitions(xmlRegParserCtxtPtr ctxt, int tonr) {
+     xmlRegStatePtr to;
+ 
+     to = ctxt->states[tonr];
++    if (to == NULL)
++	return;
+     if ((to->mark == XML_REGEXP_MARK_START) ||
+ 	(to->mark == XML_REGEXP_MARK_NORMAL))
+ 	return;
+-- 
+2.27.0
+

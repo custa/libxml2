@@ -1,0 +1,33 @@
+From d58bff6125f066689a872113123152fdcfe693cc Mon Sep 17 00:00:00 2001
+From: Alex Richardson <Alexander.Richardson@cl.cam.ac.uk>
+Date: Thu, 1 Dec 2022 12:53:15 +0000
+Subject: [PATCH 27/28] Avoid creating an out-of-bounds pointer by rewriting a
+ check
+
+Creating more than one-past-the-end pointers is undefined behaviour in C
+and while this code is unlikely to be miscompiled, I discovered that an
+out-of-bounds pointer is being created using UBSan on a CHERI-enabled
+system.
+
+Reference: https://github.com/GNOME/libxml2/commit/c715ded0861af956ba584f566bc7db6717f519d0
+Conflict: NA
+---
+ HTMLparser.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index 746edf6..60dea30 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -2333,7 +2333,7 @@ htmlEncodeEntities(unsigned char* out, int *outlen,
+ 	    else
+ 		cp = ent->name;
+ 	    len = strlen(cp);
+-	    if (out + 2 + len > outend)
++	    if (outend - out < len + 2)
+ 		break;
+ 	    *out++ = '&';
+ 	    memcpy(out, cp, len);
+-- 
+2.27.0
+

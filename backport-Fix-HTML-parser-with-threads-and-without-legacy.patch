@@ -1,0 +1,55 @@
+From 38f04779f7afd758db6210123ec0b64c489595c5 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 22 Aug 2022 13:33:35 +0200
+Subject: [PATCH] Fix HTML parser with threads and --without-legacy
+
+If the legacy functions are disabled, the default "V1" HTML SAX handler
+isn't initialized in threads other than the main thread.
+htmlInitParserCtxt would later use the empty V1 SAX handler, resulting
+in NULL documents.
+
+Change htmlInitParserCtxt to initialize the HTML SAX handler by calling
+xmlSAX2InitHtmlDefaultSAXHandler. This removes the ability to change the
+default handler but is more in line with the XML parser which
+initializes the SAX handler by calling xmlSAXVersion, ignoring the V1
+default handler.
+
+Fixes #399.
+Reference:https://github.com/GNOME/libxml2/commit/38f04779f7afd758db6210123ec0b64c489595c5
+Conflict:NA
+---
+ HTMLparser.c | 11 ++++-------
+ 1 file changed, 4 insertions(+), 7 deletions(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index e95d86b..98d73f3 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -5039,8 +5039,7 @@ htmlInitParserCtxt(htmlParserCtxtPtr ctxt)
+         htmlErrMemory(NULL, "htmlInitParserCtxt: out of memory\n");
+ 	return(-1);
+     }
+-    else
+-        memset(sax, 0, sizeof(htmlSAXHandler));
++    memset(sax, 0, sizeof(htmlSAXHandler));
+ 
+     /* Allocate the Input stack */
+     ctxt->inputTab = (htmlParserInputPtr *)
+@@ -5099,11 +5098,9 @@ htmlInitParserCtxt(htmlParserCtxtPtr ctxt)
+     ctxt->nodeInfoNr  = 0;
+     ctxt->nodeInfoMax = 0;
+ 
+-    if (sax == NULL) ctxt->sax = (xmlSAXHandlerPtr) &htmlDefaultSAXHandler;
+-    else {
+-        ctxt->sax = sax;
+-	memcpy(sax, &htmlDefaultSAXHandler, sizeof(xmlSAXHandlerV1));
+-    }
++    ctxt->sax = sax;
++    xmlSAX2InitHtmlDefaultSAXHandler(sax);
++
+     ctxt->userData = ctxt;
+     ctxt->myDoc = NULL;
+     ctxt->wellFormed = 1;
+-- 
+2.27.0
+

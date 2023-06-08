@@ -1,0 +1,60 @@
+From 0aa8652e596a20e95ed334ac65cf15e6e9ec4b3b Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 20 May 2022 14:54:49 +0200
+Subject: [PATCH 291/300] Use xmlNewDocText in xmlXIncludeCopyRange
+
+Otherwise, the initial node of the copy could be a text node with a
+NULL document. This results in the NULL document being propagated to
+copies of other nodes, losing information about the dictionary in which
+node data is stored, and freeing a dict-allocated string.
+
+See discussion in !175.
+
+Reference:https://github.com/GNOME/libxml2/commit/0aa8652e596a20e95ed334ac65cf15e6e9ec4b3b
+Conflict:NA
+
+---
+ xinclude.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/xinclude.c b/xinclude.c
+index e5fdf0f..8c14a68 100644
+--- a/xinclude.c
++++ b/xinclude.c
+@@ -987,7 +987,7 @@ xmlXIncludeCopyRange(xmlXIncludeCtxtPtr ctxt, xmlDocPtr target,
+ 		int len;
+ 
+ 		if (content == NULL) {
+-		    tmp = xmlNewTextLen(NULL, 0);
++		    tmp = xmlNewDocTextLen(target, NULL, 0);
+ 		} else {
+ 		    len = index2;
+ 		    if ((cur == start) && (index1 > 1)) {
+@@ -996,7 +996,7 @@ xmlXIncludeCopyRange(xmlXIncludeCtxtPtr ctxt, xmlDocPtr target,
+ 		    } else {
+ 			len = index2;
+ 		    }
+-		    tmp = xmlNewTextLen(content, len);
++		    tmp = xmlNewDocTextLen(target, content, len);
+ 		}
+ 		/* single sub text node selection */
+ 		if (list == NULL)
+@@ -1047,13 +1047,13 @@ xmlXIncludeCopyRange(xmlXIncludeCtxtPtr ctxt, xmlDocPtr target,
+ 		const xmlChar *content = cur->content;
+ 
+ 		if (content == NULL) {
+-		    tmp = xmlNewTextLen(NULL, 0);
++		    tmp = xmlNewDocTextLen(target, NULL, 0);
+ 		} else {
+ 		    if (index1 > 1) {
+ 			content += (index1 - 1);
+ 			index1 = 0;
+ 		    }
+-		    tmp = xmlNewText(content);
++		    tmp = xmlNewDocText(target, content);
+ 		}
+ 		last = list = tmp;
+ 		listParent = cur->parent;
+-- 
+2.27.0
+
