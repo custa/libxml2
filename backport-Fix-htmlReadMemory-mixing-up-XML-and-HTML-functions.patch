@@ -1,0 +1,28 @@
+From 37cedc0b1563e5e312a924ac07168722a4e768d8 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 22 Aug 2022 14:04:07 +0200
+Subject: [PATCH] Fix htmlReadMemory mixing up XML and HTML functions
+
+Also see fe6890e2.
+Reference:https://github.com/GNOME/libxml2/commit/37cedc0b1563e5e312a924ac07168722a4e768d8
+Conflict:NA
+---
+ HTMLparser.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index e720bb2..c6b2183 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -6977,7 +6977,7 @@ htmlReadMemory(const char *buffer, int size, const char *URL, const char *encodi
+     htmlParserCtxtPtr ctxt;
+ 
+     xmlInitParser();
+-    ctxt = xmlCreateMemoryParserCtxt(buffer, size);
++    ctxt = htmlCreateMemoryParserCtxt(buffer, size);
+     if (ctxt == NULL)
+         return (NULL);
+     htmlDefaultSAXHandlerInit();
+-- 
+2.27.0
+

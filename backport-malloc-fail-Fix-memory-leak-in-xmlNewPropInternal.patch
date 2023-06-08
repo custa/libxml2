@@ -1,0 +1,39 @@
+From dee436cd010d7144730526914193bd9fe6c74821 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 2 Nov 2022 15:53:52 +0100
+Subject: [PATCH 06/28] malloc-fail: Fix memory leak in xmlNewPropInternal
+
+Also fixes a memory leak if called with a non-element node.
+
+Found with libFuzzer, see #344.
+
+Reference: https://github.com/GNOME/libxml2/commit/fa361de0b759f045c5f6f7f9c09a133abcc074c9
+Conflict: NA
+---
+ tree.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/tree.c b/tree.c
+index b32561d..6a8c2ea 100644
+--- a/tree.c
++++ b/tree.c
+@@ -1866,7 +1866,7 @@ xmlNewPropInternal(xmlNodePtr node, xmlNsPtr ns,
+ 
+     if ((node != NULL) && (node->type != XML_ELEMENT_NODE)) {
+         if ((eatname == 1) &&
+-	    ((node->doc == NULL) ||
++	    ((node->doc == NULL) || (node->doc->dict == NULL) ||
+ 	     (!(xmlDictOwns(node->doc->dict, name)))))
+             xmlFree((xmlChar *) name);
+         return (NULL);
+@@ -1879,6 +1879,7 @@ xmlNewPropInternal(xmlNodePtr node, xmlNsPtr ns,
+     if (cur == NULL) {
+         if ((eatname == 1) &&
+ 	    ((node == NULL) || (node->doc == NULL) ||
++             (node->doc->dict == NULL) ||
+ 	     (!(xmlDictOwns(node->doc->dict, name)))))
+             xmlFree((xmlChar *) name);
+         xmlTreeErrMemory("building attribute");
+-- 
+2.27.0
+

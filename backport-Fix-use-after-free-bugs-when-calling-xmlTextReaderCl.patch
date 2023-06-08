@@ -1,0 +1,115 @@
+From c50196c13d348025a4843305902bb37df64bae36 Mon Sep 17 00:00:00 2001
+From: David Kilzer <ddkilzer@apple.com>
+Date: Sun, 10 Apr 2022 20:02:47 -0700
+Subject: [PATCH 289/300] Fix use-after-free bugs when calling
+ xmlTextReaderClose() before xmlFreeTextReader() on post-validating parser
+
+When creating an xmlTextReaderPtr using xmlReaderForMemory(),
+there are two optional API functions that can be used:
+- xmlTextReaderClose() may be called prior to calling
+  xmlFreeTextReader() to free parsing resources and close the
+  xmlTextReaderPtr without freeing it.
+- xmlTextReaderCurrentDoc() may be called to return an
+  xmlDocPtr that's owned by the caller, and must be free using
+  xmlFreeDoc() after calling xmlFreeTextReader().
+
+The use-after-free issues occur when calling
+xmlTextReaderClose() before xmlFreeTextReader(), with different
+issues occurring depending on whether xmlTextReaderCurrentDoc()
+is also called.
+
+* xmlreader.c:
+(xmlFreeTextReader):
+- Move code to xmlTextReaderClose(), remove duplicate code, and
+  call xmlTextReaderClose() if it hasn't been called yet.
+(xmlTextReaderClose):
+- Move call to xmlFreeNode(reader->faketext) from
+  xmlFreeTextReader() to fix a use-after-free bug when calling
+  xmlTextReaderClose() before xmlFreeTextReader(), but not when
+  using xmlTextReaderCurrentDoc().  The bug was introduced in
+  2002 by commit beb70bd39.  In 2009 commit f4653dcd8 fixed the
+  use-after-free that occurred every time xmlFreeTextReader()
+  was called, but not the case where xmlTextReaderClose() was
+  called first.
+- Move post-parsing validation code from xmlFreeTextReader() to
+  fix a second use-after-free when calling xmlTextReaderClose()
+  before xmlFreeTextReader().  This regressed in v2.9.10 with
+  commit 57a3af56f.
+
+Reference:https://github.com/GNOME/libxml2/commit/c50196c13d348025a4843305902bb37df64bae36
+Conflict:NA
+
+---
+ xmlreader.c | 40 ++++++++++++++++++----------------------
+ 1 file changed, 18 insertions(+), 22 deletions(-)
+
+diff --git a/xmlreader.c b/xmlreader.c
+index 72e40b0..989b7c1 100644
+--- a/xmlreader.c
++++ b/xmlreader.c
+@@ -2319,36 +2319,16 @@ xmlFreeTextReader(xmlTextReaderPtr reader) {
+ 	xmlFree(reader->patternTab);
+     }
+ #endif
+-    if (reader->faketext != NULL) {
+-	xmlFreeNode(reader->faketext);
+-    }
++    if (reader->mode != XML_TEXTREADER_MODE_CLOSED)
++        xmlTextReaderClose(reader);
+     if (reader->ctxt != NULL) {
+         if (reader->dict == reader->ctxt->dict)
+ 	    reader->dict = NULL;
+-#ifdef LIBXML_VALID_ENABLED
+-	if ((reader->ctxt->vctxt.vstateTab != NULL) &&
+-	    (reader->ctxt->vctxt.vstateMax > 0)){
+-#ifdef LIBXML_REGEXP_ENABLED
+-            while (reader->ctxt->vctxt.vstateNr > 0)
+-                xmlValidatePopElement(&reader->ctxt->vctxt, NULL, NULL, NULL);
+-#endif /* LIBXML_REGEXP_ENABLED */
+-	    xmlFree(reader->ctxt->vctxt.vstateTab);
+-	    reader->ctxt->vctxt.vstateTab = NULL;
+-	    reader->ctxt->vctxt.vstateMax = 0;
+-	}
+-#endif /* LIBXML_VALID_ENABLED */
+-	if (reader->ctxt->myDoc != NULL) {
+-	    if (reader->preserve == 0)
+-		xmlTextReaderFreeDoc(reader, reader->ctxt->myDoc);
+-	    reader->ctxt->myDoc = NULL;
+-	}
+ 	if (reader->allocs & XML_TEXTREADER_CTXT)
+ 	    xmlFreeParserCtxt(reader->ctxt);
+     }
+     if (reader->sax != NULL)
+ 	xmlFree(reader->sax);
+-    if ((reader->input != NULL)  && (reader->allocs & XML_TEXTREADER_INPUT))
+-	xmlFreeParserInputBuffer(reader->input);
+     if (reader->buffer != NULL)
+         xmlBufFree(reader->buffer);
+     if (reader->entTab != NULL)
+@@ -2379,7 +2359,23 @@ xmlTextReaderClose(xmlTextReaderPtr reader) {
+     reader->node = NULL;
+     reader->curnode = NULL;
+     reader->mode = XML_TEXTREADER_MODE_CLOSED;
++    if (reader->faketext != NULL) {
++        xmlFreeNode(reader->faketext);
++        reader->faketext = NULL;
++    }
+     if (reader->ctxt != NULL) {
++#ifdef LIBXML_VALID_ENABLED
++	if ((reader->ctxt->vctxt.vstateTab != NULL) &&
++	    (reader->ctxt->vctxt.vstateMax > 0)){
++#ifdef LIBXML_REGEXP_ENABLED
++            while (reader->ctxt->vctxt.vstateNr > 0)
++                xmlValidatePopElement(&reader->ctxt->vctxt, NULL, NULL, NULL);
++#endif /* LIBXML_REGEXP_ENABLED */
++	    xmlFree(reader->ctxt->vctxt.vstateTab);
++	    reader->ctxt->vctxt.vstateTab = NULL;
++	    reader->ctxt->vctxt.vstateMax = 0;
++	}
++#endif /* LIBXML_VALID_ENABLED */
+ 	xmlStopParser(reader->ctxt);
+ 	if (reader->ctxt->myDoc != NULL) {
+ 	    if (reader->preserve == 0)
+-- 
+2.27.0
+

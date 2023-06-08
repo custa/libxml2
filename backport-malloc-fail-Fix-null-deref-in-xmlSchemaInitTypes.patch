@@ -1,0 +1,31 @@
+From 112340c6c0d6554865220d61f169074aae64da57 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 5 Mar 2023 14:07:57 +0100
+Subject: [PATCH] malloc-fail: Fix null deref in xmlSchemaInitTypes
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/112340c6c0d6554865220d61f169074aae64da57
+Conflict:NA
+---
+ xmlschemastypes.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/xmlschemastypes.c b/xmlschemastypes.c
+index d4864b7..160777f 100644
+--- a/xmlschemastypes.c
++++ b/xmlschemastypes.c
+@@ -406,6 +406,10 @@ xmlSchemaInitTypes(void)
+     xmlSchemaTypeAnyTypeDef = xmlSchemaInitBasicType("anyType",
+                                                      XML_SCHEMAS_ANYTYPE,
+ 						     NULL);
++    if (xmlSchemaTypeAnyTypeDef == NULL) {
++	xmlSchemaTypeErrMemory(NULL, NULL);
++        return;
++    }
+     xmlSchemaTypeAnyTypeDef->baseType = xmlSchemaTypeAnyTypeDef;
+     xmlSchemaTypeAnyTypeDef->contentType = XML_SCHEMA_CONTENT_MIXED;
+     /*
+-- 
+2.27.0
+

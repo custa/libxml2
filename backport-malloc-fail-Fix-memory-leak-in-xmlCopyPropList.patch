@@ -1,0 +1,32 @@
+From bc7740b3c30e1517dcf53a084766c74d25db222f Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 16 Feb 2023 11:45:58 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlCopyPropList
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/bc7740b3c30e1517dcf53a084766c74d25db222f
+Conflict:NA
+---
+ tree.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/tree.c b/tree.c
+index ac156e1..35bd948 100644
+--- a/tree.c
++++ b/tree.c
+@@ -4190,8 +4190,10 @@ xmlCopyPropList(xmlNodePtr target, xmlAttrPtr cur) {
+         return(NULL);
+     while (cur != NULL) {
+         q = xmlCopyProp(target, cur);
+-	if (q == NULL)
++	if (q == NULL) {
++            xmlFreePropList(ret);
+ 	    return(NULL);
++        }
+ 	if (p == NULL) {
+ 	    ret = p = q;
+ 	} else {
+-- 
+2.27.0
+

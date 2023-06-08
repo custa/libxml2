@@ -1,0 +1,56 @@
+From 5b2d07a72670513e41b481a9d922c983a64027ca Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 20 Aug 2022 17:00:50 +0200
+Subject: [PATCH] Use xmlStrlen in *CtxtReadDoc
+
+xmlStrlen handles buffers larger than INT_MAX more gracefully.
+
+Reference:https://github.com/GNOME/libxml2/commit/5b2d07a72670513e41b481a9d922c983a64027ca
+Conflict:NA
+---
+ HTMLparser.c | 7 ++-----
+ parser.c     | 6 ++----
+ 2 files changed, 4 insertions(+), 9 deletions(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index a4168f3..e0b32fe 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -7087,13 +7087,10 @@ htmlDocPtr
+ htmlCtxtReadDoc(htmlParserCtxtPtr ctxt, const xmlChar * cur,
+                const char *URL, const char *encoding, int options)
+ {
+-    const char *buf;
+-
+     if (cur == NULL)
+         return (NULL);
+-    buf = (const char *) cur;
+-    return (htmlCtxtReadMemory(ctxt, buf, strlen(buf), URL, encoding,
+-                               options));
++    return (htmlCtxtReadMemory(ctxt, (const char *) cur, xmlStrlen(cur), URL,
++                               encoding, options));
+ }
+ 
+ /**
+diff --git a/parser.c b/parser.c
+index fbeb7af..23b031d 100644
+--- a/parser.c
++++ b/parser.c
+@@ -15374,12 +15374,10 @@ xmlDocPtr
+ xmlCtxtReadDoc(xmlParserCtxtPtr ctxt, const xmlChar * cur,
+                const char *URL, const char *encoding, int options)
+ {
+-    const char *buf;
+-
+     if (cur == NULL)
+         return (NULL);
+-    buf = (const char *) cur;
+-    return (xmlCtxtReadMemory(ctxt, buf, strlen(buf), URL, encoding, options));
++    return (xmlCtxtReadMemory(ctxt, (const char *) cur, xmlStrlen(cur), URL,
++                              encoding, options));
+ }
+ 
+ /**
+-- 
+2.27.0
+

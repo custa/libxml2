@@ -1,0 +1,28 @@
+From 1a90087543485763d8e6124a1818e10637e512ae Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 2 Nov 2022 16:05:05 +0100
+Subject: [PATCH 09/28] malloc-fail: Fix memory leak in xmlSAX2ExternalSubset
+
+Found with libFuzzer, see #344.
+
+Reference: https://github.com/GNOME/libxml2/commit/7ceaee9430ca24bda7f2480f387dbebfc259002a
+Conflict: NA
+---
+ SAX2.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/SAX2.c b/SAX2.c
+index 9801393..96bbcb3 100644
+--- a/SAX2.c
++++ b/SAX2.c
+@@ -436,6 +436,7 @@ xmlSAX2ExternalSubset(void *ctx, const xmlChar *name,
+ 	                 xmlMalloc(5 * sizeof(xmlParserInputPtr));
+ 	if (ctxt->inputTab == NULL) {
+ 	    xmlSAX2ErrMemory(ctxt, "xmlSAX2ExternalSubset");
++            xmlFreeInputStream(input);
+ 	    ctxt->input = oldinput;
+ 	    ctxt->inputNr = oldinputNr;
+ 	    ctxt->inputMax = oldinputMax;
+-- 
+2.27.0
+

@@ -1,0 +1,41 @@
+From d31a0e8e7599bfb691616f7c59ff8d39b982aa55 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 15 Feb 2023 14:47:29 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak after calling xmlXPathWrapString
+
+Destroy the string in xmlXPathWrapString if the function fails. This is
+somewhat dangerous but matches the expectations of users.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/d31a0e8e7599bfb691616f7c59ff8d39b982aa55
+Conflict:xpath.c
+---
+ xpath.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/xpath.c b/xpath.c
+index 5a6d762..cf74030 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -5289,6 +5289,8 @@ xmlXPathNewString(const xmlChar *val) {
+  * Wraps the @val string into an XPath object.
+  *
+  * Returns the newly created object.
++ *
++ * Frees @val in case of error.
+  */
+ xmlXPathObjectPtr
+ xmlXPathWrapString (xmlChar *val) {
+@@ -5297,6 +5299,7 @@ xmlXPathWrapString (xmlChar *val) {
+     ret = (xmlXPathObjectPtr) xmlMalloc(sizeof(xmlXPathObject));
+     if (ret == NULL) {
+         xmlXPathErrMemory(NULL, "creating string object\n");
++        xmlFree(val);
+ 	return(NULL);
+     }
+     memset(ret, 0 , (size_t) sizeof(xmlXPathObject));
+-- 
+2.27.0
+
+

@@ -1,0 +1,42 @@
+From 054e46b097524d3808fdc0815b64e14beb2baaf9 Mon Sep 17 00:00:00 2001
+From: David Kilzer <ddkilzer@apple.com>
+Date: Sat, 14 May 2022 08:48:01 -0700
+Subject: [PATCH 288/300] Restore behavior of htmlDocContentDumpFormatOutput()
+
+Patch by J Pascoe of Apple.
+
+* HTMLtree.c:
+(htmlDocContentDumpFormatOutput):
+- Prior to commit b79ab6e6d92, xmlDoc.type was set to
+  XML_HTML_DOCUMENT_NODE before dumping the HTML output, then
+  restored before returning.
+
+Reference:https://github.com/GNOME/libxml2/commit/054e46b097524d3808fdc0815b64e14beb2baaf9
+Conflict:NA
+
+---
+ HTMLtree.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/HTMLtree.c b/HTMLtree.c
+index 7a2b855..2e9fc57 100644
+--- a/HTMLtree.c
++++ b/HTMLtree.c
+@@ -992,7 +992,14 @@ void
+ htmlDocContentDumpFormatOutput(xmlOutputBufferPtr buf, xmlDocPtr cur,
+ 	                       const char *encoding ATTRIBUTE_UNUSED,
+                                int format) {
++    int type = 0;
++    if (cur) {
++        type = cur->type;
++        cur->type = XML_HTML_DOCUMENT_NODE;
++    }
+     htmlNodeDumpFormatOutput(buf, cur, (xmlNodePtr) cur, NULL, format);
++    if (cur)
++        cur->type = (xmlElementType) type;
+ }
+ 
+ /**
+-- 
+2.27.0
+

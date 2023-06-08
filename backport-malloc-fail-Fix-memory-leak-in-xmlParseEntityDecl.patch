@@ -1,0 +1,38 @@
+From f8852184a111f6c4abb38ea3d2b2b91f45347a7a Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 14 Feb 2023 13:03:13 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlParseEntityDecl
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/f8852184a111f6c4abb38ea3d2b2b91f45347a7a
+Conflict:NA
+---
+ parser.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/parser.c b/parser.c
+index 3aea3e2..37d7dec 100644
+--- a/parser.c
++++ b/parser.c
+@@ -5518,7 +5518,7 @@ xmlParseEntityDecl(xmlParserCtxtPtr ctxt) {
+ 			ctxt->myDoc = xmlNewDoc(SAX_COMPAT_MODE);
+ 			if (ctxt->myDoc == NULL) {
+ 			    xmlErrMemory(ctxt, "New Doc failed");
+-			    return;
++			    goto done;
+ 			}
+ 			ctxt->myDoc->properties = XML_DOC_INTERNAL;
+ 		    }
+@@ -5589,7 +5589,7 @@ xmlParseEntityDecl(xmlParserCtxtPtr ctxt) {
+ 			    ctxt->myDoc = xmlNewDoc(SAX_COMPAT_MODE);
+ 			    if (ctxt->myDoc == NULL) {
+ 			        xmlErrMemory(ctxt, "New Doc failed");
+-				return;
++				goto done;
+ 			    }
+ 			    ctxt->myDoc->properties = XML_DOC_INTERNAL;
+ 			}
+-- 
+2.27.0
+

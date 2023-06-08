@@ -1,0 +1,48 @@
+From 85bc313e7996c06d52b6f6f5c6a467ff3a148e75 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 15 Feb 2023 13:49:28 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak after calling valuePush
+
+Destroy the object in valuePush if the function fails. This is somewhat
+dangerous but matches the expectations of users.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/85bc313e7996c06d52b6f6f5c6a467ff3a148e75
+Conflict:NA
+---
+ xpath.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/xpath.c b/xpath.c
+index 7833870..dc99e63 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -2881,6 +2881,8 @@ valuePop(xmlXPathParserContextPtr ctxt)
+  * a memory error is recorded in the parser context.
+  *
+  * Returns the number of items on the value stack, or -1 in case of error.
++ *
++ * The object is destroyed in case of error.
+  */
+ int
+ valuePush(xmlXPathParserContextPtr ctxt, xmlXPathObjectPtr value)
+@@ -2899,6 +2901,7 @@ valuePush(xmlXPathParserContextPtr ctxt, xmlXPathObjectPtr value)
+ 
+         if (ctxt->valueMax >= XPATH_MAX_STACK_DEPTH) {
+             xmlXPathPErrMemory(ctxt, "XPath stack depth limit reached\n");
++            xmlXPathFreeObject(value);
+             return (-1);
+         }
+         tmp = (xmlXPathObjectPtr *) xmlRealloc(ctxt->valueTab,
+@@ -2906,6 +2909,7 @@ valuePush(xmlXPathParserContextPtr ctxt, xmlXPathObjectPtr value)
+                                              sizeof(ctxt->valueTab[0]));
+         if (tmp == NULL) {
+             xmlXPathPErrMemory(ctxt, "pushing value\n");
++            xmlXPathFreeObject(value);
+             return (-1);
+         }
+         ctxt->valueMax *= 2;
+-- 
+2.27.0
+

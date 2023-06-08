@@ -1,0 +1,93 @@
+From 40bc1c699a7999626d3384be43684f2a68dad6c4 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 17 Feb 2023 15:40:32 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlFAParseCharProp
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/40bc1c699a7999626d3384be43684f2a68dad6c4
+Conflict:NA
+---
+ xmlregexp.c | 26 ++++++++++++++++----------
+ 1 file changed, 16 insertions(+), 10 deletions(-)
+
+diff --git a/xmlregexp.c b/xmlregexp.c
+index fb2eadc..8c2ea81 100644
+--- a/xmlregexp.c
++++ b/xmlregexp.c
+@@ -1245,7 +1245,7 @@ xmlRegPrintCtxt(FILE *output, xmlRegParserCtxtPtr ctxt) {
+  *									*
+  ************************************************************************/
+ 
+-static void
++static xmlRegRangePtr
+ xmlRegAtomAddRange(xmlRegParserCtxtPtr ctxt, xmlRegAtomPtr atom,
+ 	           int neg, xmlRegAtomType type, int start, int end,
+ 		   xmlChar *blockName) {
+@@ -1253,11 +1253,11 @@ xmlRegAtomAddRange(xmlRegParserCtxtPtr ctxt, xmlRegAtomPtr atom,
+ 
+     if (atom == NULL) {
+ 	ERROR("add range: atom is NULL");
+-	return;
++	return(NULL);
+     }
+     if (atom->type != XML_REGEXP_RANGES) {
+ 	ERROR("add range: atom is not ranges");
+-	return;
++	return(NULL);
+     }
+     if (atom->maxRanges == 0) {
+ 	atom->maxRanges = 4;
+@@ -1266,7 +1266,7 @@ xmlRegAtomAddRange(xmlRegParserCtxtPtr ctxt, xmlRegAtomPtr atom,
+ 	if (atom->ranges == NULL) {
+ 	    xmlRegexpErrMemory(ctxt, "adding ranges");
+ 	    atom->maxRanges = 0;
+-	    return;
++	    return(NULL);
+ 	}
+     } else if (atom->nbRanges >= atom->maxRanges) {
+ 	xmlRegRangePtr *tmp;
+@@ -1276,16 +1276,17 @@ xmlRegAtomAddRange(xmlRegParserCtxtPtr ctxt, xmlRegAtomPtr atom,
+ 	if (tmp == NULL) {
+ 	    xmlRegexpErrMemory(ctxt, "adding ranges");
+ 	    atom->maxRanges /= 2;
+-	    return;
++	    return(NULL);
+ 	}
+ 	atom->ranges = tmp;
+     }
+     range = xmlRegNewRange(ctxt, neg, type, start, end);
+     if (range == NULL)
+-	return;
++	return(NULL);
+     range->blockName = blockName;
+     atom->ranges[atom->nbRanges++] = range;
+ 
++    return(range);
+ }
+ 
+ static int
+@@ -4899,11 +4900,16 @@ xmlFAParseCharProp(xmlRegParserCtxtPtr ctxt) {
+     }
+     if (ctxt->atom == NULL) {
+ 	ctxt->atom = xmlRegNewAtom(ctxt, type);
+-	if (ctxt->atom != NULL)
+-	    ctxt->atom->valuep = blockName;
++        if (ctxt->atom == NULL) {
++            xmlFree(blockName);
++            return;
++        }
++	ctxt->atom->valuep = blockName;
+     } else if (ctxt->atom->type == XML_REGEXP_RANGES) {
+-        xmlRegAtomAddRange(ctxt, ctxt->atom, ctxt->neg,
+-		           type, 0, 0, blockName);
++        if (xmlRegAtomAddRange(ctxt, ctxt->atom, ctxt->neg,
++                               type, 0, 0, blockName) == NULL) {
++            xmlFree(blockName);
++        }
+     }
+ }
+ 
+-- 
+2.27.0
+

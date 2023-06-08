@@ -1,0 +1,31 @@
+From d18f9c1102a45b401039dd899ce7069da7a73124 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 14 Feb 2023 13:50:46 +0100
+Subject: [PATCH] malloc-fail: Fix leak of xmlCharEncodingHandler
+
+Also free handler if its name is NULL.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/d18f9c1102a45b401039dd899ce7069da7a73124
+Conflict:encoding.c
+
+---
+ encoding.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/encoding.c b/encoding.c
+index 400e860..8b98f7d 100644
+--- a/encoding.c
++++ b/encoding.c
+@@ -2792,7 +2792,6 @@ xmlCharEncCloseFunc(xmlCharEncodingHandler *handler) {
+     int i, handler_in_list = 0;
+ 
+     if (handler == NULL) return(-1);
+-    if (handler->name == NULL) return(-1);
+     if (handlers != NULL) {
+         for (i = 0;i < nbCharEncodingHandler; i++) {
+             if (handler == handlers[i]) {
+-- 
+2.27.0
+

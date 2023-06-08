@@ -1,0 +1,30 @@
+From 97086fd76b21fee6e41c13921c450411442d9da6 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 14 Feb 2023 14:45:58 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlParserInputBufferCreateMem
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/97086fd76b21fee6e41c13921c450411442d9da6
+Conflict:NA
+---
+ xmlIO.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/xmlIO.c b/xmlIO.c
+index 71c9fbf..edf31e8 100644
+--- a/xmlIO.c
++++ b/xmlIO.c
+@@ -2953,7 +2953,7 @@ xmlParserInputBufferCreateMem(const char *mem, int size, xmlCharEncoding enc) {
+ 	ret->closecallback = NULL;
+ 	errcode = xmlBufAdd(ret->buffer, (const xmlChar *) mem, size);
+ 	if (errcode != 0) {
+-	    xmlFree(ret);
++	    xmlFreeParserInputBuffer(ret);
+ 	    return(NULL);
+ 	}
+     }
+-- 
+2.27.0
+
+

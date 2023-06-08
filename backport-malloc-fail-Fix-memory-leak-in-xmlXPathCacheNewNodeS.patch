@@ -1,0 +1,51 @@
+From 6f9604f0e3e52e96881ab3b662f35fbe04cd49ac Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 26 Feb 2023 16:09:50 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlXPathCacheNewNodeSet
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/6f9604f0e3e52e96881ab3b662f35fbe04cd49ac
+Conflict:NA
+---
+ xpath.c | 15 +++++++++------
+ 1 file changed, 9 insertions(+), 6 deletions(-)
+
+diff --git a/xpath.c b/xpath.c
+index 84b139d..1f358e3 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -2448,21 +2448,24 @@ xmlXPathCacheNewNodeSet(xmlXPathContextPtr ctxt, xmlNodePtr val)
+ 	    (cache->miscObjs->number != 0))
+ 	{
+ 	    xmlXPathObjectPtr ret;
++            xmlNodeSetPtr set;
+ 	    /*
+ 	    * Fallback to misc-cache.
+ 	    */
+ 
++	    set = xmlXPathNodeSetCreate(val);
++	    if (set == NULL) {
++		ctxt->lastError.domain = XML_FROM_XPATH;
++		ctxt->lastError.code = XML_ERR_NO_MEMORY;
++		return(NULL);
++	    }
++
+ 	    ret = (xmlXPathObjectPtr)
+ 		cache->miscObjs->items[--cache->miscObjs->number];
+ 
+ 	    ret->type = XPATH_NODESET;
+ 	    ret->boolval = 0;
+-	    ret->nodesetval = xmlXPathNodeSetCreate(val);
+-	    if (ret->nodesetval == NULL) {
+-		ctxt->lastError.domain = XML_FROM_XPATH;
+-		ctxt->lastError.code = XML_ERR_NO_MEMORY;
+-		return(NULL);
+-	    }
++	    ret->nodesetval = set;
+ #ifdef XP_DEBUG_OBJ_USAGE
+ 	    xmlXPathDebugObjUsageRequested(ctxt, XPATH_NODESET);
+ #endif
+-- 
+2.27.0
+

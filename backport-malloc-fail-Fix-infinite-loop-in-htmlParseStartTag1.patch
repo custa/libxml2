@@ -1,0 +1,51 @@
+From 643b4e90ebf619432b0287010b593edd8c0c0f8e Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 16 Feb 2023 14:45:06 +0100
+Subject: [PATCH] malloc-fail: Fix infinite loop in htmlParseStartTag
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/643b4e90ebf619432b0287010b593edd8c0c0f8e
+Conflict:NA
+---
+ HTMLparser.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index 60dea30..0ccd6e8 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -2570,6 +2570,7 @@ static const xmlChar * htmlParseNameComplex(xmlParserCtxtPtr ctxt);
+ 
+ static const xmlChar *
+ htmlParseHTMLName(htmlParserCtxtPtr ctxt) {
++    const xmlChar *ret;
+     int i = 0;
+     xmlChar loc[HTML_PARSER_BUFFER_SIZE];
+ 
+@@ -2587,7 +2588,11 @@ htmlParseHTMLName(htmlParserCtxtPtr ctxt) {
+ 	NEXT;
+     }
+ 
+-    return(xmlDictLookup(ctxt->dict, loc, i));
++    ret = xmlDictLookup(ctxt->dict, loc, i);
++    if (ret == NULL)
++        htmlErrMemory(ctxt, NULL);
++
++    return(ret);
+ }
+ 
+ 
+@@ -4020,7 +4025,8 @@ htmlParseStartTag(htmlParserCtxtPtr ctxt) {
+     SKIP_BLANKS;
+     while ((CUR != 0) &&
+            (CUR != '>') &&
+-	   ((CUR != '/') || (NXT(1) != '>'))) {
++	   ((CUR != '/') || (NXT(1) != '>')) &&
++           (ctxt->instate != XML_PARSER_EOF)) {
+ 	GROW;
+ 	attname = htmlParseAttribute(ctxt, &attvalue);
+         if (attname != NULL) {
+-- 
+2.27.0
+
