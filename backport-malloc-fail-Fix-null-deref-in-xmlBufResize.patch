@@ -1,0 +1,30 @@
+From 1aabc9db40dc5ec1f8f22c09e74c63dda53f7ed6 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 22 Jan 2023 13:20:15 +0100
+Subject: [PATCH] malloc-fail: Fix null deref in xmlBufResize
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/1aabc9db40dc5ec1f8f22c09e74c63dda53f7ed6
+Conflict:NA
+---
+ buf.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/buf.c b/buf.c
+index e851364..69370b7 100644
+--- a/buf.c
++++ b/buf.c
+@@ -821,7 +821,8 @@ xmlBufResize(xmlBufPtr buf, size_t size)
+ 	if (buf->content == NULL) {
+ 	    rebuf = (xmlChar *) xmlMallocAtomic(newSize);
+ 	    buf->use = 0;
+-	    rebuf[buf->use] = 0;
++            if (rebuf != NULL)
++	        rebuf[buf->use] = 0;
+ 	} else if (buf->size - buf->use < 100) {
+ 	    rebuf = (xmlChar *) xmlRealloc(buf->content, newSize);
+         } else {
+-- 
+2.27.0
+

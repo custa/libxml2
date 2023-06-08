@@ -1,0 +1,126 @@
+From f442a3290626a522b6e71c902a971859b15566f3 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 30 Oct 2022 12:32:14 +0100
+Subject: [PATCH 02/28] xinclude: Fix more memory leaks in xmlXIncludeLoadDoc
+
+Reference: https://github.com/GNOME/libxml2/commit/f14529baf5315b3d77877fd1617b0e1f3df564d0
+Conflict: xinclude.c:<xmlXIncludeLoadDoc>
+---
+ xinclude.c | 37 ++++++++++++++-----------------------
+ 1 file changed, 14 insertions(+), 23 deletions(-)
+
+diff --git a/xinclude.c b/xinclude.c
+index 6ee58cb..cd1e1b1 100644
+--- a/xinclude.c
++++ b/xinclude.c
+@@ -1417,9 +1417,10 @@ static int
+ xmlXIncludeLoadDoc(xmlXIncludeCtxtPtr ctxt, const xmlChar *url, int nr) {
+     xmlDocPtr doc;
+     xmlURIPtr uri;
+-    xmlChar *URL;
++    xmlChar *URL = NULL;
+     xmlChar *fragment = NULL;
+     int i = 0;
++    int ret = -1;
+ #ifdef LIBXML_XPTR_ENABLED
+     int saveFlags;
+ #endif
+@@ -1435,7 +1436,7 @@ xmlXIncludeLoadDoc(xmlXIncludeCtxtPtr ctxt, const xmlChar *url, int nr) {
+ 	xmlXIncludeErr(ctxt, ctxt->incTab[nr]->ref,
+ 	               XML_XINCLUDE_HREF_URI,
+ 		       "invalid value URI %s\n", url);
+-	return(-1);
++	goto error;
+     }
+     if (uri->fragment != NULL) {
+ 	fragment = (xmlChar *) uri->fragment;
+@@ -1457,9 +1458,7 @@ xmlXIncludeLoadDoc(xmlXIncludeCtxtPtr ctxt, const xmlChar *url, int nr) {
+ 	    xmlXIncludeErr(ctxt, NULL,
+ 			   XML_XINCLUDE_HREF_URI,
+ 			   "invalid value URI %s\n", url);
+-	if (fragment != NULL)
+-	    xmlFree(fragment);
+-	return(-1);
++	goto error;
+     }
+ 
+     /*
+@@ -1509,10 +1508,7 @@ xmlXIncludeLoadDoc(xmlXIncludeCtxtPtr ctxt, const xmlChar *url, int nr) {
+     ctxt->parseFlags = saveFlags;
+ #endif
+     if (doc == NULL) {
+-	xmlFree(URL);
+-	if (fragment != NULL)
+-	    xmlFree(fragment);
+-	return(-1);
++	goto error;
+     }
+     ctxt->incTab[nr]->doc = doc;
+     /*
+@@ -1578,9 +1574,7 @@ loaded:
+ 	    xmlXIncludeErr(ctxt, ctxt->incTab[nr]->ref,
+ 	                   XML_XINCLUDE_XPTR_FAILED,
+ 			   "could not create XPointer context\n", NULL);
+-	    xmlFree(URL);
+-	    xmlFree(fragment);
+-	    return(-1);
++	    goto error;
+ 	}
+ 	xptr = xmlXPtrEval(fragment, xptrctxt);
+ 	if (xptr == NULL) {
+@@ -1589,9 +1583,7 @@ loaded:
+ 			   "XPointer evaluation failed: #%s\n",
+ 			   fragment);
+ 	    xmlXPathFreeContext(xptrctxt);
+-	    xmlFree(URL);
+-	    xmlFree(fragment);
+-	    return(-1);
++            goto error;
+ 	}
+ 	switch (xptr->type) {
+ 	    case XPATH_UNDEFINED:
+@@ -1607,17 +1599,13 @@ loaded:
+ 			       fragment);
+                 xmlXPathFreeObject(xptr);
+ 		xmlXPathFreeContext(xptrctxt);
+-		xmlFree(URL);
+-		xmlFree(fragment);
+-		return(-1);
++		goto error;
+ 	    case XPATH_NODESET:
+ 	        if ((xptr->nodesetval == NULL) ||
+ 		    (xptr->nodesetval->nodeNr <= 0)) {
+                     xmlXPathFreeObject(xptr);
+ 		    xmlXPathFreeContext(xptrctxt);
+-		    xmlFree(URL);
+-		    xmlFree(fragment);
+-		    return(-1);
++		    goto error;
+ 		}
+ 
+ 	    case XPATH_RANGE:
+@@ -1681,7 +1669,6 @@ loaded:
+             xmlXIncludeCopyXPointer(ctxt, ctxt->doc, doc, xptr);
+         xmlXPathFreeObject(xptr);
+ 	xmlXPathFreeContext(xptrctxt);
+-	xmlFree(fragment);
+     }
+ #endif
+ 
+@@ -1777,8 +1764,12 @@ loaded:
+ 	xmlFreeDoc(ctxt->incTab[nr]->doc);
+ 	ctxt->incTab[nr]->doc = NULL;
+     }
++    ret = 0;
++
++error:
+     xmlFree(URL);
+-    return(0);
++    xmlFree(fragment);
++    return(ret);
+ }
+ 
+ /**
+-- 
+2.27.0
+

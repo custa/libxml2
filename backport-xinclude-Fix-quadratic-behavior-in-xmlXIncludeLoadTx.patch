@@ -1,0 +1,147 @@
+From e20f4d7a656e47553f9da9d594e299e2fa2dbe41 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 13 Feb 2023 14:38:05 +0100
+Subject: [PATCH] xinclude: Fix quadratic behavior in xmlXIncludeLoadTxt
+
+Also make text inclusions work with memory buffers, for example when
+using a custom entity loader, and fix a memory leak in case of invalid
+characters.
+
+Fixes #483.
+
+Reference:https://github.com/GNOME/libxml2/commit/e20f4d7a656e47553f9da9d594e299e2fa2dbe41
+Conflict:NA
+
+---
+ result/XInclude/invalid_char.xml.err |  2 +
+ result/XInclude/invalid_char.xml.rdr |  7 ++++
+ test/XInclude/docs/invalid_char.xml  |  3 ++
+ test/XInclude/ents/invalid_char.txt  |  1 +
+ xinclude.c                           | 61 ++++++++++++----------------
+ 5 files changed, 39 insertions(+), 35 deletions(-)
+ create mode 100644 result/XInclude/invalid_char.xml.err
+ create mode 100644 result/XInclude/invalid_char.xml.rdr
+ create mode 100644 test/XInclude/docs/invalid_char.xml
+ create mode 100644 test/XInclude/ents/invalid_char.txt
+
+diff --git a/result/XInclude/invalid_char.xml.err b/result/XInclude/invalid_char.xml.err
+new file mode 100644
+index 0000000..c28c109
+--- /dev/null
++++ b/result/XInclude/invalid_char.xml.err
+@@ -0,0 +1,2 @@
++./test/XInclude/docs/invalid_char.xml:2: element include: XInclude error : test/XInclude/ents/invalid_char.txt contains invalid char
++./test/XInclude/docs/invalid_char.xml:2: element include: XInclude error : could not load test/XInclude/ents/invalid_char.txt, and no fallback was found
+diff --git a/result/XInclude/invalid_char.xml.rdr b/result/XInclude/invalid_char.xml.rdr
+new file mode 100644
+index 0000000..1fb5774
+--- /dev/null
++++ b/result/XInclude/invalid_char.xml.rdr
+@@ -0,0 +1,7 @@
++0 1 x 0 0
++1 14 #text 0 1 
++   
++1 1 xinclude:include 1 0
++1 14 #text 0 1 
++
++0 15 x 0 0
+diff --git a/test/XInclude/docs/invalid_char.xml b/test/XInclude/docs/invalid_char.xml
+new file mode 100644
+index 0000000..28e5a48
+--- /dev/null
++++ b/test/XInclude/docs/invalid_char.xml
+@@ -0,0 +1,3 @@
++<x xmlns:xinclude="http://www.w3.org/2001/XInclude">
++   <xinclude:include href="../ents/invalid_char.txt" parse="text"/>
++</x>
+diff --git a/test/XInclude/ents/invalid_char.txt b/test/XInclude/ents/invalid_char.txt
+new file mode 100644
+index 0000000..ae06618
+--- /dev/null
++++ b/test/XInclude/ents/invalid_char.txt
+@@ -0,0 +1 @@
++invalid: ÿ
+\ No newline at end of file
+diff --git a/xinclude.c b/xinclude.c
+index cc486f5..6e5b61d 100644
+--- a/xinclude.c
++++ b/xinclude.c
+@@ -1798,7 +1798,9 @@ xmlXIncludeLoadTxt(xmlXIncludeCtxtPtr ctxt, const xmlChar *url, int nr) {
+     xmlCharEncoding enc = (xmlCharEncoding) 0;
+     xmlParserCtxtPtr pctxt;
+     xmlParserInputPtr inputStream;
+-    int xinclude_multibyte_fallback_used = 0;
++    int len;
++    const xmlChar *content;
++
+ 
+     /* Don't read from stdin. */
+     if (xmlStrcmp(url, BAD_CAST "-") == 0)
+@@ -1905,41 +1907,30 @@ xmlXIncludeLoadTxt(xmlXIncludeCtxtPtr ctxt, const xmlChar *url, int nr) {
+     /*
+      * Scan all chars from the resource and add the to the node
+      */
+-xinclude_multibyte_fallback:
+-    while (xmlParserInputBufferRead(buf, 128) > 0) {
+-	int len;
+-	const xmlChar *content;
+-
+-	content = xmlBufContent(buf->buffer);
+-	len = xmlBufLength(buf->buffer);
+-	for (i = 0;i < len;) {
+-	    int cur;
+-	    int l;
+-
+-	    cur = xmlStringCurrentChar(NULL, &content[i], &l);
+-	    if (!IS_CHAR(cur)) {
+-		/* Handle split multibyte char at buffer boundary */
+-		if (((len - i) < 4) && (!xinclude_multibyte_fallback_used)) {
+-		    xinclude_multibyte_fallback_used = 1;
+-		    xmlBufShrink(buf->buffer, i);
+-		    goto xinclude_multibyte_fallback;
+-		} else {
+-		    xmlXIncludeErr(ctxt, ctxt->incTab[nr]->ref,
+-				   XML_XINCLUDE_INVALID_CHAR,
+-				   "%s contains invalid char\n", URL);
+-		    xmlFreeParserCtxt(pctxt);
+-		    xmlFreeParserInputBuffer(buf);
+-		    xmlFree(URL);
+-		    return(-1);
+-		}
+-	    } else {
+-		xinclude_multibyte_fallback_used = 0;
+-		xmlNodeAddContentLen(node, &content[i], l);
+-	    }
+-	    i += l;
+-	}
+-	xmlBufShrink(buf->buffer, len);
++    while (xmlParserInputBufferRead(buf, 4096) > 0)
++        ;
++
++    content = xmlBufContent(buf->buffer);
++    len = xmlBufLength(buf->buffer);
++    for (i = 0; i < len;) {
++        int cur;
++        int l;
++
++        cur = xmlStringCurrentChar(NULL, &content[i], &l);
++        if (!IS_CHAR(cur)) {
++            xmlXIncludeErr(ctxt, ctxt->incTab[nr]->ref, XML_XINCLUDE_INVALID_CHAR,
++                           "%s contains invalid char\n", URL);
++            xmlFreeNode(node);
++            xmlFreeInputStream(inputStream);
++            xmlFreeParserCtxt(pctxt);
++            xmlFree(URL);
++            return(-1);
++        }
++
++        i += l;
+     }
++
++    xmlNodeAddContentLen(node, content, len);
+     xmlFreeParserCtxt(pctxt);
+     xmlXIncludeAddTxt(ctxt, node->content, URL);
+     xmlFreeInputStream(inputStream);
+-- 
+2.27.0
+

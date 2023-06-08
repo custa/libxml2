@@ -1,0 +1,45 @@
+From 6273df6c6d84b6be8a62a62abf1d9b79cc2035f8 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 30 May 2023 12:30:27 +0200
+Subject: [PATCH] xpath: Ignore entity ref nodes when computing node hash
+
+XPath queries only work reliably if entities are substituted.
+Nevertheless, it's possible to query a document with entity reference
+nodes. xmllint even deletes entities when the `--dropdtd` option is
+passed, resulting in dangling pointers, so it's best to skip entity
+reference nodes to avoid a use-after-free.
+
+Fixes #550.
+
+Reference:https://github.com/GNOME/libxml2/commit/6273df6c6d84b6be8a62a62abf1d9b79cc2035f8
+Conflict:NA
+
+---
+ xpath.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/xpath.c b/xpath.c
+index 3d1ca71..3128efb 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -6396,11 +6396,12 @@ xmlXPathNodeValHash(xmlNodePtr node) {
+ 	/*
+ 	 * Skip to next node
+ 	 */
+-	if ((tmp->children != NULL) && (tmp->type != XML_DTD_NODE)) {
+-	    if (tmp->children->type != XML_ENTITY_DECL) {
+-		tmp = tmp->children;
+-		continue;
+-	    }
++        if ((tmp->children != NULL) &&
++            (tmp->type != XML_DTD_NODE) &&
++            (tmp->type != XML_ENTITY_REF_NODE) &&
++            (tmp->children->type != XML_ENTITY_DECL)) {
++            tmp = tmp->children;
++            continue;
+ 	}
+ 	if (tmp == node)
+ 	    break;
+-- 
+2.27.0
+

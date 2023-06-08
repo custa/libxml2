@@ -1,0 +1,122 @@
+From cb1b8b8516ade9add9f63fa0e39eaa3bc7034828 Mon Sep 17 00:00:00 2001
+From: David Kilzer <ddkilzer@apple.com>
+Date: Mon, 10 Apr 2023 13:06:18 -0700
+Subject: [PATCH] xmlValidatePopElement() can return invalid value (-1)
+
+Covered by:  test/VC/ElementValid5
+
+This only affects XML Reader API with LIBXML_REGEXP_ENABLED and
+LIBXML_VALID_ENABLED turned on.
+
+* result/VC/ElementValid5.rdr:
+- Update result to add missing error message.
+
+* python/tests/reader2.py:
+* result/VC/ElementValid6.rdr:
+* result/VC/ElementValid7.rdr:
+* result/valid/781333.xml.err.rdr:
+- Update result to fix grammar issue.
+
+* valid.c:
+(xmlValidatePopElement):
+- Check return value of xmlRegExecPushString() to handle -1, and
+  assign 'ret = 0;' to return 0 from xmlValidatePopElement().
+  This change affects xmlTextReaderValidatePop() from
+  xmlreader.c.
+- Fix grammar of error message by changing 'child' to
+  'children'.
+
+Reference:https://github.com/GNOME/libxml2/commit/cb1b8b8516ade9add9f63fa0e39eaa3bc7034828
+Conflict:python/tests/reader2.py
+
+---
+ python/tests/reader2.py         | 2 +-
+ result/VC/ElementValid5.rdr     | 3 +++
+ result/VC/ElementValid6.rdr     | 2 +-
+ result/VC/ElementValid7.rdr     | 2 +-
+ result/valid/781333.xml.err.rdr | 2 +-
+ valid.c                         | 5 +++--
+ 6 files changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/python/tests/reader2.py b/python/tests/reader2.py
+index b50180d..b581674 100755
+--- a/python/tests/reader2.py
++++ b/python/tests/reader2.py
+@@ -39,7 +39,7 @@ value
+ """../../test/valid/781333.xml:4: element a: validity error : Element a content does not follow the DTD, expecting ( ..., got 
+ <a/>
+     ^
+-../../test/valid/781333.xml:5: element a: validity error : Element a content does not follow the DTD, Expecting more child
++../../test/valid/781333.xml:5: element a: validity error : Element a content does not follow the DTD, Expecting more children
+ 
+ ^
+ """,
+diff --git a/result/VC/ElementValid5.rdr b/result/VC/ElementValid5.rdr
+index 899d759..91eef9c 100644
+--- a/result/VC/ElementValid5.rdr
++++ b/result/VC/ElementValid5.rdr
+@@ -4,3 +4,6 @@
+ ./test/VC/ElementValid5:8: element doc: validity error : Element doc content does not follow the DTD, Misplaced b
+ 
+ ^
++./test/VC/ElementValid5:8: element doc: validity error : Element doc content does not follow the DTD, Expecting more children
++
++^
+diff --git a/result/VC/ElementValid6.rdr b/result/VC/ElementValid6.rdr
+index aeafd6b..3b51d1a 100644
+--- a/result/VC/ElementValid6.rdr
++++ b/result/VC/ElementValid6.rdr
+@@ -1,6 +1,6 @@
+ ./test/VC/ElementValid6:7: element doc: validity error : Element doc content does not follow the DTD, expecting (a , b? , c+)?, got (a b)
+ <doc><a/><b>lacks c</b></doc>
+                              ^
+-./test/VC/ElementValid6:8: element doc: validity error : Element doc content does not follow the DTD, Expecting more child
++./test/VC/ElementValid6:8: element doc: validity error : Element doc content does not follow the DTD, Expecting more children
+ 
+ ^
+diff --git a/result/VC/ElementValid7.rdr b/result/VC/ElementValid7.rdr
+index f001fd2..ecafd1d 100644
+--- a/result/VC/ElementValid7.rdr
++++ b/result/VC/ElementValid7.rdr
+@@ -1,6 +1,6 @@
+ ./test/VC/ElementValid7:7: element doc: validity error : Element doc content does not follow the DTD, expecting ((a | b)* , c+ , a , b? , c , a?), got (a b a c c a)
+ <doc><a/><b/><a/><c/><c/><a/></doc>
+                                    ^
+-./test/VC/ElementValid7:8: element doc: validity error : Element doc content does not follow the DTD, Expecting more child
++./test/VC/ElementValid7:8: element doc: validity error : Element doc content does not follow the DTD, Expecting more children
+ 
+ ^
+diff --git a/result/valid/781333.xml.err.rdr b/result/valid/781333.xml.err.rdr
+index 5ff5699..dd9df08 100644
+--- a/result/valid/781333.xml.err.rdr
++++ b/result/valid/781333.xml.err.rdr
+@@ -1,6 +1,6 @@
+ ./test/valid/781333.xml:4: element a: validity error : Element a content does not follow the DTD, expecting ( ..., got 
+ <a/>
+     ^
+-./test/valid/781333.xml:5: element a: validity error : Element a content does not follow the DTD, Expecting more child
++./test/valid/781333.xml:5: element a: validity error : Element a content does not follow the DTD, Expecting more children
+ 
+ ^
+diff --git a/valid.c b/valid.c
+index 3c0a869..92aaedb 100644
+--- a/valid.c
++++ b/valid.c
+@@ -6012,11 +6012,12 @@ xmlValidatePopElement(xmlValidCtxtPtr ctxt, xmlDocPtr doc ATTRIBUTE_UNUSED,
+ 	    if (elemDecl->etype == XML_ELEMENT_TYPE_ELEMENT) {
+ 		if (state->exec != NULL) {
+ 		    ret = xmlRegExecPushString(state->exec, NULL, NULL);
+-		    if (ret == 0) {
++		    if (ret <= 0) {
+ 			xmlErrValidNode(ctxt, state->node,
+ 			                XML_DTD_CONTENT_MODEL,
+-	   "Element %s content does not follow the DTD, Expecting more child\n",
++	   "Element %s content does not follow the DTD, Expecting more children\n",
+ 			       state->node->name, NULL,NULL);
++			ret = 0;
+ 		    } else {
+ 			/*
+ 			 * previous validation errors should not generate
+-- 
+2.27.0
+

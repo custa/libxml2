@@ -1,0 +1,45 @@
+From a17a1f564eaac42d6db561c639b5d2461884e829 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 18 May 2022 02:17:31 +0200
+Subject: [PATCH] Don't reset nsDef when changing node content
+
+nsDef is only used for element nodes.
+
+Reference:https://github.com/GNOME/libxml2/commit/a17a1f564eaac42d6db561c639b5d2461884e829
+Conflict:NA
+
+---
+ tree.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/tree.c b/tree.c
+index fe6f54a..84da156 100644
+--- a/tree.c
++++ b/tree.c
+@@ -5721,7 +5721,6 @@ xmlNodeSetContent(xmlNodePtr cur, const xmlChar *content) {
+ 	    } else
+ 		cur->content = NULL;
+ 	    cur->properties = NULL;
+-	    cur->nsDef = NULL;
+ 	    break;
+         case XML_DOCUMENT_NODE:
+         case XML_HTML_DOCUMENT_NODE:
+@@ -5799,7 +5798,6 @@ xmlNodeSetContentLen(xmlNodePtr cur, const xmlChar *content, int len) {
+ 	    } else
+ 		cur->content = NULL;
+ 	    cur->properties = NULL;
+-	    cur->nsDef = NULL;
+ 	    break;
+         case XML_DOCUMENT_NODE:
+         case XML_DTD_NODE:
+@@ -5878,7 +5876,6 @@ xmlNodeAddContentLen(xmlNodePtr cur, const xmlChar *content, int len) {
+ 			    xmlDictOwns(cur->doc->dict, cur->content))) {
+ 		    cur->content = xmlStrncatNew(cur->content, content, len);
+ 		    cur->properties = NULL;
+-		    cur->nsDef = NULL;
+ 		} else {
+ 		    cur->content = xmlStrncat(cur->content, content, len);
+                 }
+-- 
+2.27.0
+

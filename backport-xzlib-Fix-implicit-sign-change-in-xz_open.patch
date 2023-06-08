@@ -1,0 +1,42 @@
+From 1a6a9d6878ed00265941939adc468a517cd5ef36 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 14 Mar 2023 14:19:03 +0100
+Subject: [PATCH] xzlib: Fix implicit sign change in xz_open
+
+
+Reference:https://github.com/GNOME/libxml2/commit/1a6a9d6878ed00265941939adc468a517cd5ef36
+Conflict:NA
+
+---
+ xzlib.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/xzlib.c b/xzlib.c
+index 9a34738..8d75590 100644
+--- a/xzlib.c
++++ b/xzlib.c
+@@ -139,6 +139,7 @@ static xzFile
+ xz_open(const char *path, int fd, const char *mode ATTRIBUTE_UNUSED)
+ {
+     xz_statep state;
++    off_t offset;
+ 
+     /* allocate xzFile structure to return */
+     state = xmlMalloc(sizeof(xz_state));
+@@ -173,9 +174,11 @@ xz_open(const char *path, int fd, const char *mode ATTRIBUTE_UNUSED)
+     }
+ 
+     /* save the current position for rewinding (only if reading) */
+-    state->start = lseek(state->fd, 0, SEEK_CUR);
+-    if (state->start == (uint64_t) - 1)
++    offset = lseek(state->fd, 0, SEEK_CUR);
++    if (offset == -1)
+         state->start = 0;
++    else
++        state->start = offset;
+ 
+     /* initialize stream */
+     xz_reset(state);
+-- 
+2.27.0
+

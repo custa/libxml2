@@ -1,0 +1,42 @@
+From 961a4f35bfcbe3f2b0ca0932e880ea73cbb2ab2c Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 5 Mar 2023 14:10:41 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlSchemaParseUnion
+
+Also report malloc failure from xmlStrndup.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/961a4f35bfcbe3f2b0ca0932e880ea73cbb2ab2c
+Conflict:NA
+---
+ xmlschemas.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/xmlschemas.c b/xmlschemas.c
+index d2f8bf1..4dbee37 100644
+--- a/xmlschemas.c
++++ b/xmlschemas.c
+@@ -9017,6 +9017,11 @@ xmlSchemaParseUnion(xmlSchemaParserCtxtPtr ctxt, xmlSchemaPtr schema,
+ 	    if (end == cur)
+ 		break;
+ 	    tmp = xmlStrndup(cur, end - cur);
++            if (tmp == NULL) {
++                xmlSchemaPErrMemory(ctxt, "xmlSchemaParseUnion, "
++                    "duplicating type name", NULL);
++                return (-1);
++            }
+ 	    if (xmlSchemaPValAttrNodeQNameValue(ctxt, schema,
+ 		NULL, attr, BAD_CAST tmp, &nsName, &localName) == 0) {
+ 		/*
+@@ -9027,6 +9032,7 @@ xmlSchemaParseUnion(xmlSchemaParserCtxtPtr ctxt, xmlSchemaPtr schema,
+ 		if (link == NULL) {
+ 		    xmlSchemaPErrMemory(ctxt, "xmlSchemaParseUnion, "
+ 			"allocating a type link", NULL);
++	            FREE_AND_NULL(tmp)
+ 		    return (-1);
+ 		}
+ 		link->type = NULL;
+-- 
+2.27.0
+

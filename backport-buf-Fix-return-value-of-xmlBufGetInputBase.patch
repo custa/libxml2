@@ -1,0 +1,31 @@
+From f8c5e7fb75cd741fb576ddb4de8fcd61f9907549 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 22 Jan 2023 13:49:19 +0100
+Subject: [PATCH] buf: Fix return value of xmlBufGetInputBase
+
+Don't return (size_t) -1 in error case.
+
+Found with libFuzzer and -fsanitize=implicit-conversion.
+
+Reference:https://github.com/GNOME/libxml2/commit/f8c5e7fb75cd741fb576ddb4de8fcd61f9907549
+Conflict:NA
+---
+ buf.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/buf.c b/buf.c
+index 69370b7..d8992f7 100644
+--- a/buf.c
++++ b/buf.c
+@@ -1283,7 +1283,7 @@ xmlBufGetInputBase(xmlBufPtr buf, xmlParserInputPtr input) {
+     size_t base;
+ 
+     if ((input == NULL) || (buf == NULL) || (buf->error))
+-        return(-1);
++        return(0);
+     CHECK_COMPAT(buf)
+     base = input->base - buf->content;
+     /*
+-- 
+2.27.0
+

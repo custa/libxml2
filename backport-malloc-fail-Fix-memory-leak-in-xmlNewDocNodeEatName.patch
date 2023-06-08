@@ -1,0 +1,32 @@
+From ec471ee3202d4434b695e652e1fd5e0dfc592d1b Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 2 Nov 2022 15:58:31 +0100
+Subject: [PATCH 07/28] malloc-fail: Fix memory leak in xmlNewDocNodeEatName
+
+Found with libFuzzer, see #344.
+
+Reference: https://github.com/GNOME/libxml2/commit/dd50cfeb61c4f74ffc1dca1e818e01cf478e366d
+Conflict: NA
+---
+ tree.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/tree.c b/tree.c
+index 6a8c2ea..bb85220 100644
+--- a/tree.c
++++ b/tree.c
+@@ -2385,8 +2385,9 @@ xmlNewDocNodeEatName(xmlDocPtr doc, xmlNsPtr ns,
+ 	}
+     } else {
+         /* if name don't come from the doc dictionary free it here */
+-        if ((name != NULL) && (doc != NULL) &&
+-	    (!(xmlDictOwns(doc->dict, name))))
++        if ((name != NULL) &&
++            ((doc == NULL) || (doc->dict == NULL) ||
++	     (!(xmlDictOwns(doc->dict, name)))))
+ 	    xmlFree(name);
+     }
+     return(cur);
+-- 
+2.27.0
+

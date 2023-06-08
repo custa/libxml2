@@ -1,0 +1,41 @@
+From 3dc645227ed1ac463c9d333c6eb92d1b6bb26ae9 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 15 Feb 2023 14:30:40 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlXPathEqualValuesCommon
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/3dc645227ed1ac463c9d333c6eb92d1b6bb26ae9
+Conflict:NA
+---
+ xpath.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/xpath.c b/xpath.c
+index cf74030..ef9f517 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -7028,7 +7028,8 @@ xmlXPathEqualValuesCommon(xmlXPathParserContextPtr ctxt,
+ 		    valuePush(ctxt, arg2);
+ 		    xmlXPathNumberFunction(ctxt, 1);
+ 		    arg2 = valuePop(ctxt);
+-                    CHECK_ERROR0;
++                    if (ctxt->error)
++                        break;
+                     /* Falls through. */
+ 		case XPATH_NUMBER:
+ 		    /* Hand check NaN and Infinity equalities */
+@@ -7092,7 +7093,8 @@ xmlXPathEqualValuesCommon(xmlXPathParserContextPtr ctxt,
+ 		    valuePush(ctxt, arg1);
+ 		    xmlXPathNumberFunction(ctxt, 1);
+ 		    arg1 = valuePop(ctxt);
+-                    CHECK_ERROR0;
++                    if (ctxt->error)
++                        break;
+ 		    /* Hand check NaN and Infinity equalities */
+ 		    if (xmlXPathIsNaN(arg1->floatval) ||
+ 			    xmlXPathIsNaN(arg2->floatval)) {
+-- 
+2.27.0
+
+

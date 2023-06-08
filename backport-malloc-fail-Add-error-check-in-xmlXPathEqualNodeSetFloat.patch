@@ -1,0 +1,30 @@
+From 08695683dbd78301aa95bf3042871256479bc6a6 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 30 Jan 2023 15:52:00 +0100
+Subject: [PATCH] malloc-fail: Add error check in xmlXPathEqualNodeSetFloat
+
+Avoid null deref.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/08695683dbd78301aa95bf3042871256479bc6a6
+Conflict:NA
+---
+ xpath.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/xpath.c b/xpath.c
+index 6d76e43..77d5434 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -6799,6 +6799,7 @@ xmlXPathEqualNodeSetFloat(xmlXPathParserContextPtr ctxt,
+ 		xmlFree(str2);
+ 		xmlXPathNumberFunction(ctxt, 1);
+ 		val = valuePop(ctxt);
++                CHECK_ERROR0;
+ 		v = val->floatval;
+ 		xmlXPathReleaseObject(ctxt->context, val);
+ 		if (!xmlXPathIsNaN(v)) {
+-- 
+2.27.0
+

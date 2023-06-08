@@ -1,0 +1,39 @@
+From 4b3452d17123631ec43d532b83dc182c1a638fed Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 15 Mar 2023 16:56:36 +0100
+Subject: [PATCH] html: Fix quadratic behavior in htmlParseTryOrFinish
+
+Fix check for end of script content.
+
+Found by OSS-Fuzz.
+
+Reference:https://github.com/GNOME/libxml2/commit/4b3452d17123631ec43d532b83dc182c1a638fed
+Conflict:NA
+
+---
+ HTMLparser.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index b76218c..6c8f180 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -5984,8 +5984,14 @@ htmlParseTryOrFinish(htmlParserCtxtPtr ctxt, int terminate) {
+ 			if (idx < 0)
+ 			    goto done;
+ 		        val = in->cur[idx + 2];
+-			if (val == 0) /* bad cut of input */
++			if (val == 0) { /* bad cut of input */
++                            /*
++                             * FIXME: htmlParseScript checks for additional
++                             * characters after '</'.
++                             */
++                            ctxt->checkIndex = idx;
+ 			    goto done;
++                        }
+ 		    }
+ 		    htmlParseScript(ctxt);
+ 		    if ((cur == '<') && (next == '/')) {
+-- 
+2.27.0
+
