@@ -1,0 +1,29 @@
+From bd9de3a31f66bbf38b2e90cc9efb1374cc1314da Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 22 Jan 2023 16:52:39 +0100
+Subject: [PATCH] malloc-fail: Fix null deref in xmlAddDefAttrs
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/bd9de3a31f66bbf38b2e90cc9efb1374cc1314da
+Conflict:NA
+---
+ parser.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/parser.c b/parser.c
+index fafae15..3c06439 100644
+--- a/parser.c
++++ b/parser.c
+@@ -1334,6 +1334,8 @@ xmlAddDefAttrs(xmlParserCtxtPtr ctxt,
+     /* intern the string and precompute the end */
+     len = xmlStrlen(value);
+     value = xmlDictLookup(ctxt->dict, value, len);
++    if (value == NULL)
++        goto mem_error;
+     defaults->values[5 * defaults->nbAttrs + 2] = value;
+     defaults->values[5 * defaults->nbAttrs + 3] = value + len;
+     if (ctxt->external)
+-- 
+2.27.0
+

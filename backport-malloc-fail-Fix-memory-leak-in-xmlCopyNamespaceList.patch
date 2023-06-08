@@ -1,0 +1,31 @@
+From dbc893f5885cf60f9ebed89c363ff810bde3ebb5 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 3 Mar 2023 13:02:11 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlCopyNamespaceList
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/dbc893f5885cf60f9ebed89c363ff810bde3ebb5
+Conflict:NA
+---
+ tree.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/tree.c b/tree.c
+index 4a80e28..14d5247 100644
+--- a/tree.c
++++ b/tree.c
+@@ -4046,6 +4046,10 @@ xmlCopyNamespaceList(xmlNsPtr cur) {
+ 
+     while (cur != NULL) {
+         q = xmlCopyNamespace(cur);
++        if (q == NULL) {
++            xmlFreeNsList(ret);
++            return(NULL);
++        }
+ 	if (p == NULL) {
+ 	    ret = p = q;
+ 	} else {
+-- 
+2.27.0
+
