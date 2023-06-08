@@ -1,0 +1,30 @@
+From 33264f08a089667a6b69f9ba019e8c3f0bb36d39 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 2 Nov 2022 16:11:00 +0100
+Subject: [PATCH 10/28] malloc-fail: Fix memory leak in xmlParseReference
+
+Found with libFuzzer, see #344.
+
+Reference: https://github.com/GNOME/libxml2/commit/afc7e3a7f41e2e29ac36d4d7cbd0c0755558fa5d
+Conflict: NA
+---
+ parser.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/parser.c b/parser.c
+index 780a8b3..334a0aa 100644
+--- a/parser.c
++++ b/parser.c
+@@ -7463,8 +7463,8 @@ xmlParseReference(xmlParserCtxtPtr ctxt) {
+ 			    firstChild = cur;
+ 			}
+ 			xmlAddChild((xmlNodePtr) ent, nw);
+-			xmlAddChild(ctxt->node, cur);
+ 		    }
++		    xmlAddChild(ctxt->node, cur);
+ 		    if (cur == last)
+ 			break;
+ 		    cur = next;
+-- 
+2.27.0
+

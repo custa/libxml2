@@ -1,0 +1,43 @@
+From 11f49efda51bfde64d341d7a475d480adfeeac79 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 21 Nov 2022 21:35:01 +0100
+Subject: [PATCH 22/28] parser: Fix progress check when parsing character data
+
+Skip over zero bytes to guarantee progress. Short-lived regression.
+
+Reference: https://github.com/GNOME/libxml2/commit/a8b31e68c2331a1289e860ce07c8b80b855b7bf4
+Conflict: parser.c:<xmlParseCharDataComplex>
+---
+ parser.c          | 2 +-
+ parserInternals.c | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/parser.c b/parser.c
+index 4615db0..6e55838 100644
+--- a/parser.c
++++ b/parser.c
+@@ -4654,7 +4654,7 @@ xmlParseCharDataComplex(xmlParserCtxtPtr ctxt, int cdata) {
+ 	    }
+ 	}
+     }
+-    if ((cur != 0) && (!IS_CHAR(cur))) {
++    if ((ctxt->input->cur < ctxt->input->end) && (!IS_CHAR(cur))) {
+ 	/* Generate the error and skip the offending character */
+         xmlFatalErrMsgInt(ctxt, XML_ERR_INVALID_CHAR,
+                           "PCDATA invalid Char value %d\n",
+diff --git a/parserInternals.c b/parserInternals.c
+index 422dfc0..b8eab4b 100644
+--- a/parserInternals.c
++++ b/parserInternals.c
+@@ -406,7 +406,7 @@ xmlNextChar(xmlParserCtxtPtr ctxt)
+ 	return;
+     }
+ 
+-    if ((*ctxt->input->cur == 0) &&
++    if ((ctxt->input->cur >= ctxt->input->end) &&
+         (xmlParserInputGrow(ctxt->input, INPUT_CHUNK) <= 0)) {
+         return;
+     }
+-- 
+2.27.0
+

@@ -1,0 +1,34 @@
+From 1813411ca9f9b60e62ef70e8be2e169af0831edb Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 2 Nov 2022 10:53:24 +0100
+Subject: [PATCH 03/28] schemas: Fix infinite loop in
+ xmlSchemaCheckElemSubstGroup
+
+Types like xmlSchemaTypeAnyTypeDef have a base type pointing to itself,
+resulting in an infinite loop.
+
+Fixes #430.
+
+Reference: https://github.com/GNOME/libxml2/commit/abb5a93fed95cfd628db72e9e1a51fc3ced5c941
+Conflict: NA
+---
+ xmlschemas.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/xmlschemas.c b/xmlschemas.c
+index 9aa6acf..4a767ac 100644
+--- a/xmlschemas.c
++++ b/xmlschemas.c
+@@ -19957,7 +19957,8 @@ xmlSchemaCheckElemSubstGroup(xmlSchemaParserCtxtPtr ctxt,
+ 	    /*
+ 	    * The set of all {derivation method}s involved in the derivation
+ 	    */
+-	    while ((type != NULL) && (type != headType)) {
++	    while ((type != NULL) && (type != headType) &&
++                   (type != type->baseType)) {
+ 		if ((WXS_IS_EXTENSION(type)) &&
+ 		    ((methSet & XML_SCHEMAS_TYPE_BLOCK_RESTRICTION) == 0))
+ 		    methSet |= XML_SCHEMAS_TYPE_BLOCK_EXTENSION;
+-- 
+2.27.0
+

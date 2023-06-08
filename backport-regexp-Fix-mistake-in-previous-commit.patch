@@ -1,0 +1,31 @@
+From c613ab14b85d5813ff834afe23adcab2cc82dc04 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 2 May 2023 00:32:50 +0200
+Subject: [PATCH] regexp: Fix mistake in previous commit
+
+The `ret = 0` line should have been deleted.
+
+Fixes #531.
+
+Reference:https://github.com/GNOME/libxml2/commit/c613ab14b85d5813ff834afe23adcab2cc82dc04
+Conflict:NA
+
+---
+ xmlregexp.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/xmlregexp.c b/xmlregexp.c
+index c89f0c7..185fcda 100644
+--- a/xmlregexp.c
++++ b/xmlregexp.c
+@@ -2707,7 +2707,6 @@ xmlFARecurseDeterminism(xmlRegParserCtxtPtr ctxt, xmlRegStatePtr state,
+             if ((t1->to != tonr) ||
+                 (!xmlFAEqualAtoms(t1->atom, atom, deep)))
+                 ret = 0;
+-	    ret = 0;
+ 	    /* mark the transition as non-deterministic */
+ 	    t1->nd = 1;
+ 	}
+-- 
+2.27.0
+

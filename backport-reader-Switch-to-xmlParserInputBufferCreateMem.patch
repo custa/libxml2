@@ -1,0 +1,41 @@
+From 800bb118a5cb30232a295b89df8cb749eece49af Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 14 Nov 2022 22:00:50 +0100
+Subject: [PATCH 16/28] reader: Switch to xmlParserInputBufferCreateMem
+
+This is less efficient but can't result in input buffer overreads.
+
+Fixes #326.
+
+Reference: https://github.com/GNOME/libxml2/commit/1ca0dfec351a089537127911607c5e89bc937840
+Conflict: NA
+---
+ xmlreader.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/xmlreader.c b/xmlreader.c
+index 989b7c1..ac97bde 100644
+--- a/xmlreader.c
++++ b/xmlreader.c
+@@ -5508,8 +5508,7 @@ xmlReaderForMemory(const char *buffer, int size, const char *URL,
+     xmlTextReaderPtr reader;
+     xmlParserInputBufferPtr buf;
+ 
+-    buf = xmlParserInputBufferCreateStatic(buffer, size,
+-                                      XML_CHAR_ENCODING_NONE);
++    buf = xmlParserInputBufferCreateMem(buffer, size, XML_CHAR_ENCODING_NONE);
+     if (buf == NULL) {
+         return (NULL);
+     }
+@@ -5735,7 +5734,7 @@ xmlReaderNewMemory(xmlTextReaderPtr reader, const char *buffer, int size,
+     if (buffer == NULL)
+         return (-1);
+ 
+-    input = xmlParserInputBufferCreateStatic(buffer, size,
++    input = xmlParserInputBufferCreateMem(buffer, size,
+                                       XML_CHAR_ENCODING_NONE);
+     if (input == NULL) {
+         return (-1);
+-- 
+2.27.0
+

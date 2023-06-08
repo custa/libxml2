@@ -1,0 +1,106 @@
+From 0e4421e793e52e2025297f9252c4dc76b72674c7 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 30 Jan 2023 15:05:58 +0100
+Subject: [PATCH] malloc-fail: Check return value of xmlXPathNodeSetDupNs
+
+Avoid null deref if allocation fails.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/0e4421e793e52e2025297f9252c4dc76b72674c7
+Conflict:NA
+---
+ xpath.c | 38 +++++++++++++++++++++++---------------
+ 1 file changed, 23 insertions(+), 15 deletions(-)
+
+diff --git a/xpath.c b/xpath.c
+index fe0e1e2..212a4e0 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -3588,10 +3588,13 @@ xmlXPathNodeSetCreate(xmlNodePtr val) {
+         ret->nodeMax = XML_NODESET_DEFAULT;
+ 	if (val->type == XML_NAMESPACE_DECL) {
+ 	    xmlNsPtr ns = (xmlNsPtr) val;
++            xmlNodePtr nsNode = xmlXPathNodeSetDupNs((xmlNodePtr) ns->next, ns);
+ 
+-            /* TODO: Check memory error. */
+-	    ret->nodeTab[ret->nodeNr++] =
+-		xmlXPathNodeSetDupNs((xmlNodePtr) ns->next, ns);
++            if (nsNode == NULL) {
++                xmlXPathFreeNodeSet(ret);
++                return(NULL);
++            }
++	    ret->nodeTab[ret->nodeNr++] = nsNode;
+ 	} else
+ 	    ret->nodeTab[ret->nodeNr++] = val;
+     }
+@@ -3648,7 +3651,7 @@ xmlXPathNodeSetContains (xmlNodeSetPtr cur, xmlNodePtr val) {
+ int
+ xmlXPathNodeSetAddNs(xmlNodeSetPtr cur, xmlNodePtr node, xmlNsPtr ns) {
+     int i;
+-
++    xmlNodePtr nsNode;
+ 
+     if ((cur == NULL) || (ns == NULL) || (node == NULL) ||
+         (ns->type != XML_NAMESPACE_DECL) ||
+@@ -3696,8 +3699,10 @@ xmlXPathNodeSetAddNs(xmlNodeSetPtr cur, xmlNodePtr node, xmlNsPtr ns) {
+         cur->nodeMax *= 2;
+ 	cur->nodeTab = temp;
+     }
+-    /* TODO: Check memory error. */
+-    cur->nodeTab[cur->nodeNr++] = xmlXPathNodeSetDupNs(node, ns);
++    nsNode = xmlXPathNodeSetDupNs(node, ns);
++    if(nsNode == NULL)
++        return(-1);
++    cur->nodeTab[cur->nodeNr++] = nsNode;
+     return(0);
+ }
+ 
+@@ -3754,10 +3759,11 @@ xmlXPathNodeSetAdd(xmlNodeSetPtr cur, xmlNodePtr val) {
+     }
+     if (val->type == XML_NAMESPACE_DECL) {
+ 	xmlNsPtr ns = (xmlNsPtr) val;
++        xmlNodePtr nsNode = xmlXPathNodeSetDupNs((xmlNodePtr) ns->next, ns);
+ 
+-        /* TODO: Check memory error. */
+-	cur->nodeTab[cur->nodeNr++] =
+-	    xmlXPathNodeSetDupNs((xmlNodePtr) ns->next, ns);
++        if (nsNode == NULL)
++            return(-1);
++	cur->nodeTab[cur->nodeNr++] = nsNode;
+     } else
+ 	cur->nodeTab[cur->nodeNr++] = val;
+     return(0);
+@@ -3809,10 +3815,11 @@ xmlXPathNodeSetAddUnique(xmlNodeSetPtr cur, xmlNodePtr val) {
+     }
+     if (val->type == XML_NAMESPACE_DECL) {
+ 	xmlNsPtr ns = (xmlNsPtr) val;
++        xmlNodePtr nsNode = xmlXPathNodeSetDupNs((xmlNodePtr) ns->next, ns);
+ 
+-        /* TODO: Check memory error. */
+-	cur->nodeTab[cur->nodeNr++] =
+-	    xmlXPathNodeSetDupNs((xmlNodePtr) ns->next, ns);
++        if (nsNode == NULL)
++            return(-1);
++	cur->nodeTab[cur->nodeNr++] = nsNode;
+     } else
+ 	cur->nodeTab[cur->nodeNr++] = val;
+     return(0);
+@@ -3926,10 +3933,11 @@ xmlXPathNodeSetMerge(xmlNodeSetPtr val1, xmlNodeSetPtr val2) {
+ 	}
+ 	if (n2->type == XML_NAMESPACE_DECL) {
+ 	    xmlNsPtr ns = (xmlNsPtr) n2;
++            xmlNodePtr nsNode = xmlXPathNodeSetDupNs((xmlNodePtr) ns->next, ns);
+ 
+-            /* TODO: Check memory error. */
+-	    val1->nodeTab[val1->nodeNr++] =
+-		xmlXPathNodeSetDupNs((xmlNodePtr) ns->next, ns);
++            if (nsNode == NULL)
++                return(NULL);
++	    val1->nodeTab[val1->nodeNr++] = nsNode;
+ 	} else
+ 	    val1->nodeTab[val1->nodeNr++] = n2;
+     }
+-- 
+2.27.0
+
