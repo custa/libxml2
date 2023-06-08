@@ -13,19 +13,18 @@ Always use a NULL callback for memory buffers to avoid ambiguities.
 Fixes #262.
 
 Reference:https://github.com/GNOME/libxml2/commit/46cd7d224ed5c4cdbd4f72ec899db24e18d21fe7
-Conflict:include/private/io.h, parserInternals.c
-
+Conflict:include/private/io.h
 ---
  parser.c          |  2 +-
- parserInternals.c |  4 ++++
+ parserInternals.c |  3 ++-
  xmlIO.c           | 30 ++++--------------------------
- 3 files changed, 9 insertions(+), 27 deletions(-)
+ 3 files changed, 7 insertions(+), 28 deletions(-)
 
 diff --git a/parser.c b/parser.c
-index 0d5bcc1..4af757e 100644
+index adc449c..f13287a 100644
 --- a/parser.c
 +++ b/parser.c
-@@ -2136,7 +2136,7 @@ static void xmlGROW (xmlParserCtxtPtr ctxt) {
+@@ -2134,7 +2134,7 @@ static void xmlGROW (xmlParserCtxtPtr ctxt) {
      if (((curEnd > XML_MAX_LOOKUP_LIMIT) ||
           (curBase > XML_MAX_LOOKUP_LIMIT)) &&
           ((ctxt->input->buf) &&
@@ -35,22 +34,21 @@ index 0d5bcc1..4af757e 100644
          xmlFatalErr(ctxt, XML_ERR_INTERNAL_ERROR, "Huge input lookup");
          xmlHaltParser(ctxt);
 diff --git a/parserInternals.c b/parserInternals.c
-index c5c0b16..a418c63 100644
+index 0ef44fe..ef18ccf 100644
 --- a/parserInternals.c
 +++ b/parserInternals.c
-@@ -320,6 +320,10 @@ xmlParserInputGrow(xmlParserInputPtr in, int len) {
+@@ -311,7 +311,8 @@ xmlParserInputGrow(xmlParserInputPtr in, int len) {
+     if (in->buf->buffer == NULL) return(-1);
  
-         return(0);
-     }
-+    
+     /* Don't grow memory buffers. */
+-    if (in->buf->readcallback == NULL) return(0);
 +    if ((in->buf->encoder == NULL) && (in->buf->readcallback == NULL))
-+	return(0);
-+
-     if (in->buf->readcallback != NULL) {
- 	ret = xmlParserInputBufferGrow(in->buf, len);
-     } else
++        return(0);
+ 
+     CHECK_BUFFER(in);
+ 
 diff --git a/xmlIO.c b/xmlIO.c
-index 007144c..3546bd4 100644
+index 0762034..71c9fbf 100644
 --- a/xmlIO.c
 +++ b/xmlIO.c
 @@ -729,20 +729,6 @@ xmlCheckFilename (const char *path)
@@ -83,7 +81,7 @@ index 007144c..3546bd4 100644
  	ret->closecallback = NULL;
  	errcode = xmlBufAdd(ret->buffer, (const xmlChar *) mem, size);
  	if (errcode != 0) {
-@@ -3267,10 +3253,8 @@ xmlParserInputBufferGrow(xmlParserInputBufferPtr in, int len) {
+@@ -3261,10 +3247,8 @@ xmlParserInputBufferGrow(xmlParserInputBufferPtr in, int len) {
  	res = in->readcallback(in->context, &buffer[0], len);
  	if (res <= 0)
  	    in->readcallback = endOfInput;
@@ -96,7 +94,7 @@ index 007144c..3546bd4 100644
      }
      if (res < 0) {
  	return(-1);
-@@ -3337,13 +3321,7 @@ xmlParserInputBufferGrow(xmlParserInputBufferPtr in, int len) {
+@@ -3331,13 +3315,7 @@ xmlParserInputBufferGrow(xmlParserInputBufferPtr in, int len) {
   */
  int
  xmlParserInputBufferRead(xmlParserInputBufferPtr in, int len) {
@@ -112,5 +110,5 @@ index 007144c..3546bd4 100644
  
  #ifdef LIBXML_OUTPUT_ENABLED
 -- 
-2.33.0
+2.27.0
 
