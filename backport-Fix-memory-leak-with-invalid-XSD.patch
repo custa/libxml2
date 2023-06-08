@@ -1,0 +1,63 @@
+From a09c89545d3ed5b56701abcc5d638faa01c5c903 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 15 Aug 2022 12:19:25 +0200
+Subject: [PATCH] Fix memory leak with invalid XSD
+
+xmlSchemaClearElemInfo can add new items to the "matcher" cache, so the
+cache must be cleared after calling this function, not before. This
+only seems to affect invalid XSDs.
+
+Fixes #390.
+Reference:https://github.com/GNOME/libxml2/commit/a09c89545d3ed5b56701abcc5d638faa01c5c903
+Conflict:NA
+---
+ xmlschemas.c | 26 +++++++++++++++-----------
+ 1 file changed, 15 insertions(+), 11 deletions(-)
+
+diff --git a/xmlschemas.c b/xmlschemas.c
+index 9da4cd1..9aa6acf 100644
+--- a/xmlschemas.c
++++ b/xmlschemas.c
+@@ -27830,17 +27830,6 @@ xmlSchemaClearValidCtxt(xmlSchemaValidCtxtPtr vctxt)
+ 	} while (cur != NULL);
+ 	vctxt->aidcs = NULL;
+     }
+-    if (vctxt->idcMatcherCache != NULL) {
+-	xmlSchemaIDCMatcherPtr matcher = vctxt->idcMatcherCache, tmp;
+-
+-	while (matcher) {
+-	    tmp = matcher;
+-	    matcher = matcher->nextCached;
+-	    xmlSchemaIDCFreeMatcherList(tmp);
+-	}
+-	vctxt->idcMatcherCache = NULL;
+-    }
+-
+ 
+     if (vctxt->idcNodes != NULL) {
+ 	int i;
+@@ -27907,6 +27896,21 @@ xmlSchemaClearValidCtxt(xmlSchemaValidCtxtPtr vctxt)
+         xmlFree(vctxt->filename);
+ 	vctxt->filename = NULL;
+     }
++
++    /*
++     * Note that some cleanup functions can move items to the cache,
++     * so the cache shouldn't be freed too early.
++     */
++    if (vctxt->idcMatcherCache != NULL) {
++	xmlSchemaIDCMatcherPtr matcher = vctxt->idcMatcherCache, tmp;
++
++	while (matcher) {
++	    tmp = matcher;
++	    matcher = matcher->nextCached;
++	    xmlSchemaIDCFreeMatcherList(tmp);
++	}
++	vctxt->idcMatcherCache = NULL;
++    }
+ }
+ 
+ /**
+-- 
+2.27.0
+
