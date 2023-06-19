@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.14
-Release: 6
+Release: 7
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.9/%{name}-%{version}.tar.xz
@@ -61,7 +61,7 @@ Patch6042:  backport-uri-Allow-port-without-host.patch
 Patch6043:  backport-parser-Fix-consumed-accounting-when-switching-encodi.patch
 Patch6044:  backport-html-Fix-check-for-end-of-comment-in-push-parser.patch
 Patch6045:  backport-parser-Fix-push-parser-with-1-3-byte-initial-chunk.patch
-Patch6046:  backport-parser-Fix-progress-check-when-parsing-character-dat.patch
+
 Patch6047:  backport-parser-Restore-parser-state-in-xmlParseCDSect.patch
 Patch6048:  backport-parser-Remove-dangerous-check-in-xmlParseCharData.patch
 Patch6049:  backport-parser-Don-t-call-DefaultSAXHandlerInit-from-xmlInit.patch
@@ -342,6 +342,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Mon Jun 19 2023 zhuofeng <zhuofeng2@huawei.com> - 2.9.14-7
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:revert parser-Fix-progress-check
+
 * Thu Jun 08 2023 zhuofeng <zhuofeng2@huawei.com> - 2.9.14-6
 - Type:bugfix
 - CVE:NA
