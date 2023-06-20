@@ -1,0 +1,37 @@
+From 64b76f8163d3608f9881b4de23dcc06530ba9323 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 14 Mar 2023 13:17:20 +0100
+Subject: [PATCH] xmllint: Fix memory leak with --pattern --stream
+
+Fixes #499.
+
+Reference:https://github.com/GNOME/libxml2/commit/64b76f8163d3608f9881b4de23dcc06530ba9323
+Conflict:NA
+
+---
+ xmllint.c | 9 ---------
+ 1 file changed, 9 deletions(-)
+
+diff --git a/xmllint.c b/xmllint.c
+index ee6bfdc..c79b8e9 100644
+--- a/xmllint.c
++++ b/xmllint.c
+@@ -1848,15 +1848,6 @@ static void streamFile(char *filename) {
+ #endif
+ 	reader = xmlReaderForFile(filename, NULL, options);
+ #ifdef LIBXML_PATTERN_ENABLED
+-    if (pattern != NULL) {
+-        patternc = xmlPatterncompile((const xmlChar *) pattern, NULL, 0, NULL);
+-	if (patternc == NULL) {
+-	    xmlGenericError(xmlGenericErrorContext,
+-		    "Pattern %s failed to compile\n", pattern);
+-            progresult = XMLLINT_ERR_SCHEMAPAT;
+-	    pattern = NULL;
+-	}
+-    }
+     if (patternc != NULL) {
+         patstream = xmlPatternGetStreamCtxt(patternc);
+ 	if (patstream != NULL) {
+-- 
+2.27.0
+

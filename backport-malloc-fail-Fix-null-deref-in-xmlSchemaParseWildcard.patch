@@ -1,0 +1,29 @@
+From e15838ab5454514e53981585c71cd20bb1537d01 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 5 Mar 2023 14:09:14 +0100
+Subject: [PATCH] malloc-fail: Fix null deref in xmlSchemaParseWildcardNs
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/e15838ab5454514e53981585c71cd20bb1537d01
+Conflict:NA
+---
+ xmlschemas.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/xmlschemas.c b/xmlschemas.c
+index 9ace2b7..dd79d2e 100644
+--- a/xmlschemas.c
++++ b/xmlschemas.c
+@@ -6867,6 +6867,8 @@ xmlSchemaParseWildcardNs(xmlSchemaParserCtxtPtr ctxt,
+      */
+     attr = xmlSchemaGetPropNode(node, "namespace");
+     ns = xmlSchemaGetNodeContent(ctxt, (xmlNodePtr) attr);
++    if (ns == NULL)
++        return (-1);
+     if ((attr == NULL) || (xmlStrEqual(ns, BAD_CAST "##any")))
+ 	wildc->any = 1;
+     else if (xmlStrEqual(ns, BAD_CAST "##other")) {
+-- 
+2.27.0
+

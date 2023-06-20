@@ -1,0 +1,66 @@
+From 9f7b114232904a7d0e304bff30ed4b255f34a572 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 9 Mar 2023 05:25:09 +0100
+Subject: [PATCH] regexp: Fix cycle check in xmlFAReduceEpsilonTransitions
+
+The visited flag must only be reset after the first call to
+xmlFAReduceEpsilonTransitions has finished. Visiting states multiple
+times could lead to unnecessary processing of duplicate transitions.
+
+Similar to 68eadabd.
+
+Reference:https://github.com/GNOME/libxml2/commit/9f7b114232904a7d0e304bff30ed4b255f34a572
+Conflict:NA
+
+---
+ xmlregexp.c | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+diff --git a/xmlregexp.c b/xmlregexp.c
+index cc4ae6f..24f9fc0 100644
+--- a/xmlregexp.c
++++ b/xmlregexp.c
+@@ -1880,7 +1880,32 @@ xmlFAReduceEpsilonTransitions(xmlRegParserCtxtPtr ctxt, int fromnr,
+ 	    }
+ 	}
+     }
++}
++
++/**
++ * xmlFAFinishReduceEpsilonTransitions:
++ * @ctxt:  a regexp parser context
++ * @fromnr:  the from state
++ * @tonr:  the to state
++ * @counter:  should that transition be associated to a counted
++ *
++ */
++static void
++xmlFAFinishReduceEpsilonTransitions(xmlRegParserCtxtPtr ctxt, int tonr) {
++    int transnr;
++    xmlRegStatePtr to;
++
++    to = ctxt->states[tonr];
++    if ((to->mark == XML_REGEXP_MARK_START) ||
++	(to->mark == XML_REGEXP_MARK_NORMAL))
++	return;
++
+     to->mark = XML_REGEXP_MARK_NORMAL;
++    for (transnr = 0;transnr < to->nbTrans;transnr++) {
++	xmlRegTransPtr t1 = &to->trans[transnr];
++	if ((t1->to >= 0) && (t1->atom == NULL))
++            xmlFAFinishReduceEpsilonTransitions(ctxt, t1->to);
++    }
+ }
+ 
+ /**
+@@ -2032,6 +2057,7 @@ xmlFAEliminateEpsilonTransitions(xmlRegParserCtxtPtr ctxt) {
+ 		    state->mark = XML_REGEXP_MARK_START;
+ 		    xmlFAReduceEpsilonTransitions(ctxt, statenr,
+ 				      newto, state->trans[transnr].counter);
++		    xmlFAFinishReduceEpsilonTransitions(ctxt, newto);
+ 		    state->mark = XML_REGEXP_MARK_NORMAL;
+ #ifdef DEBUG_REGEXP_GRAPH
+ 		} else {
+-- 
+2.27.0
+

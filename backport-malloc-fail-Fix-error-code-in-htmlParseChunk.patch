@@ -1,0 +1,32 @@
+From 53d1cc98cf08c789087a92fd57da70811abe7d60 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 16 Feb 2023 15:09:32 +0100
+Subject: [PATCH] malloc-fail: Fix error code in htmlParseChunk
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/53d1cc98cf08c789087a92fd57da70811abe7d60
+Conflict:NA
+---
+ HTMLparser.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index 457b2a3..72ede56 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -6276,9 +6276,8 @@ htmlParseChunk(htmlParserCtxtPtr ctxt, const char *chunk, int size,
+ 	res = xmlParserInputBufferPush(ctxt->input->buf, size, chunk);
+         xmlBufSetInputBaseCur(ctxt->input->buf->buffer, ctxt->input, base, cur);
+ 	if (res < 0) {
+-	    ctxt->errNo = XML_PARSER_EOF;
+-	    ctxt->disableSAX = 1;
+-	    return (XML_PARSER_EOF);
++            htmlErrMemory(ctxt, NULL);
++	    return (ctxt->errNo);
+ 	}
+ #ifdef DEBUG_PUSH
+ 	xmlGenericError(xmlGenericErrorContext, "HPP: pushed %d\n", size);
+-- 
+2.27.0
+

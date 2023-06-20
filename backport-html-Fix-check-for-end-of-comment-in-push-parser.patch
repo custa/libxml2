@@ -1,0 +1,66 @@
+From 63fa7b922a169ed6b86a4c6678140795c28657f5 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 20 Nov 2022 19:54:34 +0100
+Subject: [PATCH 20/28] html: Fix check for end of comment in push parser
+
+Make sure to reset checkIndex. Handle case where "--" or "--!" is at the
+end of the buffer. Fix "avail" check in htmlParseOrTryFinish.
+
+Reference: https://github.com/GNOME/libxml2/commit/c93679381c565f4c110c7a6110372bd6d0610308
+Conflict: HTMLparser.c:<htmlParseLookupCommentEnd>,<htmlParseTryOrFinish>
+---
+ HTMLparser.c | 20 ++++++++++++++------
+ 1 file changed, 14 insertions(+), 6 deletions(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index e0b32fe..746edf6 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -5405,14 +5405,22 @@ static int
+ htmlParseLookupCommentEnd(htmlParserCtxtPtr ctxt)
+ {
+     int mark = 0;
++    int offset;
+     int cur = CUR_PTR - BASE_PTR;
+ 
+-    while (mark >= 0) {
++    while (1) {
+ 	mark = htmlParseLookupSequence(ctxt, '-', '-', 0, 0);
+-	if ((mark < 0) ||
+-	    (NXT(mark+2) == '>') ||
++	if (mark < 0)
++	    break;
++	if ((NXT(mark+2) == '>') ||
+ 	    ((NXT(mark+2) == '!') && (NXT(mark+3) == '>'))) {
+-	    return mark;
++	    ctxt->checkIndex = 0;
++	    break;
++	}
++	offset = (NXT(mark+2) == '!') ? 3 : 2;
++	if (mark + offset >= ctxt->input->end - ctxt->input->cur) {
++	    ctxt->checkIndex = mark;
++	    return(-1);
+ 	}
+ 	ctxt->checkIndex = cur + mark + 1;
+     }
+@@ -5949,6 +5957,8 @@ htmlParseTryOrFinish(htmlParserCtxtPtr ctxt, int terminate) {
+ 			break;
+ 		    }
+ 		} else {
++		    if ((cur == '<') && (next == '!') && (avail < 4))
++			goto done;
+ 		    /*
+ 		     * Sometimes DOCTYPE arrives in the middle of the document
+ 		     */
+@@ -5984,8 +5994,6 @@ htmlParseTryOrFinish(htmlParserCtxtPtr ctxt, int terminate) {
+ #endif
+ 			htmlParsePI(ctxt);
+ 			ctxt->instate = XML_PARSER_CONTENT;
+-		    } else if ((cur == '<') && (next == '!') && (avail < 4)) {
+-			goto done;
+ 		    } else if ((cur == '<') && (next == '/')) {
+ 			ctxt->instate = XML_PARSER_END_TAG;
+ 			ctxt->checkIndex = 0;
+-- 
+2.27.0
+

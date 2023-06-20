@@ -1,0 +1,33 @@
+From 85057e513111f69f5a8af94f3a82899d23d4c057 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 21 Feb 2023 15:24:19 +0100
+Subject: [PATCH] regexp: Add sanity check in xmlRegCalloc2
+
+These arguments should be non-zero, but add a sanity check to avoid
+division by zero.
+
+Fixes #450.
+
+Reference:https://github.com/GNOME/libxml2/commit/85057e513111f69f5a8af94f3a82899d23d4c057
+Conflict:NA
+---
+ xmlregexp.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/xmlregexp.c b/xmlregexp.c
+index e7c48a4..cc4ae6f 100644
+--- a/xmlregexp.c
++++ b/xmlregexp.c
+@@ -443,7 +443,8 @@ xmlRegCalloc2(size_t dim1, size_t dim2, size_t elemSize) {
+     void *ret;
+ 
+     /* Check for overflow */
+-    if (dim1 > SIZE_MAX / dim2 / elemSize)
++    if ((dim2 == 0) || (elemSize == 0) ||
++        (dim1 > SIZE_MAX / dim2 / elemSize))
+         return (NULL);
+     totalSize = dim1 * dim2 * elemSize;
+     ret = xmlMalloc(totalSize);
+-- 
+2.27.0
+

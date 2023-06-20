@@ -1,0 +1,49 @@
+From 3eb9f5ca4e6b0933ac1dc7fbcce38669ac002b7f Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 21 Mar 2023 13:19:31 +0100
+Subject: [PATCH] parser: Limit name length in xmlParseEncName
+
+
+Reference:https://github.com/GNOME/libxml2/commit/3eb9f5ca4e6b0933ac1dc7fbcce38669ac002b7f
+Conflict:NA
+
+---
+ parser.c | 13 ++++++++-----
+ 1 file changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/parser.c b/parser.c
+index b872d34..a4c9fb2 100644
+--- a/parser.c
++++ b/parser.c
+@@ -10301,6 +10301,9 @@ xmlParseEncName(xmlParserCtxtPtr ctxt) {
+     xmlChar *buf = NULL;
+     int len = 0;
+     int size = 10;
++    int maxLength = (ctxt->options & XML_PARSE_HUGE) ?
++                    XML_MAX_TEXT_LENGTH :
++                    XML_MAX_NAME_LENGTH;
+     xmlChar cur;
+ 
+     cur = CUR;
+@@ -10333,13 +10336,13 @@ xmlParseEncName(xmlParserCtxtPtr ctxt) {
+ 		buf = tmp;
+ 	    }
+ 	    buf[len++] = cur;
++            if (len > maxLength) {
++                xmlFatalErr(ctxt, XML_ERR_NAME_TOO_LONG, "EncName");
++                xmlFree(buf);
++                return(NULL);
++            }
+ 	    NEXT;
+ 	    cur = CUR;
+-	    if (cur == 0) {
+-	        SHRINK;
+-		GROW;
+-		cur = CUR;
+-	    }
+         }
+ 	buf[len] = 0;
+     } else {
+-- 
+2.27.0
+

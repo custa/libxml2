@@ -1,0 +1,64 @@
+From 0c5f40b788410753eb73e3040be4f50b608923e1 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 22 Jan 2023 13:27:41 +0100
+Subject: [PATCH] malloc-fail: Fix null deref in xmlSAX2AttributeInternal
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/0c5f40b788410753eb73e3040be4f50b608923e1
+Conflict:NA
+---
+ SAX2.c | 36 ++++++++++++++++++------------------
+ 1 file changed, 18 insertions(+), 18 deletions(-)
+
+diff --git a/SAX2.c b/SAX2.c
+index 3eebd2b..2426e93 100644
+--- a/SAX2.c
++++ b/SAX2.c
+@@ -1297,25 +1297,25 @@ xmlSAX2AttributeInternal(void *ctx, const xmlChar *fullname,
+ 
+     /* !!!!!! <a toto:arg="" xmlns:toto="http://toto.com"> */
+     ret = xmlNewNsPropEatName(ctxt->node, namespace, name, NULL);
++    if (ret == NULL)
++        goto error;
+ 
+-    if (ret != NULL) {
+-        if ((ctxt->replaceEntities == 0) && (!ctxt->html)) {
+-	    xmlNodePtr tmp;
+-
+-	    ret->children = xmlStringGetNodeList(ctxt->myDoc, value);
+-	    tmp = ret->children;
+-	    while (tmp != NULL) {
+-		tmp->parent = (xmlNodePtr) ret;
+-		if (tmp->next == NULL)
+-		    ret->last = tmp;
+-		tmp = tmp->next;
+-	    }
+-	} else if (value != NULL) {
+-	    ret->children = xmlNewDocText(ctxt->myDoc, value);
+-	    ret->last = ret->children;
+-	    if (ret->children != NULL)
+-		ret->children->parent = (xmlNodePtr) ret;
+-	}
++    if ((ctxt->replaceEntities == 0) && (!ctxt->html)) {
++        xmlNodePtr tmp;
++
++        ret->children = xmlStringGetNodeList(ctxt->myDoc, value);
++        tmp = ret->children;
++        while (tmp != NULL) {
++            tmp->parent = (xmlNodePtr) ret;
++            if (tmp->next == NULL)
++                ret->last = tmp;
++            tmp = tmp->next;
++        }
++    } else if (value != NULL) {
++        ret->children = xmlNewDocText(ctxt->myDoc, value);
++        ret->last = ret->children;
++        if (ret->children != NULL)
++            ret->children->parent = (xmlNodePtr) ret;
+     }
+ 
+ #ifdef LIBXML_VALID_ENABLED
+-- 
+2.27.0
+

@@ -1,0 +1,28 @@
+From cb4334b7abf265f55d1a41f435fedd67494eeb18 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 14 Feb 2023 18:10:14 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlSAX2StartElementNs
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/cb4334b7abf265f55d1a41f435fedd67494eeb18
+Conflict:NA
+---
+ SAX2.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/SAX2.c b/SAX2.c
+index 2426e93..916e974 100644
+--- a/SAX2.c
++++ b/SAX2.c
+@@ -2242,6 +2242,7 @@ xmlSAX2StartElementNs(void *ctx,
+ 	        ret->name = lname;
+ 	    if (ret->name == NULL) {
+ 	        xmlSAX2ErrMemory(ctxt, "xmlSAX2StartElementNs");
++                xmlFree(ret);
+ 		return;
+ 	    }
+ 	}
+-- 
+2.27.0
+

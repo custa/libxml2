@@ -1,0 +1,102 @@
+From 4499143a8737148b9be4e3c05e71bc60c5b52e4f Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 26 Feb 2023 15:43:50 +0100
+Subject: [PATCH] malloc-fail: Check for malloc failure in xmlHashAddEntry
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/4499143a8737148b9be4e3c05e71bc60c5b52e4f
+Conflict:NA
+---
+ hash.c | 54 ++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 50 insertions(+), 4 deletions(-)
+
+diff --git a/hash.c b/hash.c
+index 7b82d2f..00250ba 100644
+--- a/hash.c
++++ b/hash.c
+@@ -614,8 +614,24 @@ xmlHashAddEntry3(xmlHashTablePtr table, const xmlChar *name,
+         entry->name3 = (xmlChar *) name3;
+     } else {
+ 	entry->name = xmlStrdup(name);
+-	entry->name2 = xmlStrdup(name2);
+-	entry->name3 = xmlStrdup(name3);
++        if (entry->name == NULL) {
++            entry->name2 = NULL;
++            goto error;
++        }
++        if (name2 == NULL) {
++            entry->name2 = NULL;
++        } else {
++	    entry->name2 = xmlStrdup(name2);
++            if (entry->name2 == NULL)
++                goto error;
++        }
++        if (name3 == NULL) {
++            entry->name3 = NULL;
++        } else {
++	    entry->name3 = xmlStrdup(name3);
++            if (entry->name3 == NULL)
++                goto error;
++        }
+     }
+     entry->payload = userdata;
+     entry->next = NULL;
+@@ -631,6 +647,13 @@ xmlHashAddEntry3(xmlHashTablePtr table, const xmlChar *name,
+ 	xmlHashGrow(table, MAX_HASH_LEN * table->size);
+ 
+     return(0);
++
++error:
++    xmlFree(entry->name2);
++    xmlFree(entry->name);
++    if (insert != NULL)
++        xmlFree(entry);
++    return(-1);
+ }
+ 
+ /**
+@@ -744,8 +767,24 @@ xmlHashUpdateEntry3(xmlHashTablePtr table, const xmlChar *name,
+         entry->name3 = (xmlChar *) name3;
+     } else {
+ 	entry->name = xmlStrdup(name);
+-	entry->name2 = xmlStrdup(name2);
+-	entry->name3 = xmlStrdup(name3);
++        if (entry->name == NULL) {
++            entry->name2 = NULL;
++            goto error;
++        }
++        if (name2 == NULL) {
++            entry->name2 = NULL;
++        } else {
++	    entry->name2 = xmlStrdup(name2);
++            if (entry->name2 == NULL)
++                goto error;
++        }
++        if (name3 == NULL) {
++            entry->name3 = NULL;
++        } else {
++	    entry->name3 = xmlStrdup(name3);
++            if (entry->name3 == NULL)
++                goto error;
++        }
+     }
+     entry->payload = userdata;
+     entry->next = NULL;
+@@ -757,6 +796,13 @@ xmlHashUpdateEntry3(xmlHashTablePtr table, const xmlChar *name,
+ 	insert->next = entry;
+     }
+     return(0);
++
++error:
++    xmlFree(entry->name2);
++    xmlFree(entry->name);
++    if (insert != NULL)
++        xmlFree(entry);
++    return(-1);
+ }
+ 
+ /**
+-- 
+2.27.0
+
