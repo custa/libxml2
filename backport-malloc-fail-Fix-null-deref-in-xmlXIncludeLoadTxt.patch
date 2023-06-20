@@ -1,0 +1,33 @@
+From dc2dde1ab92e50766df654fa9445456adb007605 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 4 Feb 2023 15:00:54 +0100
+Subject: [PATCH] malloc-fail: Fix null deref in xmlXIncludeLoadTxt
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/dc2dde1ab92e50766df654fa9445456adb007605
+Conflict:xinclude.c
+---
+ xinclude.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/xinclude.c b/xinclude.c
+index e5e3b16..60a0d7b 100644
+--- a/xinclude.c
++++ b/xinclude.c
+@@ -1891,6 +1891,12 @@ xmlXIncludeLoadTxt(xmlXIncludeCtxtPtr ctxt, const xmlChar *url, int nr) {
+ 	xmlCharEncCloseFunc(buf->encoder);
+     buf->encoder = xmlGetCharEncodingHandler(enc);
+     node = xmlNewText(NULL);
++    if (node == NULL) {
++        xmlFreeInputStream(inputStream);
++        xmlFreeParserCtxt(pctxt);
++        xmlFree(URL);
++        return(-1);
++    }
+ 
+     /*
+      * Scan all chars from the resource and add the to the node
+-- 
+2.27.0
+

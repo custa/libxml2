@@ -1,0 +1,29 @@
+From 74263eff5f6212afa2196022ecd2fbc39c6d3c36 Mon Sep 17 00:00:00 2001
+From: jinsub ahn <jinniahn@gmail.com>
+Date: Wed, 30 Mar 2022 06:02:31 +0000
+Subject: [PATCH 206/300] fix: xmlXPathParserContext could be double-delete in 
+ OOM case.
+
+Reference:https://github.com/GNOME/libxml2/commit/74263eff5f6212afa2196022ecd2fbc39c6d3c36
+Conflict:NA
+---
+ xpath.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/xpath.c b/xpath.c
+index c2d8458..e79dcec 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -13895,7 +13895,7 @@ xmlXPathRunEval(xmlXPathParserContextPtr ctxt, int toBool)
+ 			 xmlMalloc(10 * sizeof(xmlXPathObjectPtr));
+ 	if (ctxt->valueTab == NULL) {
+ 	    xmlXPathPErrMemory(ctxt, "creating evaluation context\n");
+-	    xmlFree(ctxt);
++	    return(-1);
+ 	}
+ 	ctxt->valueNr = 0;
+ 	ctxt->valueMax = 10;
+-- 
+2.27.0
+
+

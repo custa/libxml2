@@ -1,0 +1,56 @@
+From b1b654171e44dba90bbc6836ca05dd4e1161b4b0 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 20 Aug 2022 15:15:04 +0200
+Subject: [PATCH] Create stream with buffer in xmlNewStringInputStream
+
+Create an input stream with a buffer in xmlNewStringInputStream.
+Otherwise, switching encodings won't work.
+
+See #34.
+Reference:https://github.com/GNOME/libxml2/commit/b1b654171e44dba90bbc6836ca05dd4e1161b4b0
+Conflict:NA
+---
+ parserInternals.c | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/parserInternals.c b/parserInternals.c
+index d68592f..6ef7671 100644
+--- a/parserInternals.c
++++ b/parserInternals.c
+@@ -1465,6 +1465,7 @@ xmlNewEntityInputStream(xmlParserCtxtPtr ctxt, xmlEntityPtr entity) {
+ xmlParserInputPtr
+ xmlNewStringInputStream(xmlParserCtxtPtr ctxt, const xmlChar *buffer) {
+     xmlParserInputPtr input;
++    xmlParserInputBufferPtr buf;
+ 
+     if (buffer == NULL) {
+         xmlErrInternal(ctxt, "xmlNewStringInputStream string = NULL\n",
+@@ -1474,15 +1475,21 @@ xmlNewStringInputStream(xmlParserCtxtPtr ctxt, const xmlChar *buffer) {
+     if (xmlParserDebugEntities)
+ 	xmlGenericError(xmlGenericErrorContext,
+ 		"new fixed input: %.30s\n", buffer);
++    buf = xmlParserInputBufferCreateMem((const char *) buffer,
++                                        strlen((const char *) buffer),
++                                        XML_CHAR_ENCODING_NONE);
++    if (buf == NULL) {
++	xmlErrMemory(ctxt, NULL);
++        return(NULL);
++    }
+     input = xmlNewInputStream(ctxt);
+     if (input == NULL) {
+         xmlErrMemory(ctxt,  "couldn't allocate a new input stream\n");
++	xmlFreeParserInputBuffer(buf);
+ 	return(NULL);
+     }
+-    input->base = buffer;
+-    input->cur = buffer;
+-    input->length = xmlStrlen(buffer);
+-    input->end = &buffer[input->length];
++    input->buf = buf;
++    xmlBufResetInput(input->buf->buffer, input);
+     return(input);
+ }
+ 
+-- 
+2.27.0
+

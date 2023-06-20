@@ -1,0 +1,36 @@
+From 06a2c251a18d8cc93bcae82270997b27cbc9aaea Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 6 May 2023 15:28:13 +0200
+Subject: [PATCH] hash: Fix possible startup crash with old libxslt versions
+
+Call xmlInitParser in xmlHashCreate to make it work if the library
+wasn't initialized yet.
+
+Otherwise, exsltRegisterAll from libxslt 1.1.24 or older might cause
+a crash.
+
+See #534.
+
+Reference:https://github.com/GNOME/libxml2/commit/06a2c251a18d8cc93bcae82270997b27cbc9aaea
+Conflict:NA
+
+---
+ hash.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/hash.c b/hash.c
+index 00250ba..ac868ff 100644
+--- a/hash.c
++++ b/hash.c
+@@ -181,6 +181,8 @@ xmlHashTablePtr
+ xmlHashCreate(int size) {
+     xmlHashTablePtr table;
+ 
++    xmlInitParser();
++
+     if (size <= 0)
+         size = 256;
+ 
+-- 
+2.27.0
+

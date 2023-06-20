@@ -1,0 +1,39 @@
+From d9a8dab3a3ba980f1efc1366c1b9a3a2434dcabd Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 22 Jan 2023 12:00:59 +0100
+Subject: [PATCH] error: Don't move past current position
+
+Make sure that we never move past the current position in
+xmlParserPrintFileContextInternal.
+
+Found with libFuzzer and -fsanitize=implicit-conversion.
+
+Reference:https://github.com/GNOME/libxml2/commit/d9a8dab3a3ba980f1efc1366c1b9a3a2434dcabd
+Conflict:NA
+---
+ error.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/error.c b/error.c
+index fe9a7e2..5eee72a 100644
+--- a/error.c
++++ b/error.c
+@@ -188,10 +188,12 @@ xmlParserPrintFileContextInternal(xmlParserInputPtr input ,
+     }
+     n = 0;
+     /* search backwards for beginning-of-line (to max buff size) */
+-    while ((n++ < (sizeof(content)-1)) && (cur > base) &&
+-	   (*(cur) != '\n') && (*(cur) != '\r'))
++    while ((n < sizeof(content) - 1) && (cur > base) &&
++	   (*cur != '\n') && (*cur != '\r')) {
+         cur--;
+-    if ((*(cur) == '\n') || (*(cur) == '\r')) {
++        n++;
++    }
++    if ((n > 0) && ((*cur == '\n') || (*cur == '\r'))) {
+         cur++;
+     } else {
+         /* skip over continuation bytes */
+-- 
+2.27.0
+

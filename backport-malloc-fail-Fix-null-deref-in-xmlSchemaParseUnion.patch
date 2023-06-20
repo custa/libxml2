@@ -1,0 +1,29 @@
+From 31844c74df39c3b88735ef884c33c41da9d52795 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 5 Mar 2023 14:10:08 +0100
+Subject: [PATCH] malloc-fail: Fix null deref in xmlSchemaParseUnion
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/31844c74df39c3b88735ef884c33c41da9d52795
+Conflict:NA
+---
+ xmlschemas.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/xmlschemas.c b/xmlschemas.c
+index 06bf664..5b93937 100644
+--- a/xmlschemas.c
++++ b/xmlschemas.c
+@@ -9006,6 +9006,8 @@ xmlSchemaParseUnion(xmlSchemaParserCtxtPtr ctxt, xmlSchemaPtr schema,
+ 	xmlSchemaQNameRefPtr ref;
+ 
+ 	cur = xmlSchemaGetNodeContent(ctxt, (xmlNodePtr) attr);
++        if (cur == NULL)
++            return (-1);
+ 	type->base = cur;
+ 	do {
+ 	    while (IS_BLANK_CH(*cur))
+-- 
+2.27.0
+

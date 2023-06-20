@@ -1,0 +1,85 @@
+From 767ae50bc9e94a35bfede3af291cf0060893db0f Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 5 Mar 2023 14:11:24 +0100
+Subject: [PATCH] malloc-fail: Fix null deref after
+ xmlSchemaItemList{Add,Insert}
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/767ae50bc9e94a35bfede3af291cf0060893db0f
+Conflict:NA
+---
+ xmlschemas.c | 44 ++++++++++++++++----------------------------
+ 1 file changed, 16 insertions(+), 28 deletions(-)
+
+diff --git a/xmlschemas.c b/xmlschemas.c
+index 46cbe0f..d2f8bf1 100644
+--- a/xmlschemas.c
++++ b/xmlschemas.c
+@@ -3417,23 +3417,17 @@ xmlSchemaItemListClear(xmlSchemaItemListPtr list)
+ static int
+ xmlSchemaItemListAdd(xmlSchemaItemListPtr list, void *item)
+ {
+-    if (list->items == NULL) {
+-	list->items = (void **) xmlMalloc(
+-	    20 * sizeof(void *));
+-	if (list->items == NULL) {
+-	    xmlSchemaPErrMemory(NULL, "allocating new item list", NULL);
+-	    return(-1);
+-	}
+-	list->sizeItems = 20;
+-    } else if (list->sizeItems <= list->nbItems) {
+-	list->sizeItems *= 2;
+-	list->items = (void **) xmlRealloc(list->items,
+-	    list->sizeItems * sizeof(void *));
+-	if (list->items == NULL) {
++    if (list->sizeItems <= list->nbItems) {
++        void **tmp;
++        size_t newSize = list->sizeItems == 0 ? 20 : list->sizeItems * 2;
++
++	tmp = (void **) xmlRealloc(list->items, newSize * sizeof(void *));
++	if (tmp == NULL) {
+ 	    xmlSchemaPErrMemory(NULL, "growing item list", NULL);
+-	    list->sizeItems = 0;
+ 	    return(-1);
+ 	}
++        list->items = tmp;
++	list->sizeItems = newSize;
+     }
+     list->items[list->nbItems++] = item;
+     return(0);
+@@ -3474,23 +3468,17 @@ xmlSchemaItemListAddSize(xmlSchemaItemListPtr list,
+ static int
+ xmlSchemaItemListInsert(xmlSchemaItemListPtr list, void *item, int idx)
+ {
+-    if (list->items == NULL) {
+-	list->items = (void **) xmlMalloc(
+-	    20 * sizeof(void *));
+-	if (list->items == NULL) {
+-	    xmlSchemaPErrMemory(NULL, "allocating new item list", NULL);
+-	    return(-1);
+-	}
+-	list->sizeItems = 20;
+-    } else if (list->sizeItems <= list->nbItems) {
+-	list->sizeItems *= 2;
+-	list->items = (void **) xmlRealloc(list->items,
+-	    list->sizeItems * sizeof(void *));
+-	if (list->items == NULL) {
++    if (list->sizeItems <= list->nbItems) {
++        void **tmp;
++        size_t newSize = list->sizeItems == 0 ? 20 : list->sizeItems * 2;
++
++	tmp = (void **) xmlRealloc(list->items, newSize * sizeof(void *));
++	if (tmp == NULL) {
+ 	    xmlSchemaPErrMemory(NULL, "growing item list", NULL);
+-	    list->sizeItems = 0;
+ 	    return(-1);
+ 	}
++        list->items = tmp;
++	list->sizeItems = newSize;
+     }
+     /*
+     * Just append if the index is greater/equal than the item count.
+-- 
+2.27.0
+

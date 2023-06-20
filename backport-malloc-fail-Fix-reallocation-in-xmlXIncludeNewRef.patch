@@ -1,0 +1,45 @@
+From a3749551e65a8caf146ea2bccf610e718d90bde0 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 3 Feb 2023 14:00:13 +0100
+Subject: [PATCH] malloc-fail: Fix reallocation in xmlXIncludeNewRef
+
+Avoid null deref.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/a3749551e65a8caf146ea2bccf610e718d90bde0
+Conflict:xinclude.c
+---
+ xinclude.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/xinclude.c b/xinclude.c
+index 60a0d7b..cc486f5 100644
+--- a/xinclude.c
++++ b/xinclude.c
+@@ -257,14 +257,18 @@ xmlXIncludeNewRef(xmlXIncludeCtxtPtr ctxt, const xmlChar *URI,
+ 	}
+     }
+     if (ctxt->incNr >= ctxt->incMax) {
+-	ctxt->incMax *= 2;
+-        ctxt->incTab = (xmlXIncludeRefPtr *) xmlRealloc(ctxt->incTab,
+-	             ctxt->incMax * sizeof(ctxt->incTab[0]));
+-        if (ctxt->incTab == NULL) {
++        xmlXIncludeRefPtr *tmp;
++        size_t newSize = ctxt->incMax * 2;
++
++        tmp = (xmlXIncludeRefPtr *) xmlRealloc(ctxt->incTab,
++	             newSize * sizeof(ctxt->incTab[0]));
++        if (tmp == NULL) {
+ 	    xmlXIncludeErrMemory(ctxt, ref, "growing XInclude context");
+ 	    xmlXIncludeFreeRef(ret);
+ 	    return(NULL);
+ 	}
++        ctxt->incTab = tmp;
++        ctxt->incMax *= 2;
+     }
+     ctxt->incTab[ctxt->incNr++] = ret;
+     return(ret);
+-- 
+2.27.0
+

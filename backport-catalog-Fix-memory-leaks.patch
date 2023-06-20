@@ -1,0 +1,48 @@
+From c9e4c6d416d00968f2e2d7c68a9c0e809265baf2 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 21 Feb 2023 15:22:01 +0100
+Subject: [PATCH] catalog: Fix memory leaks
+
+Fixes #377.
+
+Reference:https://github.com/GNOME/libxml2/commit/c9e4c6d416d00968f2e2d7c68a9c0e809265baf2
+Conflict:catalog.c xmlcatalog.c
+
+---
+ catalog.c    | 2 +-
+ xmlcatalog.c | 6 ++----
+ 2 files changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/catalog.c b/catalog.c
+index b3a97da..4d84a6a 100644
+--- a/catalog.c
++++ b/catalog.c
+@@ -2983,7 +2983,7 @@ xmlACatalogAdd(xmlCatalogPtr catal, const xmlChar * type,
+ 	    if (catal->sgml == NULL)
+ 		catal->sgml = xmlHashCreate(10);
+             res = xmlHashAddEntry(catal->sgml, orig, entry);
+-            if (res)
++            if (res < 0)
+                 xmlFreeCatalogEntry(entry, NULL);
+         }
+     }
+diff --git a/xmlcatalog.c b/xmlcatalog.c
+index 7fe25ac..c7a1dc8 100644
+--- a/xmlcatalog.c
++++ b/xmlcatalog.c
+@@ -513,10 +513,8 @@ int main(int argc, char **argv) {
+ 		}
+ 		i += 2;
+ 		/* Check for memory leaks */
+-		if (catal != NULL)
+-		    xmlFreeCatalog(catal);
+-		if (super != NULL)
+-		    xmlFreeCatalog(super);
++		xmlFreeCatalog(catal);
++		xmlFreeCatalog(super);
+ 	    } else {
+ 		if ((!strcmp(argv[i], "-add")) ||
+ 		    (!strcmp(argv[i], "--add"))) {
+-- 
+2.27.0
+

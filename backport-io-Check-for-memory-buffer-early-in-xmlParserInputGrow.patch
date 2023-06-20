@@ -1,0 +1,40 @@
+From 9feafbc5c5cce13852062a527d719ecce6b54661 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 13 Nov 2022 16:56:10 +0100
+Subject: [PATCH] io: Check for memory buffer early in xmlParserInputGrow
+
+Reference:https://github.com/GNOME/libxml2/commit/9feafbc5c5cce13852062a527d719ecce6b54661
+Conflict:NA
+---
+ parserInternals.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/parserInternals.c b/parserInternals.c
+index b8eab4b..0ef44fe 100644
+--- a/parserInternals.c
++++ b/parserInternals.c
+@@ -310,6 +310,9 @@ xmlParserInputGrow(xmlParserInputPtr in, int len) {
+     if (in->cur == NULL) return(-1);
+     if (in->buf->buffer == NULL) return(-1);
+ 
++    /* Don't grow memory buffers. */
++    if (in->buf->readcallback == NULL) return(0);
++
+     CHECK_BUFFER(in);
+ 
+     indx = in->cur - in->base;
+@@ -319,10 +322,7 @@ xmlParserInputGrow(xmlParserInputPtr in, int len) {
+ 
+         return(0);
+     }
+-    if (in->buf->readcallback != NULL) {
+-	ret = xmlParserInputBufferGrow(in->buf, len);
+-    } else
+-        return(0);
++    ret = xmlParserInputBufferGrow(in->buf, len);
+ 
+     in->base = xmlBufContent(in->buf->buffer);
+     in->cur = in->base + indx;
+-- 
+2.27.0
+

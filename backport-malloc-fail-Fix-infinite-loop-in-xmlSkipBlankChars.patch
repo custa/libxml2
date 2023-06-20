@@ -1,0 +1,29 @@
+From 71e81a4ce7946c43ca61124b142d86066590aeb0 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 2 Nov 2022 16:02:39 +0100
+Subject: [PATCH 08/28] malloc-fail: Fix infinite loop in xmlSkipBlankChars
+
+Found with libFuzzer, see #344.
+
+Reference: https://github.com/GNOME/libxml2/commit/e129c1d1a27abdeaab44f4d59eb0cb5052df7c6f
+Conflict: NA
+---
+ parser.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/parser.c b/parser.c
+index 443a216..780a8b3 100644
+--- a/parser.c
++++ b/parser.c
+@@ -2220,7 +2220,7 @@ xmlSkipBlankChars(xmlParserCtxtPtr ctxt) {
+     } else {
+         int expandPE = ((ctxt->external != 0) || (ctxt->inputNr != 1));
+ 
+-	while (1) {
++	while (ctxt->instate != XML_PARSER_EOF) {
+             if (IS_BLANK_CH(CUR)) { /* CHECKED tstblanks.xml */
+ 		NEXT;
+ 	    } else if (CUR == '%') {
+-- 
+2.27.0
+

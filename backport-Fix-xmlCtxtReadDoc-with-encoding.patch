@@ -1,0 +1,87 @@
+From 4ad71c2d72beef0d10cf75aa417db10d77846f75 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 20 Aug 2022 16:19:34 +0200
+Subject: [PATCH] Fix xmlCtxtReadDoc with encoding
+
+xmlCtxtReadDoc used to create an input stream involving
+xmlNewStringInputStream. This would create a stream without an input
+buffer, causing problems with encodings (see #34).
+
+After commit aab584dc3, an error was returned even with UTF-8 encodings
+which happened to work before.
+
+Make xmlCtxtReadDoc call xmlCtxtReadMemory which doesn't suffer from
+these issues. Also fix htmlCtxtReadDoc.
+
+Fixes #397.
+Reference:https://github.com/GNOME/libxml2/commit/4ad71c2d72beef0d10cf75aa417db10d77846f75
+Conflict:NA
+---
+ HTMLparser.c | 17 ++++-------------
+ parser.c     | 16 +++-------------
+ 2 files changed, 7 insertions(+), 26 deletions(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index 98d73f3..a4168f3 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -7087,22 +7087,13 @@ htmlDocPtr
+ htmlCtxtReadDoc(htmlParserCtxtPtr ctxt, const xmlChar * cur,
+                const char *URL, const char *encoding, int options)
+ {
+-    xmlParserInputPtr stream;
++    const char *buf;
+ 
+     if (cur == NULL)
+         return (NULL);
+-    if (ctxt == NULL)
+-        return (NULL);
+-    xmlInitParser();
+-
+-    htmlCtxtReset(ctxt);
+-
+-    stream = xmlNewStringInputStream(ctxt, cur);
+-    if (stream == NULL) {
+-        return (NULL);
+-    }
+-    inputPush(ctxt, stream);
+-    return (htmlDoRead(ctxt, URL, encoding, options, 1));
++    buf = (const char *) cur;
++    return (htmlCtxtReadMemory(ctxt, buf, strlen(buf), URL, encoding,
++                               options));
+ }
+ 
+ /**
+diff --git a/parser.c b/parser.c
+index 6b04bbf..fbeb7af 100644
+--- a/parser.c
++++ b/parser.c
+@@ -15374,22 +15374,12 @@ xmlDocPtr
+ xmlCtxtReadDoc(xmlParserCtxtPtr ctxt, const xmlChar * cur,
+                const char *URL, const char *encoding, int options)
+ {
+-    xmlParserInputPtr stream;
++    const char *buf;
+ 
+     if (cur == NULL)
+         return (NULL);
+-    if (ctxt == NULL)
+-        return (NULL);
+-    xmlInitParser();
+-
+-    xmlCtxtReset(ctxt);
+-
+-    stream = xmlNewStringInputStream(ctxt, cur);
+-    if (stream == NULL) {
+-        return (NULL);
+-    }
+-    inputPush(ctxt, stream);
+-    return (xmlDoRead(ctxt, URL, encoding, options, 1));
++    buf = (const char *) cur;
++    return (xmlCtxtReadMemory(ctxt, buf, strlen(buf), URL, encoding, options));
+ }
+ 
+ /**
+-- 
+2.27.0
+

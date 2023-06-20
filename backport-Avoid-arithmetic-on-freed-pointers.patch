@@ -1,0 +1,104 @@
+From 4951c462eae68562df335ff6d611f4352ea9931d Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 6 Mar 2022 02:29:00 +0100
+Subject: [PATCH] Avoid arithmetic on freed pointers
+
+Conflict:NA
+Reference:https://gitlab.gnome.org/GNOME/libxml2/-/commit/4951c462eae68562df335ff6d611f4352ea9931d
+
+---
+ parserInternals.c | 45 +++++++++------------------------------------
+ 1 file changed, 9 insertions(+), 36 deletions(-)
+
+diff --git a/parserInternals.c b/parserInternals.c
+index c5c0b16..d68592f 100644
+--- a/parserInternals.c
++++ b/parserInternals.c
+@@ -300,7 +300,6 @@ int
+ xmlParserInputGrow(xmlParserInputPtr in, int len) {
+     int ret;
+     size_t indx;
+-    const xmlChar *content;
+ 
+     if ((in == NULL) || (len < 0)) return(-1);
+ #ifdef DEBUG_INPUT
+@@ -325,22 +324,8 @@ xmlParserInputGrow(xmlParserInputPtr in, int len) {
+     } else
+         return(0);
+ 
+-    /*
+-     * NOTE : in->base may be a "dangling" i.e. freed pointer in this
+-     *        block, but we use it really as an integer to do some
+-     *        pointer arithmetic. Insure will raise it as a bug but in
+-     *        that specific case, that's not !
+-     */
+-
+-    content = xmlBufContent(in->buf->buffer);
+-    if (in->base != content) {
+-        /*
+-	 * the buffer has been reallocated
+-	 */
+-	indx = in->cur - in->base;
+-	in->base = content;
+-	in->cur = &content[indx];
+-    }
++    in->base = xmlBufContent(in->buf->buffer);
++    in->cur = in->base + indx;
+     in->end = xmlBufEnd(in->buf->buffer);
+ 
+     CHECK_BUFFER(in);
+@@ -358,8 +343,6 @@ void
+ xmlParserInputShrink(xmlParserInputPtr in) {
+     size_t used;
+     size_t ret;
+-    size_t indx;
+-    const xmlChar *content;
+ 
+ #ifdef DEBUG_INPUT
+     xmlGenericError(xmlGenericErrorContext, "Shrink\n");
+@@ -372,7 +355,7 @@ xmlParserInputShrink(xmlParserInputPtr in) {
+ 
+     CHECK_BUFFER(in);
+ 
+-    used = in->cur - xmlBufContent(in->buf->buffer);
++    used = in->cur - in->base;
+     /*
+      * Do not shrink on large buffers whose only a tiny fraction
+      * was consumed
+@@ -380,27 +363,17 @@ xmlParserInputShrink(xmlParserInputPtr in) {
+     if (used > INPUT_CHUNK) {
+ 	ret = xmlBufShrink(in->buf->buffer, used - LINE_LEN);
+ 	if (ret > 0) {
+-	    in->cur -= ret;
++            used -= ret;
+ 	    in->consumed += ret;
+ 	}
+-	in->end = xmlBufEnd(in->buf->buffer);
+     }
+ 
+-    CHECK_BUFFER(in);
+-
+-    if (xmlBufUse(in->buf->buffer) > INPUT_CHUNK) {
+-        return;
+-    }
+-    xmlParserInputBufferRead(in->buf, 2 * INPUT_CHUNK);
+-    content = xmlBufContent(in->buf->buffer);
+-    if (in->base != content) {
+-        /*
+-	 * the buffer has been reallocated
+-	 */
+-	indx = in->cur - in->base;
+-	in->base = content;
+-	in->cur = &content[indx];
++    if (xmlBufUse(in->buf->buffer) <= INPUT_CHUNK) {
++        xmlParserInputBufferRead(in->buf, 2 * INPUT_CHUNK);
+     }
++
++    in->base = xmlBufContent(in->buf->buffer);
++    in->cur = in->base + used;
+     in->end = xmlBufEnd(in->buf->buffer);
+ 
+     CHECK_BUFFER(in);
+-- 
+2.27.0
+

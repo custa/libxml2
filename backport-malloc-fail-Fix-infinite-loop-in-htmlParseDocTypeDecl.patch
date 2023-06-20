@@ -1,0 +1,31 @@
+From 15b0ed0815d48ac48c7b95a28b8332a298ed7072 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 16 Feb 2023 15:09:02 +0100
+Subject: [PATCH] malloc-fail: Fix infinite loop in htmlParseDocTypeDecl
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/15b0ed0815d48ac48c7b95a28b8332a298ed7072
+Conflict:NA
+---
+ HTMLparser.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index e02a142..457b2a3 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -3695,7 +3695,8 @@ htmlParseDocTypeDecl(htmlParserCtxtPtr ctxt) {
+ 	htmlParseErr(ctxt, XML_ERR_DOCTYPE_NOT_FINISHED,
+ 	             "DOCTYPE improperly terminated\n", NULL, NULL);
+         /* Ignore bogus content */
+-        while ((CUR != 0) && (CUR != '>'))
++        while ((CUR != 0) && (CUR != '>') &&
++               (ctxt->instate != XML_PARSER_EOF))
+             NEXT;
+     }
+     if (CUR == '>')
+-- 
+2.27.0
+
+

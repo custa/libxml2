@@ -1,0 +1,29 @@
+From 3b59fdf001f030e1b2180d3303347119e05d8dcb Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 15 Feb 2023 13:28:24 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlXIncludeAddNode
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/3b59fdf001f030e1b2180d3303347119e05d8dcb
+Conflict:xinclude.c
+
+---
+ xinclude.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/xinclude.c b/xinclude.c
+index 6e5b61d..cc22848 100644
+--- a/xinclude.c
++++ b/xinclude.c
+@@ -660,6 +660,7 @@ xmlXIncludeAddNode(xmlXIncludeCtxtPtr ctxt, xmlNodePtr cur) {
+     ref = xmlXIncludeNewRef(ctxt, URL, cur);
+     xmlFree(URL);
+     if (ref == NULL) {
++        xmlFree(fragment);
+ 	return(-1);
+     }
+     ref->fragment = fragment;
+-- 
+2.27.0
+
