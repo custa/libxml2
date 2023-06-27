@@ -1,0 +1,56 @@
+From 9afb6c5fb86a0dca167b6ae60aa05211a25e435f Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 5 Mar 2023 14:09:49 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in WXS_ADD_{LOCAL,GLOBAL}
+
+It's somewhat dangerous to add the cleanup code to a macro, but
+otherwise we'd have to fix all the call sites.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/9afb6c5fb86a0dca167b6ae60aa05211a25e435f
+Conflict:NA
+---
+ xmlschemas.c | 17 +++++++++++++----
+ 1 file changed, 13 insertions(+), 4 deletions(-)
+
+diff --git a/xmlschemas.c b/xmlschemas.c
+index 5b93937..724920b 100644
+--- a/xmlschemas.c
++++ b/xmlschemas.c
+@@ -305,10 +305,20 @@ static const xmlChar *xmlNamespaceNs = (const xmlChar *)
+ #define WXS_SCHEMA(ctx) (ctx)->schema
+ 
+ #define WXS_ADD_LOCAL(ctx, item) \
+-    xmlSchemaAddItemSize(&(WXS_BUCKET(ctx)->locals), 10, item)
++    do { \
++        if (xmlSchemaAddItemSize(&(WXS_BUCKET(ctx)->locals), 10, item) < 0) { \
++            xmlFree(item); \
++            item = NULL; \
++        } \
++    } while (0)
+ 
+ #define WXS_ADD_GLOBAL(ctx, item) \
+-    xmlSchemaAddItemSize(&(WXS_BUCKET(ctx)->globals), 5, item)
++    do { \
++        if (xmlSchemaAddItemSize(&(WXS_BUCKET(ctx)->globals), 5, item) < 0) { \
++            xmlFree(item); \
++            item = NULL; \
++        } \
++    } while (0)
+ 
+ #define WXS_ADD_PENDING(ctx, item) \
+     xmlSchemaAddItemSize(&((ctx)->constructor->pending), 10, item)
+@@ -3764,8 +3774,7 @@ xmlSchemaAddItemSize(xmlSchemaItemListPtr *list, int initialSize, void *item)
+ 	if (*list == NULL)
+ 	    return(-1);
+     }
+-    xmlSchemaItemListAddSize(*list, initialSize, item);
+-    return(0);
++    return(xmlSchemaItemListAddSize(*list, initialSize, item));
+ }
+ 
+ /**
+-- 
+2.27.0
+

@@ -1,0 +1,37 @@
+From 73bd5d52ae314a17a6b60f7c0ab893c812e714e7 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 5 Mar 2023 14:11:55 +0100
+Subject: [PATCH] malloc-fail: Fix type confusion after
+ xmlSchemaFixupTypeAttributeUses
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/73bd5d52ae314a17a6b60f7c0ab893c812e714e7
+Conflict:NA
+---
+ xmlschemas.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/xmlschemas.c b/xmlschemas.c
+index dd79d2e..46cbe0f 100644
+--- a/xmlschemas.c
++++ b/xmlschemas.c
+@@ -14572,6 +14572,7 @@ xmlSchemaFixupTypeAttributeUses(xmlSchemaParserCtxtPtr pctxt,
+ 	    {
+ 		PERROR_INT("xmlSchemaFixupTypeAttributeUses",
+ 		"failed to expand attributes");
++                return(-1);
+ 	    }
+ 	    if (pctxt->attrProhibs->nbItems != 0)
+ 		prohibs = pctxt->attrProhibs;
+@@ -14582,6 +14583,7 @@ xmlSchemaFixupTypeAttributeUses(xmlSchemaParserCtxtPtr pctxt,
+ 	    {
+ 		PERROR_INT("xmlSchemaFixupTypeAttributeUses",
+ 		"failed to expand attributes");
++                return(-1);
+ 	    }
+ 	}
+     }
+-- 
+2.27.0
+

@@ -1,0 +1,30 @@
+From 80bd34c3c650bd68e3c9c3e2308ac1988067ad50 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 22 Aug 2022 14:06:37 +0200
+Subject: [PATCH] Don't initialize SAX handler in htmlReadMemory
+
+The SAX handler is already initialized when creating the parser
+context.
+Reference:https://github.com/GNOME/libxml2/commit/80bd34c3c650bd68e3c9c3e2308ac1988067ad50
+Conflict:NA
+---
+ HTMLparser.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index c6b2183..e95d86b 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -6980,9 +6980,6 @@ htmlReadMemory(const char *buffer, int size, const char *URL, const char *encodi
+     ctxt = htmlCreateMemoryParserCtxt(buffer, size);
+     if (ctxt == NULL)
+         return (NULL);
+-    htmlDefaultSAXHandlerInit();
+-    if (ctxt->sax != NULL)
+-        memcpy(ctxt->sax, &htmlDefaultSAXHandler, sizeof(xmlSAXHandlerV1));
+     return (htmlDoRead(ctxt, URL, encoding, options, 0));
+ }
+ 
+-- 
+2.27.0
+

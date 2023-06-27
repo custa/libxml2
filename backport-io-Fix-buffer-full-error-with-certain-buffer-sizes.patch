@@ -1,0 +1,36 @@
+From cc645b439f54040b424bcb6c9b4c2c3f51cf2f9e Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 13 Nov 2022 15:08:44 +0100
+Subject: [PATCH 14/28] io: Fix "buffer full" error with certain buffer sizes
+
+Remove a useless check in xmlParserInputBufferGrow that could be
+triggered after changing xmlBufAvail in c14cac8b.
+
+Fixes #438.
+
+Reference: https://github.com/GNOME/libxml2/commit/22d879bf0ab3ef14177a6388e28bb264bd36e64b
+Conflict: NA
+---
+ xmlIO.c | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/xmlIO.c b/xmlIO.c
+index 3f5307f..0762034 100644
+--- a/xmlIO.c
++++ b/xmlIO.c
+@@ -3247,12 +3247,6 @@ xmlParserInputBufferGrow(xmlParserInputBufferPtr in, int len) {
+     if ((len <= MINLEN) && (len != 4))
+         len = MINLEN;
+ 
+-    if (xmlBufAvail(in->buffer) <= 0) {
+-	xmlIOErr(XML_IO_BUFFER_FULL, NULL);
+-	in->error = XML_IO_BUFFER_FULL;
+-	return(-1);
+-    }
+-
+     if (xmlBufGrow(in->buffer, len + 1) < 0) {
+         xmlIOErrMemory("growing input buffer");
+         in->error = XML_ERR_NO_MEMORY;
+-- 
+2.27.0
+

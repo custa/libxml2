@@ -1,0 +1,31 @@
+From 8ed40c621b33b44c26e90505b9de1c92080c4a8e Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 13 Dec 2022 00:51:33 +0100
+Subject: [PATCH] Revert "uri: Allow port without host"
+
+This reverts commit f30adb54f55e4e765d58195163f2a21f7ac759fb.
+
+Fixes #460.
+
+Reference:https://github.com/GNOME/libxml2/commit/8ed40c621b33b44c26e90505b9de1c92080c4a8e
+Conflict:NA
+---
+ uri.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/uri.c b/uri.c
+index 79dc48b..ccc26aa 100644
+--- a/uri.c
++++ b/uri.c
+@@ -768,6 +768,8 @@ xmlParse3986HierPart(xmlURIPtr uri, const char **str)
+         cur += 2;
+ 	ret = xmlParse3986Authority(uri, &cur);
+ 	if (ret != 0) return(ret);
++	if (uri->server == NULL)
++	    uri->port = -1;
+ 	ret = xmlParse3986PathAbEmpty(uri, &cur);
+ 	if (ret != 0) return(ret);
+ 	*str = cur;
+-- 
+2.27.0
+

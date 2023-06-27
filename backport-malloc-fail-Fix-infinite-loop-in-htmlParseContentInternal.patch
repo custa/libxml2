@@ -1,0 +1,90 @@
+From 04c2955197b53eb106037bc1d422bb80b39abbf6 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 16 Feb 2023 14:53:29 +0100
+Subject: [PATCH] malloc-fail: Fix infinite loop in htmlParseContentInternal
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/04c2955197b53eb106037bc1d422bb80b39abbf6
+Conflict:NA
+---
+ HTMLparser.c | 32 ++++++++++++++++++++++++++++++--
+ 1 file changed, 30 insertions(+), 2 deletions(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index 5272c25..f90053a 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -4718,8 +4718,16 @@ htmlParseContentInternal(htmlParserCtxtPtr ctxt) {
+     int depth;
+     const xmlChar *name;
+ 
+-    currentNode = xmlStrdup(ctxt->name);
+     depth = ctxt->nameNr;
++    if (depth <= 0) {
++        currentNode = NULL;
++    } else {
++        currentNode = xmlStrdup(ctxt->name);
++        if (currentNode == NULL) {
++            htmlErrMemory(ctxt, NULL);
++            return;
++        }
++    }
+     while (1) {
+         GROW;
+ 
+@@ -4735,8 +4743,16 @@ htmlParseContentInternal(htmlParserCtxtPtr ctxt) {
+ 		if (currentNode != NULL)
+ 		    xmlFree(currentNode);
+ 
+-	        currentNode = xmlStrdup(ctxt->name);
+ 	        depth = ctxt->nameNr;
++                if (depth <= 0) {
++                    currentNode = NULL;
++                } else {
++                    currentNode = xmlStrdup(ctxt->name);
++                    if (currentNode == NULL) {
++                        htmlErrMemory(ctxt, NULL);
++                        break;
++                    }
++                }
+ 	    }
+ 	    continue; /* while */
+         }
+@@ -4758,6 +4774,10 @@ htmlParseContentInternal(htmlParserCtxtPtr ctxt) {
+ 	            xmlFree(currentNode);
+ 
+ 	        currentNode = xmlStrdup(ctxt->name);
++                if (currentNode == NULL) {
++                    htmlErrMemory(ctxt, NULL);
++                    break;
++                }
+ 	        depth = ctxt->nameNr;
+ 	        continue;
+ 	    }
+@@ -4781,6 +4801,10 @@ htmlParseContentInternal(htmlParserCtxtPtr ctxt) {
+ 	    if (currentNode != NULL) xmlFree(currentNode);
+ 
+ 	    currentNode = xmlStrdup(ctxt->name);
++            if (currentNode == NULL) {
++                htmlErrMemory(ctxt, NULL);
++                break;
++            }
+ 	    depth = ctxt->nameNr;
+ 	    continue;
+ 	}
+@@ -4829,6 +4853,10 @@ htmlParseContentInternal(htmlParserCtxtPtr ctxt) {
+ 		if (currentNode != NULL) xmlFree(currentNode);
+ 
+ 		currentNode = xmlStrdup(ctxt->name);
++            if (currentNode == NULL) {
++                htmlErrMemory(ctxt, NULL);
++                break;
++            }
+ 		depth = ctxt->nameNr;
+ 	    }
+ 	    else if (CUR == '<') {
+-- 
+2.27.0
+
+

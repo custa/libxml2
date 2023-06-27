@@ -1,0 +1,27 @@
+From 0ab4b951f6906b341201dba46d4ebec05156cbe6 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 20 Nov 2022 19:55:12 +0100
+Subject: [PATCH 19/28] parser: Fix 'consumed' accounting when switching
+ encodings
+
+Reference: https://github.com/GNOME/libxml2/commit/691a7719566141bb5fbe6212498d1f0568c2610f
+Conflict: parserInternals.c:<xmlSwitchInputEncodingInt>
+---
+ parserInternals.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/parserInternals.c b/parserInternals.c
+index 2b05dac..422dfc0 100644
+--- a/parserInternals.c
++++ b/parserInternals.c
+@@ -1178,6 +1178,7 @@ xmlSwitchInputEncodingInt(xmlParserCtxtPtr ctxt, xmlParserInputPtr input,
+              */
+             processed = input->cur - input->base;
+             xmlBufShrink(input->buf->buffer, processed);
++	    input->consumed += processed;
+             input->buf->raw = input->buf->buffer;
+             input->buf->buffer = xmlBufCreate();
+ 	    input->buf->rawconsumed = processed;
+-- 
+2.27.0
+

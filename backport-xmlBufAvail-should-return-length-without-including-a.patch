@@ -1,0 +1,136 @@
+From c14cac8bbabdfbcd23b45dcb0901f1bd951159a4 Mon Sep 17 00:00:00 2001
+From: David Kilzer <ddkilzer@apple.com>
+Date: Wed, 25 May 2022 18:13:07 -0700
+Subject: [PATCH 295/300] xmlBufAvail() should return length without including
+ a byte for NUL terminator
+
+* buf.c:
+(xmlBufAvail):
+- Return the number of bytes available in the buffer, but do not
+  include a byte for the NUL terminator so that it is reserved.
+
+* encoding.c:
+(xmlCharEncFirstLineInput):
+(xmlCharEncInput):
+(xmlCharEncOutput):
+* xmlIO.c:
+(xmlOutputBufferWriteEscape):
+- Remove code that subtracts 1 from the return value of
+  xmlBufAvail().  It was implemented inconsistently anyway.
+
+Reference:https://github.com/GNOME/libxml2/commit/c14cac8bbabdfbcd23b45dcb0901f1bd951159a4
+Conflict:NA
+
+---
+ buf.c      |  9 +++++----
+ encoding.c | 14 ++++----------
+ xmlIO.c    |  2 +-
+ 3 files changed, 10 insertions(+), 15 deletions(-)
+
+diff --git a/buf.c b/buf.c
+index d341750..f896826 100644
+--- a/buf.c
++++ b/buf.c
+@@ -689,10 +689,11 @@ xmlBufUse(const xmlBufPtr buf)
+  * @buf:  the buffer
+  *
+  * Function to find how much free space is allocated but not
+- * used in the buffer. It does not account for the terminating zero
+- * usually needed
++ * used in the buffer. It reserves one byte for the NUL
++ * terminator character that is usually needed, so there is
++ * no need to subtract 1 from the result anymore.
+  *
+- * Returns the amount or 0 if none or an error occurred
++ * Returns the amount, or 0 if none or if an error occurred.
+  */
+ 
+ size_t
+@@ -702,7 +703,7 @@ xmlBufAvail(const xmlBufPtr buf)
+         return 0;
+     CHECK_COMPAT(buf)
+ 
+-    return(buf->size - buf->use);
++    return((buf->size > buf->use) ? (buf->size - buf->use - 1) : 0);
+ }
+ 
+ /**
+diff --git a/encoding.c b/encoding.c
+index c14c9ff..8ce407f 100644
+--- a/encoding.c
++++ b/encoding.c
+@@ -2177,7 +2177,7 @@ xmlCharEncFirstLineInput(xmlParserInputBufferPtr input, int len)
+     toconv = xmlBufUse(in);
+     if (toconv == 0)
+         return (0);
+-    written = xmlBufAvail(out) - 1; /* count '\0' */
++    written = xmlBufAvail(out);
+     /*
+      * echo '<?xml version="1.0" encoding="UCS4"?>' | wc -c => 38
+      * 45 chars should be sufficient to reach the end of the encoding
+@@ -2195,7 +2195,7 @@ xmlCharEncFirstLineInput(xmlParserInputBufferPtr input, int len)
+     }
+     if (toconv * 2 >= written) {
+         xmlBufGrow(out, toconv * 2);
+-        written = xmlBufAvail(out) - 1;
++        written = xmlBufAvail(out);
+     }
+     if (written > 360)
+         written = 360;
+@@ -2287,13 +2287,9 @@ xmlCharEncInput(xmlParserInputBufferPtr input, int flush)
+     if ((toconv > 64 * 1024) && (flush == 0))
+         toconv = 64 * 1024;
+     written = xmlBufAvail(out);
+-    if (written > 0)
+-        written--; /* count '\0' */
+     if (toconv * 2 >= written) {
+         xmlBufGrow(out, toconv * 2);
+         written = xmlBufAvail(out);
+-        if (written > 0)
+-            written--; /* count '\0' */
+     }
+     if ((written > 128 * 1024) && (flush == 0))
+         written = 128 * 1024;
+@@ -2475,8 +2471,6 @@ xmlCharEncOutput(xmlOutputBufferPtr output, int init)
+ retry:
+ 
+     written = xmlBufAvail(out);
+-    if (written > 0)
+-        written--; /* count '\0' */
+ 
+     /*
+      * First specific handling of the initialization call
+@@ -2505,7 +2499,7 @@ retry:
+         toconv = 64 * 1024;
+     if (toconv * 4 >= written) {
+         xmlBufGrow(out, toconv * 4);
+-        written = xmlBufAvail(out) - 1;
++        written = xmlBufAvail(out);
+     }
+     if (written > 256 * 1024)
+         written = 256 * 1024;
+@@ -2580,7 +2574,7 @@ retry:
+                              "&#%d;", cur);
+             xmlBufShrink(in, len);
+             xmlBufGrow(out, charrefLen * 4);
+-            c_out = xmlBufAvail(out) - 1;
++            c_out = xmlBufAvail(out);
+             c_in = charrefLen;
+             ret = xmlEncOutputChunk(output->encoder, xmlBufEnd(out), &c_out,
+                                     charref, &c_in);
+diff --git a/xmlIO.c b/xmlIO.c
+index 007144c..3f5307f 100644
+--- a/xmlIO.c
++++ b/xmlIO.c
+@@ -3560,7 +3560,7 @@ xmlOutputBufferWriteEscape(xmlOutputBufferPtr out, const xmlChar *str,
+ 	 * how many bytes to consume and how many bytes to store.
+ 	 */
+ 	cons = len;
+-	chunk = xmlBufAvail(out->buffer) - 1;
++	chunk = xmlBufAvail(out->buffer);
+ 
+         /*
+ 	 * make sure we have enough room to save first, if this is
+-- 
+2.27.0
+

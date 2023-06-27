@@ -1,0 +1,45 @@
+From 691f7eb44dd82a3de79e492bbe6c5426c96cbdde Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 15 Feb 2023 14:05:13 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlXPathCompareValues
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/691f7eb44dd82a3de79e492bbe6c5426c96cbdde
+Conflict:NA
+---
+ xpath.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/xpath.c b/xpath.c
+index 212a4e0..c1d119b 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -7375,14 +7375,14 @@ xmlXPathCompareValues(xmlXPathParserContextPtr ctxt, int inf, int strict) {
+ 	valuePush(ctxt, arg1);
+ 	xmlXPathNumberFunction(ctxt, 1);
+ 	arg1 = valuePop(ctxt);
+-        CHECK_ERROR0;
+     }
+     if (arg2->type != XPATH_NUMBER) {
+ 	valuePush(ctxt, arg2);
+ 	xmlXPathNumberFunction(ctxt, 1);
+ 	arg2 = valuePop(ctxt);
+-        CHECK_ERROR0;
+     }
++    if (ctxt->error)
++        goto error;
+     /*
+      * Add tests for infinity and nan
+      * => feedback on 3.4 for Inf and NaN
+@@ -7432,6 +7432,7 @@ xmlXPathCompareValues(xmlXPathParserContextPtr ctxt, int inf, int strict) {
+ 	    }
+ 	}
+     }
++error:
+     xmlXPathReleaseObject(ctxt->context, arg1);
+     xmlXPathReleaseObject(ctxt->context, arg2);
+     return(ret);
+-- 
+2.27.0
+

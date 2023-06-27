@@ -1,0 +1,67 @@
+From ed615967dfeba615218826bb4ef0c87877cb53cd Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 17 Feb 2023 15:23:42 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlRegexpCompile
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/ed615967dfeba615218826bb4ef0c87877cb53cd
+Conflict:NA
+---
+ xmlregexp.c | 18 ++++++++----------
+ 1 file changed, 8 insertions(+), 10 deletions(-)
+
+diff --git a/xmlregexp.c b/xmlregexp.c
+index 11c684a..360916f 100644
+--- a/xmlregexp.c
++++ b/xmlregexp.c
+@@ -5566,7 +5566,7 @@ xmlRegexpPrint(FILE *output, xmlRegexpPtr regexp) {
+  */
+ xmlRegexpPtr
+ xmlRegexpCompile(const xmlChar *regexp) {
+-    xmlRegexpPtr ret;
++    xmlRegexpPtr ret = NULL;
+     xmlRegParserCtxtPtr ctxt;
+ 
+     ctxt = xmlRegNewParserCtxt(regexp);
+@@ -5576,7 +5576,7 @@ xmlRegexpCompile(const xmlChar *regexp) {
+     /* initialize the parser */
+     ctxt->state = xmlRegStatePush(ctxt);
+     if (ctxt->state == NULL)
+-        return(NULL);
++        goto error;
+     ctxt->start = ctxt->state;
+     ctxt->end = NULL;
+ 
+@@ -5585,10 +5585,8 @@ xmlRegexpCompile(const xmlChar *regexp) {
+     if (CUR != 0) {
+ 	ERROR("xmlFAParseRegExp: extra characters");
+     }
+-    if (ctxt->error != 0) {
+-	xmlRegFreeParserCtxt(ctxt);
+-	return(NULL);
+-    }
++    if (ctxt->error != 0)
++        goto error;
+     ctxt->end = ctxt->state;
+     ctxt->start->type = XML_REGEXP_START_STATE;
+     ctxt->end->type = XML_REGEXP_FINAL_STATE;
+@@ -5597,11 +5595,11 @@ xmlRegexpCompile(const xmlChar *regexp) {
+     xmlFAEliminateEpsilonTransitions(ctxt);
+ 
+ 
+-    if (ctxt->error != 0) {
+-	xmlRegFreeParserCtxt(ctxt);
+-	return(NULL);
+-    }
++    if (ctxt->error != 0)
++        goto error;
+     ret = xmlRegEpxFromParse(ctxt);
++
++error:
+     xmlRegFreeParserCtxt(ctxt);
+     return(ret);
+ }
+-- 
+2.27.0
+

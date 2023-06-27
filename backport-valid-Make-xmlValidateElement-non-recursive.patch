@@ -1,0 +1,127 @@
+From 08f9d319ebe99f41f71336ea01767b9c652ef34f Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 16 Mar 2023 17:01:05 +0100
+Subject: [PATCH] valid: Make xmlValidateElement non-recursive
+
+Fixes call stack overflows when validating deeply nested documents.
+
+Found by OSS-Fuzz.
+
+Reference:https://github.com/GNOME/libxml2/commit/08f9d319ebe99f41f71336ea01767b9c652ef34f
+Conflict:NA
+
+---
+ valid.c | 86 ++++++++++++++++++++++++++++-----------------------------
+ 1 file changed, 43 insertions(+), 43 deletions(-)
+
+diff --git a/valid.c b/valid.c
+index 9a2c708..3c0a869 100644
+--- a/valid.c
++++ b/valid.c
+@@ -6480,60 +6480,60 @@ name_ok:
+  */
+ 
+ int
+-xmlValidateElement(xmlValidCtxtPtr ctxt, xmlDocPtr doc, xmlNodePtr elem) {
+-    xmlNodePtr child;
++xmlValidateElement(xmlValidCtxtPtr ctxt, xmlDocPtr doc, xmlNodePtr root) {
++    xmlNodePtr elem;
+     xmlAttrPtr attr;
+     xmlNsPtr ns;
+     const xmlChar *value;
+     int ret = 1;
+ 
+-    if (elem == NULL) return(0);
+-
+-    /*
+-     * XInclude elements were added after parsing in the infoset,
+-     * they don't really mean anything validation wise.
+-     */
+-    if ((elem->type == XML_XINCLUDE_START) ||
+-	(elem->type == XML_XINCLUDE_END) ||
+-	(elem->type == XML_NAMESPACE_DECL))
+-	return(1);
++    if (root == NULL) return(0);
+ 
+     CHECK_DTD;
+ 
+-    /*
+-     * Entities references have to be handled separately
+-     */
+-    if (elem->type == XML_ENTITY_REF_NODE) {
+-	return(1);
+-    }
++    elem = root;
++    while (1) {
++        ret &= xmlValidateOneElement(ctxt, doc, elem);
++
++        if (elem->type == XML_ELEMENT_NODE) {
++            attr = elem->properties;
++            while (attr != NULL) {
++                value = xmlNodeListGetString(doc, attr->children, 0);
++                ret &= xmlValidateOneAttribute(ctxt, doc, elem, attr, value);
++                if (value != NULL)
++                    xmlFree((char *)value);
++                attr= attr->next;
++            }
+ 
+-    ret &= xmlValidateOneElement(ctxt, doc, elem);
+-    if (elem->type == XML_ELEMENT_NODE) {
+-	attr = elem->properties;
+-	while (attr != NULL) {
+-	    value = xmlNodeListGetString(doc, attr->children, 0);
+-	    ret &= xmlValidateOneAttribute(ctxt, doc, elem, attr, value);
+-	    if (value != NULL)
+-		xmlFree((char *)value);
+-	    attr= attr->next;
+-	}
+-	ns = elem->nsDef;
+-	while (ns != NULL) {
+-	    if (elem->ns == NULL)
+-		ret &= xmlValidateOneNamespace(ctxt, doc, elem, NULL,
+-					       ns, ns->href);
+-	    else
+-		ret &= xmlValidateOneNamespace(ctxt, doc, elem,
+-		                               elem->ns->prefix, ns, ns->href);
+-	    ns = ns->next;
+-	}
+-    }
+-    child = elem->children;
+-    while (child != NULL) {
+-        ret &= xmlValidateElement(ctxt, doc, child);
+-        child = child->next;
++            ns = elem->nsDef;
++            while (ns != NULL) {
++                if (elem->ns == NULL)
++                    ret &= xmlValidateOneNamespace(ctxt, doc, elem, NULL,
++                                                   ns, ns->href);
++                else
++                    ret &= xmlValidateOneNamespace(ctxt, doc, elem,
++                                                   elem->ns->prefix, ns,
++                                                   ns->href);
++                ns = ns->next;
++            }
++
++            if (elem->children != NULL) {
++                elem = elem->children;
++                continue;
++            }
++        }
++
++        while (1) {
++            if (elem == root)
++                goto done;
++            if (elem->next != NULL)
++                break;
++            elem = elem->parent;
++        }
++        elem = elem->next;
+     }
+ 
++done:
+     return(ret);
+ }
+ 
+-- 
+2.27.0
+

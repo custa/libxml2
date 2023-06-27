@@ -1,0 +1,49 @@
+From bd6fa2c1d5c163ab94edaf2e62d18cdfee33f913 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 9 Mar 2023 22:33:19 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlXPathRegisterNs
+
+Found by OSS-Fuzz.
+
+Reference:https://github.com/GNOME/libxml2/commit/bd6fa2c1d5c163ab94edaf2e62d18cdfee33f913
+Conflict:NA
+---
+ xpath.c | 15 +++++++++++++--
+ 1 file changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/xpath.c b/xpath.c
+index 56a59c1..e3a8c14 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -5133,6 +5133,8 @@ xmlXPathRegisteredVariablesCleanup(xmlXPathContextPtr ctxt) {
+ int
+ xmlXPathRegisterNs(xmlXPathContextPtr ctxt, const xmlChar *prefix,
+ 			   const xmlChar *ns_uri) {
++    xmlChar *copy;
++
+     if (ctxt == NULL)
+ 	return(-1);
+     if (prefix == NULL)
+@@ -5147,8 +5149,17 @@ xmlXPathRegisterNs(xmlXPathContextPtr ctxt, const xmlChar *prefix,
+     if (ns_uri == NULL)
+         return(xmlHashRemoveEntry(ctxt->nsHash, prefix,
+ 	                          xmlHashDefaultDeallocator));
+-    return(xmlHashUpdateEntry(ctxt->nsHash, prefix, (void *) xmlStrdup(ns_uri),
+-			      xmlHashDefaultDeallocator));
++
++    copy = xmlStrdup(ns_uri);
++    if (copy == NULL)
++        return(-1);
++    if (xmlHashUpdateEntry(ctxt->nsHash, prefix, copy,
++                           xmlHashDefaultDeallocator) < 0) {
++        xmlFree(copy);
++        return(-1);
++    }
++
++    return(0);
+ }
+ 
+ /**
+-- 
+2.27.0
+

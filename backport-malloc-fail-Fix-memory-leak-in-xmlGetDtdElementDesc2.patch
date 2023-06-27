@@ -1,0 +1,87 @@
+From 9fa1b228a5d60fab92a79c6c01c39e37454da1b3 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 14 Feb 2023 16:43:35 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlGetDtdElementDesc2
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/9fa1b228a5d60fab92a79c6c01c39e37454da1b3
+Conflict:valid.c
+
+---
+ valid.c | 23 +++++++++++++++--------
+ 1 file changed, 15 insertions(+), 8 deletions(-)
+
+diff --git a/valid.c b/valid.c
+index ed3c850..b7b92fe 100644
+--- a/valid.c
++++ b/valid.c
+@@ -26,8 +26,9 @@
+ #include <libxml/list.h>
+ #include <libxml/globals.h>
+ 
+-static xmlElementPtr xmlGetDtdElementDesc2(xmlDtdPtr dtd, const xmlChar *name,
+-	                           int create);
++static xmlElementPtr
++xmlGetDtdElementDesc2(xmlValidCtxtPtr ctxt, xmlDtdPtr dtd, const xmlChar *name,
++                      int create);
+ /* #define DEBUG_VALID_ALGO */
+ /* #define DEBUG_REGEXP_ALGO */
+ 
+@@ -2135,7 +2136,7 @@ xmlAddAttributeDecl(xmlValidCtxtPtr ctxt,
+      * Validity Check:
+      * Multiple ID per element
+      */
+-    elemDef = xmlGetDtdElementDesc2(dtd, elem, 1);
++    elemDef = xmlGetDtdElementDesc2(ctxt, dtd, elem, 1);
+     if (elemDef != NULL) {
+ 
+ #ifdef LIBXML_VALID_ENABLED
+@@ -3295,7 +3296,8 @@ xmlGetDtdElementDesc(xmlDtdPtr dtd, const xmlChar *name) {
+  */
+ 
+ static xmlElementPtr
+-xmlGetDtdElementDesc2(xmlDtdPtr dtd, const xmlChar *name, int create) {
++xmlGetDtdElementDesc2(xmlValidCtxtPtr ctxt, xmlDtdPtr dtd, const xmlChar *name,
++                      int create) {
+     xmlElementTablePtr table;
+     xmlElementPtr cur;
+     xmlChar *uqname = NULL, *prefix = NULL;
+@@ -3318,7 +3320,7 @@ xmlGetDtdElementDesc2(xmlDtdPtr dtd, const xmlChar *name, int create) {
+ 	    dtd->elements = (void *) table;
+ 	}
+ 	if (table == NULL) {
+-	    xmlVErrMemory(NULL, "element table allocation failed");
++	    xmlVErrMemory(ctxt, "element table allocation failed");
+ 	    return(NULL);
+ 	}
+     }
+@@ -3331,8 +3333,8 @@ xmlGetDtdElementDesc2(xmlDtdPtr dtd, const xmlChar *name, int create) {
+     if ((cur == NULL) && (create)) {
+ 	cur = (xmlElementPtr) xmlMalloc(sizeof(xmlElement));
+ 	if (cur == NULL) {
+-	    xmlVErrMemory(NULL, "malloc failed");
+-	    return(NULL);
++	    xmlVErrMemory(ctxt, "malloc failed");
++	    goto error;
+ 	}
+ 	memset(cur, 0, sizeof(xmlElement));
+ 	cur->type = XML_ELEMENT_DECL;
+@@ -3344,8 +3346,13 @@ xmlGetDtdElementDesc2(xmlDtdPtr dtd, const xmlChar *name, int create) {
+ 	cur->prefix = xmlStrdup(prefix);
+ 	cur->etype = XML_ELEMENT_TYPE_UNDEFINED;
+ 
+-	xmlHashAddEntry2(table, name, prefix, cur);
++	if (xmlHashAddEntry2(table, name, prefix, cur) < 0) {
++	    xmlVErrMemory(ctxt, "adding entry failed");
++            xmlFreeElement(cur);
++            cur = NULL;
++        }
+     }
++error:
+     if (prefix != NULL) xmlFree(prefix);
+     if (uqname != NULL) xmlFree(uqname);
+     return(cur);
+-- 
+2.27.0
+

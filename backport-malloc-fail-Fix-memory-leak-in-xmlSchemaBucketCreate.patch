@@ -1,0 +1,35 @@
+From a5787229e5c53d522364cd68397cdc61094ac51a Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 5 Mar 2023 14:09:34 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlSchemaBucketCreate
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/260d6b8d77d11a20a2614eef99e88e68eaca6550
+Conflict:NA
+---
+ xmlschemas.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/xmlschemas.c b/xmlschemas.c
+index 724920b..9ace2b7 100644
+--- a/xmlschemas.c
++++ b/xmlschemas.c
+@@ -3658,12 +3658,12 @@ xmlSchemaBucketCreate(xmlSchemaParserCtxtPtr pctxt,
+     ret->type = type;
+     ret->globals = xmlSchemaItemListCreate();
+     if (ret->globals == NULL) {
+-	xmlFree(ret);
++	xmlSchemaBucketFree(ret);
+ 	return(NULL);
+     }
+     ret->locals = xmlSchemaItemListCreate();
+     if (ret->locals == NULL) {
+-	xmlFree(ret);
++	xmlSchemaBucketFree(ret);
+ 	return(NULL);
+     }
+     /*
+-- 
+2.27.0
+

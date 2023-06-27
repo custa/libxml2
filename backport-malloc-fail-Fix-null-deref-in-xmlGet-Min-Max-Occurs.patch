@@ -1,0 +1,49 @@
+From 0263b357567870c20de26c90dbc962aec81c5a19 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 5 Mar 2023 14:08:35 +0100
+Subject: [PATCH] malloc-fail: Fix null deref in xmlGet{Min,Max}Occurs
+
+Also report memory error in xmlSchemaGetNodeContent.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/0263b357567870c20de26c90dbc962aec81c5a19
+Conflict:NA
+---
+ xmlschemas.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/xmlschemas.c b/xmlschemas.c
+index 9be7999..c68103c 100644
+--- a/xmlschemas.c
++++ b/xmlschemas.c
+@@ -4760,6 +4760,8 @@ xmlSchemaGetNodeContent(xmlSchemaParserCtxtPtr ctxt, xmlNodePtr node)
+ 	val = xmlStrdup((xmlChar *)"");
+     ret = xmlDictLookup(ctxt->dict, val, -1);
+     xmlFree(val);
++    if (ret == NULL)
++        xmlSchemaPErrMemory(ctxt, "getting node content", node);
+     return(ret);
+ }
+ 
+@@ -6103,6 +6105,8 @@ xmlGetMaxOccurs(xmlSchemaParserCtxtPtr ctxt, xmlNodePtr node,
+     if (attr == NULL)
+ 	return (def);
+     val = xmlSchemaGetNodeContent(ctxt, (xmlNodePtr) attr);
++    if (val == NULL)
++        return (def);
+ 
+     if (xmlStrEqual(val, (const xmlChar *) "unbounded")) {
+ 	if (max != UNBOUNDED) {
+@@ -6177,6 +6181,8 @@ xmlGetMinOccurs(xmlSchemaParserCtxtPtr ctxt, xmlNodePtr node,
+     if (attr == NULL)
+ 	return (def);
+     val = xmlSchemaGetNodeContent(ctxt, (xmlNodePtr) attr);
++    if (val == NULL)
++	return (def);
+     cur = val;
+     while (IS_BLANK_CH(*cur))
+         cur++;
+-- 
+2.27.0
+

@@ -1,0 +1,35 @@
+From 0bd4e4e032d57ecf982b57312eb6136efdd35d56 Mon Sep 17 00:00:00 2001
+From: David Kilzer <ddkilzer@apple.com>
+Date: Wed, 21 Dec 2022 19:21:30 -0800
+Subject: [PATCH] xmlParseStartTag2() contains typo when checking for default
+ definitions for an attribute in a namespace
+
+* parser.c:
+(xmlParseStartTag2):
+- Fix index into defaults->values.  It is only correct the first
+  time through the loop when i == 0.
+
+Fixes #467..
+
+Reference:https://github.com/GNOME/libxml2/commit/0bd4e4e032d57ecf982b57312eb6136efdd35d56
+Conflict:NA
+---
+ parser.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/parser.c b/parser.c
+index f13287a..2207404 100644
+--- a/parser.c
++++ b/parser.c
+@@ -9561,7 +9561,7 @@ next_attr:
+ 	            if (j <= nbNs) continue;
+ 
+ 		    nsname = xmlGetNamespace(ctxt, attname);
+-		    if (nsname != defaults->values[2]) {
++		    if (nsname != defaults->values[5 * i + 2]) {
+ 			if (nsPush(ctxt, attname,
+ 			           defaults->values[5 * i + 2]) > 0)
+ 			    nbNs++;
+-- 
+2.27.0
+
