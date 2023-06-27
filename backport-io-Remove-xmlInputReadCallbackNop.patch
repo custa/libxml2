@@ -1,0 +1,114 @@
+From ee6c6084e58ab114bddd06453790d22b08e45d93 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 13 Nov 2022 16:30:46 +0100
+Subject: [PATCH] io: Remove xmlInputReadCallbackNop
+
+In some cases, for example when using encoders, the read callback was
+set to NULL, in other cases it was set to xmlInputReadCallbackNop.
+xmlGROW only tested for xmlInputReadCallbackNop, resulting in errors
+when parsing large encoded content from memory.
+
+Always use a NULL callback for memory buffers to avoid ambiguities.
+
+Fixes #262.
+
+Reference:https://github.com/GNOME/libxml2/commit/46cd7d224ed5c4cdbd4f72ec899db24e18d21fe7
+Conflict:include/private/io.h
+---
+ parser.c          |  2 +-
+ parserInternals.c |  3 ++-
+ xmlIO.c           | 30 ++++--------------------------
+ 3 files changed, 7 insertions(+), 28 deletions(-)
+
+diff --git a/parser.c b/parser.c
+index adc449c..f13287a 100644
+--- a/parser.c
++++ b/parser.c
+@@ -2134,7 +2134,7 @@ static void xmlGROW (xmlParserCtxtPtr ctxt) {
+     if (((curEnd > XML_MAX_LOOKUP_LIMIT) ||
+          (curBase > XML_MAX_LOOKUP_LIMIT)) &&
+          ((ctxt->input->buf) &&
+-          (ctxt->input->buf->readcallback != xmlInputReadCallbackNop)) &&
++          (ctxt->input->buf->readcallback != NULL)) &&
+         ((ctxt->options & XML_PARSE_HUGE) == 0)) {
+         xmlFatalErr(ctxt, XML_ERR_INTERNAL_ERROR, "Huge input lookup");
+         xmlHaltParser(ctxt);
+diff --git a/parserInternals.c b/parserInternals.c
+index 0ef44fe..ef18ccf 100644
+--- a/parserInternals.c
++++ b/parserInternals.c
+@@ -311,7 +311,8 @@ xmlParserInputGrow(xmlParserInputPtr in, int len) {
+     if (in->buf->buffer == NULL) return(-1);
+ 
+     /* Don't grow memory buffers. */
+-    if (in->buf->readcallback == NULL) return(0);
++    if ((in->buf->encoder == NULL) && (in->buf->readcallback == NULL))
++        return(0);
+ 
+     CHECK_BUFFER(in);
+ 
+diff --git a/xmlIO.c b/xmlIO.c
+index 0762034..71c9fbf 100644
+--- a/xmlIO.c
++++ b/xmlIO.c
+@@ -729,20 +729,6 @@ xmlCheckFilename (const char *path)
+     return 1;
+ }
+ 
+-/**
+- * xmlInputReadCallbackNop:
+- *
+- * No Operation xmlInputReadCallback function, does nothing.
+- *
+- * Returns zero
+- */
+-int
+-xmlInputReadCallbackNop(void *context ATTRIBUTE_UNUSED,
+-                        char *buffer ATTRIBUTE_UNUSED,
+-                        int len ATTRIBUTE_UNUSED) {
+-    return(0);
+-}
+-
+ /**
+  * xmlFdRead:
+  * @context:  the I/O context
+@@ -2963,7 +2949,7 @@ xmlParserInputBufferCreateMem(const char *mem, int size, xmlCharEncoding enc) {
+     ret = xmlAllocParserInputBuffer(enc);
+     if (ret != NULL) {
+         ret->context = (void *) mem;
+-	ret->readcallback = xmlInputReadCallbackNop;
++	ret->readcallback = NULL;
+ 	ret->closecallback = NULL;
+ 	errcode = xmlBufAdd(ret->buffer, (const xmlChar *) mem, size);
+ 	if (errcode != 0) {
+@@ -3261,10 +3247,8 @@ xmlParserInputBufferGrow(xmlParserInputBufferPtr in, int len) {
+ 	res = in->readcallback(in->context, &buffer[0], len);
+ 	if (res <= 0)
+ 	    in->readcallback = endOfInput;
+-    } else {
+-	xmlIOErr(XML_IO_NO_INPUT, NULL);
+-	in->error = XML_IO_NO_INPUT;
+-	return(-1);
++    } else if (in->encoder == NULL) {
++	return(0);
+     }
+     if (res < 0) {
+ 	return(-1);
+@@ -3331,13 +3315,7 @@ xmlParserInputBufferGrow(xmlParserInputBufferPtr in, int len) {
+  */
+ int
+ xmlParserInputBufferRead(xmlParserInputBufferPtr in, int len) {
+-    if ((in == NULL) || (in->error)) return(-1);
+-    if (in->readcallback != NULL)
+-	return(xmlParserInputBufferGrow(in, len));
+-    else if (xmlBufGetAllocationScheme(in->buffer) == XML_BUFFER_ALLOC_IMMUTABLE)
+-	return(0);
+-    else
+-        return(-1);
++    return(xmlParserInputBufferGrow(in, len));
+ }
+ 
+ #ifdef LIBXML_OUTPUT_ENABLED
+-- 
+2.27.0
+

@@ -1,0 +1,29 @@
+From 70b21c9f2a31b3ecfe8aa624c01da3ebba9e06c8 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 26 Feb 2023 14:33:16 +0100
+Subject: [PATCH] malloc-fail: Fix null deref in xmlXPathCompiledEvalInternal
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/70b21c9f2a31b3ecfe8aa624c01da3ebba9e06c8
+Conflict:NA
+---
+ xpath.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/xpath.c b/xpath.c
+index d63bdd7..54d9c58 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -14370,6 +14370,8 @@ xmlXPathCompiledEvalInternal(xmlXPathCompExprPtr comp,
+     }
+ #endif
+     pctxt = xmlXPathCompParserContext(comp, ctxt);
++    if (pctxt == NULL)
++        return(-1);
+     res = xmlXPathRunEval(pctxt, toBool);
+ 
+     if (pctxt->error != XPATH_EXPRESSION_OK) {
+-- 
+2.27.0
+

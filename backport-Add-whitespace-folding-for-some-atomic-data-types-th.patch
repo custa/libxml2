@@ -1,0 +1,105 @@
+From 966b0f21c15de0c959f4db88d658ba66bda41575 Mon Sep 17 00:00:00 2001
+From: Damjan Jovanovic <damjan.jov@gmail.com>
+Date: Thu, 19 Aug 2021 02:46:32 +0200
+Subject: [PATCH] Add whitespace folding for some atomic data types that it's
+ missing on.
+
+XSD validation fails when some atomic types contain surrounding whitespace
+even though XML Schema Part 2: Datatypes Second Edition, section 4.3.6
+says they should be collapsed. Fix this.
+
+(I am not sure whether the test is correct.)
+
+Issue: #278
+
+Conflict:NA
+Reference:https://gitlab.gnome.org/GNOME/libxml2/-/commit/966b0f21c15de0c959f4db88d658ba66bda41575
+
+---
+ test/xsdtest/xsdtest.xml | 5 +++++
+ xmlschemastypes.c        | 8 ++++++++
+ 2 files changed, 13 insertions(+)
+
+diff --git a/test/xsdtest/xsdtest.xml b/test/xsdtest/xsdtest.xml
+index b8a6de9..2807d26 100644
+--- a/test/xsdtest/xsdtest.xml
++++ b/test/xsdtest/xsdtest.xml
+@@ -657,6 +657,7 @@ B EEF </value>
+ </datatype>
+ <datatype name="byte">
+ <valid>1</valid>
++<valid> 1 </valid>
+ <valid>127</valid>
+ <valid>-128</valid>
+ <invalid>128</invalid>
+@@ -665,6 +666,7 @@ B EEF </value>
+ <datatype name="unsignedLong">
+ <valid>1</valid>
+ <valid>+1</valid>
++<valid> 1 </valid>
+ <invalid>-1</invalid>
+ <valid>0</valid>
+ <valid>18446744073709551615</valid>
+@@ -674,6 +676,7 @@ B EEF </value>
+ <datatype name="unsignedInt">
+ <valid>1</valid>
+ <valid>+1</valid>
++<valid> 1 </valid>
+ <valid>0</valid>
+ <valid>4294967295</valid>
+ <invalid>4294967296</invalid>
+@@ -682,6 +685,7 @@ B EEF </value>
+ <datatype name="unsignedShort">
+ <valid>1</valid>
+ <valid>+1</valid>
++<valid> 1 </valid>
+ <valid>0</valid>
+ <valid>65535</valid>
+ <invalid>65536</invalid>
+@@ -689,6 +693,7 @@ B EEF </value>
+ </datatype>
+ <datatype name="unsignedByte">
+ <valid>1</valid>
++<valid> 1 </valid>
+ <valid>+1</valid>
+ <valid>0</valid>
+ <valid>255</valid>
+diff --git a/xmlschemastypes.c b/xmlschemastypes.c
+index af31be5..ebb0219 100644
+--- a/xmlschemastypes.c
++++ b/xmlschemastypes.c
+@@ -3308,6 +3308,8 @@ xmlSchemaValAtomicType(xmlSchemaTypePtr type, const xmlChar * value,
+ 
+                 if (cur == NULL)
+                     goto return1;
++		if (normOnTheFly)
++		    while IS_WSP_BLANK_CH(*cur) cur++;
+                 if (*cur == '-') {
+                     sign = 1;
+                     cur++;
+@@ -3316,6 +3318,8 @@ xmlSchemaValAtomicType(xmlSchemaTypePtr type, const xmlChar * value,
+                 ret = xmlSchemaParseUInt(&cur, &lo, &mi, &hi);
+                 if (ret < 0)
+                     goto return1;
++		if (normOnTheFly)
++		    while IS_WSP_BLANK_CH(*cur) cur++;
+                 if (*cur != 0)
+                     goto return1;
+                 if (type->builtInType == XML_SCHEMAS_LONG) {
+@@ -3380,9 +3384,13 @@ xmlSchemaValAtomicType(xmlSchemaTypePtr type, const xmlChar * value,
+ 
+                 if (cur == NULL)
+                     goto return1;
++		if (normOnTheFly)
++		    while IS_WSP_BLANK_CH(*cur) cur++;
+                 ret = xmlSchemaParseUInt(&cur, &lo, &mi, &hi);
+                 if (ret < 0)
+                     goto return1;
++		if (normOnTheFly)
++		    while IS_WSP_BLANK_CH(*cur) cur++;
+                 if (*cur != 0)
+                     goto return1;
+                 if (type->builtInType == XML_SCHEMAS_ULONG) {
+-- 
+2.27.0
+

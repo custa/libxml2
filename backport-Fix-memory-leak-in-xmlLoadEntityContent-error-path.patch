@@ -1,0 +1,33 @@
+From ca2c91f139426f63646292da58a15a1511dccc0f Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 28 Jun 2022 19:24:14 +0200
+Subject: [PATCH] Fix memory leak in xmlLoadEntityContent error path
+
+Free the input stream if pushing it fails.
+
+Found by OSS-Fuzz.
+
+https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=43743
+
+Reference:https://github.com/GNOME/libxml2/commit/ca2c91f139426f63646292da58a15a1511dccc0f
+Conflict:NA
+
+---
+ parser.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/parser.c b/parser.c
+index d8225bd..dd507c0 100644
+--- a/parser.c
++++ b/parser.c
+@@ -8102,6 +8102,7 @@ xmlLoadEntityContent(xmlParserCtxtPtr ctxt, xmlEntityPtr entity) {
+      */
+     if (xmlPushInput(ctxt, input) < 0) {
+         xmlBufferFree(buf);
++	xmlFreeInputStream(input);
+ 	return(-1);
+     }
+ 
+-- 
+2.27.0
+

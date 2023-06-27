@@ -1,0 +1,164 @@
+From ec05f04d8b5a0a60515235f65ed1256644a77741 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 16 Feb 2023 12:40:02 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlXIncludeLoadTxt
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/ec05f04d8b5a0a60515235f65ed1256644a77741
+Conflict:xinclude.c
+
+---
+ xinclude.c | 67 +++++++++++++++++++++++-------------------------------
+ 1 file changed, 28 insertions(+), 39 deletions(-)
+
+diff --git a/xinclude.c b/xinclude.c
+index cc22848..c0b4439 100644
+--- a/xinclude.c
++++ b/xinclude.c
+@@ -1791,14 +1791,15 @@ error:
+ static int
+ xmlXIncludeLoadTxt(xmlXIncludeCtxtPtr ctxt, const xmlChar *url, int nr) {
+     xmlParserInputBufferPtr buf;
+-    xmlNodePtr node;
+-    xmlURIPtr uri;
+-    xmlChar *URL;
++    xmlNodePtr node = NULL;
++    xmlURIPtr uri = NULL;
++    xmlChar *URL = NULL;
+     int i;
++    int ret = -1;
+     xmlChar *encoding = NULL;
+     xmlCharEncoding enc = (xmlCharEncoding) 0;
+-    xmlParserCtxtPtr pctxt;
+-    xmlParserInputPtr inputStream;
++    xmlParserCtxtPtr pctxt = NULL;
++    xmlParserInputPtr inputStream = NULL;
+     int len;
+     const xmlChar *content;
+ 
+@@ -1814,21 +1815,19 @@ xmlXIncludeLoadTxt(xmlXIncludeCtxtPtr ctxt, const xmlChar *url, int nr) {
+     if (uri == NULL) {
+ 	xmlXIncludeErr(ctxt, ctxt->incTab[nr]->ref, XML_XINCLUDE_HREF_URI,
+ 	               "invalid value URI %s\n", url);
+-	return(-1);
++	goto error;
+     }
+     if (uri->fragment != NULL) {
+ 	xmlXIncludeErr(ctxt, ctxt->incTab[nr]->ref, XML_XINCLUDE_TEXT_FRAGMENT,
+ 	               "fragment identifier forbidden for text: %s\n",
+ 		       (const xmlChar *) uri->fragment);
+-	xmlFreeURI(uri);
+-	return(-1);
++	goto error;
+     }
+     URL = xmlSaveUri(uri);
+-    xmlFreeURI(uri);
+     if (URL == NULL) {
+ 	xmlXIncludeErr(ctxt, ctxt->incTab[nr]->ref, XML_XINCLUDE_HREF_URI,
+ 	               "invalid value URI %s\n", url);
+-	return(-1);
++	goto error;
+     }
+ 
+     /*
+@@ -1839,8 +1838,7 @@ xmlXIncludeLoadTxt(xmlXIncludeCtxtPtr ctxt, const xmlChar *url, int nr) {
+ 	xmlXIncludeErr(ctxt, ctxt->incTab[nr]->ref,
+ 	               XML_XINCLUDE_TEXT_DOCUMENT,
+ 		       "text serialization of document not available\n", NULL);
+-	xmlFree(URL);
+-	return(-1);
++	goto error;
+     }
+ 
+     /*
+@@ -1870,11 +1868,8 @@ xmlXIncludeLoadTxt(xmlXIncludeCtxtPtr ctxt, const xmlChar *url, int nr) {
+ 	    xmlXIncludeErr(ctxt, ctxt->incTab[nr]->ref,
+ 	                   XML_XINCLUDE_UNKNOWN_ENCODING,
+ 			   "encoding %s not supported\n", encoding);
+-	    xmlFree(encoding);
+-	    xmlFree(URL);
+-	    return(-1);
++	    goto error;
+ 	}
+-	xmlFree(encoding);
+     }
+ 
+     /*
+@@ -1882,27 +1877,18 @@ xmlXIncludeLoadTxt(xmlXIncludeCtxtPtr ctxt, const xmlChar *url, int nr) {
+      */
+     pctxt = xmlNewParserCtxt();
+     inputStream = xmlLoadExternalEntity((const char*)URL, NULL, pctxt);
+-    if(inputStream == NULL) {
+-	xmlFreeParserCtxt(pctxt);
+-	xmlFree(URL);
+-	return(-1);
+-    }
++    if(inputStream == NULL)
++	goto error;
+     buf = inputStream->buf;
+-    if (buf == NULL) {
+-	xmlFreeInputStream (inputStream);
+-	xmlFreeParserCtxt(pctxt);
+-	xmlFree(URL);
+-	return(-1);
+-    }
++    if (buf == NULL)
++	goto error;
+     if (buf->encoder)
+ 	xmlCharEncCloseFunc(buf->encoder);
+     buf->encoder = xmlGetCharEncodingHandler(enc);
+     node = xmlNewText(NULL);
+     if (node == NULL) {
+-        xmlFreeInputStream(inputStream);
+-        xmlFreeParserCtxt(pctxt);
+-        xmlFree(URL);
+-        return(-1);
++        xmlXIncludeErrMemory(ctxt, ctxt->incTab[nr]->ref, NULL);
++	goto error;
+     }
+ 
+     /*
+@@ -1921,28 +1907,31 @@ xmlXIncludeLoadTxt(xmlXIncludeCtxtPtr ctxt, const xmlChar *url, int nr) {
+         if (!IS_CHAR(cur)) {
+             xmlXIncludeErr(ctxt, ctxt->incTab[nr]->ref, XML_XINCLUDE_INVALID_CHAR,
+                            "%s contains invalid char\n", URL);
+-            xmlFreeNode(node);
+-            xmlFreeInputStream(inputStream);
+-            xmlFreeParserCtxt(pctxt);
+-            xmlFree(URL);
+-            return(-1);
++            goto error;
+         }
+ 
+         i += l;
+     }
+ 
+     xmlNodeAddContentLen(node, content, len);
+-    xmlFreeParserCtxt(pctxt);
+     xmlXIncludeAddTxt(ctxt, node->content, URL);
+-    xmlFreeInputStream(inputStream);
+ 
+ loaded:
+     /*
+      * Add the element as the replacement copy.
+      */
+     ctxt->incTab[nr]->inc = node;
++    node = NULL;
++    ret = 0;
++
++error:
++    xmlFreeNode(node);
++    xmlFreeInputStream(inputStream);
++    xmlFreeParserCtxt(pctxt);
++    xmlFree(encoding);
++    xmlFreeURI(uri);
+     xmlFree(URL);
+-    return(0);
++    return(ret);
+ }
+ 
+ /**
+-- 
+2.27.0
+

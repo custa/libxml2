@@ -1,0 +1,32 @@
+From 282b75f1108e81e483d95a08397da282233f9667 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 28 Feb 2023 12:14:33 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlXPathNameFunction
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/282b75f1108e81e483d95a08397da282233f9667
+Conflict:NA
+---
+ xpath.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/xpath.c b/xpath.c
+index d17ad5e..56a59c1 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -8857,9 +8857,8 @@ xmlXPathNameFunction(xmlXPathParserContextPtr ctxt, int nargs)
+ 				     NULL, 0);
+ 		    if (fullname == cur->nodesetval->nodeTab[i]->name)
+ 			fullname = xmlStrdup(cur->nodesetval->nodeTab[i]->name);
+-		    if (fullname == NULL) {
+-			XP_ERROR(XPATH_MEMORY_ERROR);
+-		    }
++		    if (fullname == NULL)
++                        xmlXPathPErrMemory(ctxt, NULL);
+ 		    valuePush(ctxt, xmlXPathCacheWrapString(
+ 			ctxt->context, fullname));
+                 }
+-- 
+2.27.0
+

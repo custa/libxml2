@@ -1,0 +1,50 @@
+From f5e1174933c65556b5d1c0b3a8f13a27f37a1638 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 15 Feb 2023 13:48:18 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak after calling
+ xmlXPathWrapNodeSet
+
+Destroy the node set in xmlXPathWrapNodeSet if the function fails.
+This is somewhat dangerous but matches the expectations of users.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/f5e1174933c65556b5d1c0b3a8f13a27f37a1638
+Conflict:xpath.c
+---
+ xpath.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/xpath.c b/xpath.c
+index dc99e63..9ead497 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -2319,6 +2319,8 @@ xmlXPathContextSetCache(xmlXPathContextPtr ctxt,
+  * Wrap the Nodeset @val in a new xmlXPathObjectPtr
+  *
+  * Returns the created or reused object.
++ *
++ * In case of error the node set is destroyed and NULL is returned.
+  */
+ static xmlXPathObjectPtr
+ xmlXPathCacheWrapNodeSet(xmlXPathContextPtr ctxt, xmlNodeSetPtr val)
+@@ -4398,6 +4400,8 @@ xmlXPathNewNodeSetList(xmlNodeSetPtr val)
+  * Wrap the Nodeset @val in a new xmlXPathObjectPtr
+  *
+  * Returns the newly created object.
++ *
++ * In case of error the node set is destroyed and NULL is returned.
+  */
+ xmlXPathObjectPtr
+ xmlXPathWrapNodeSet(xmlNodeSetPtr val) {
+@@ -4406,6 +4410,7 @@ xmlXPathWrapNodeSet(xmlNodeSetPtr val) {
+     ret = (xmlXPathObjectPtr) xmlMalloc(sizeof(xmlXPathObject));
+     if (ret == NULL) {
+         xmlXPathErrMemory(NULL, "creating node set object\n");
++        xmlXPathFreeNodeSet(val);
+ 	return(NULL);
+     }
+     memset(ret, 0 , (size_t) sizeof(xmlXPathObject));
+-- 
+2.27.0
+

@@ -1,0 +1,32 @@
+From 7810d0e3f0bebe58cf6de877cbcb302f073c75e7 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 14 Nov 2022 21:05:32 +0100
+Subject: [PATCH 17/28] uri: Allow port without host
+
+Don't set port to -1 when host is missing. Host can be empty according
+to spec.
+
+Fixes #71.
+
+Reference: https://github.com/GNOME/libxml2/commit/f30adb54f55e4e765d58195163f2a21f7ac759fb
+Conflict: NA
+---
+ uri.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/uri.c b/uri.c
+index ccc26aa..79dc48b 100644
+--- a/uri.c
++++ b/uri.c
+@@ -768,8 +768,6 @@ xmlParse3986HierPart(xmlURIPtr uri, const char **str)
+         cur += 2;
+ 	ret = xmlParse3986Authority(uri, &cur);
+ 	if (ret != 0) return(ret);
+-	if (uri->server == NULL)
+-	    uri->port = -1;
+ 	ret = xmlParse3986PathAbEmpty(uri, &cur);
+ 	if (ret != 0) return(ret);
+ 	*str = cur;
+-- 
+2.27.0
+

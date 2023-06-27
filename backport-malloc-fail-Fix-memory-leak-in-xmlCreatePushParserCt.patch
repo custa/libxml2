@@ -1,0 +1,28 @@
+From 7de8005c52c1fc4289b737c8d12c0c4efd72b605 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 2 Nov 2022 15:46:11 +0100
+Subject: [PATCH 04/28] malloc-fail: Fix memory leak in xmlCreatePushParserCtxt
+
+Found with libFuzzer, see #344.
+
+Reference: https://github.com/GNOME/libxml2/commit/865e142c4188d892705a62f9ce9df896e7b4543d
+Conflict: NA
+---
+ parser.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/parser.c b/parser.c
+index 23b031d..443a216 100644
+--- a/parser.c
++++ b/parser.c
+@@ -12508,6 +12508,7 @@ xmlCreatePushParserCtxt(xmlSAXHandlerPtr sax, void *user_data,
+ 	inputStream->filename = (char *)
+ 	    xmlCanonicPath((const xmlChar *) filename);
+ 	if (inputStream->filename == NULL) {
++            xmlFreeInputStream(inputStream);
+ 	    xmlFreeParserCtxt(ctxt);
+ 	    xmlFreeParserInputBuffer(buf);
+ 	    return(NULL);
+-- 
+2.27.0
+

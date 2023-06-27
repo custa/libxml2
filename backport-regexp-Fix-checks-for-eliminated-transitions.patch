@@ -1,0 +1,68 @@
+From e301865e69b9b834f7b777dc58a9cee40ae056b2 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 9 Mar 2023 05:34:38 +0100
+Subject: [PATCH] regexp: Fix checks for eliminated transitions
+
+'to' can be set to -1 or -2 when eliminating transitions, so check for
+all negative values.
+
+Reference:https://github.com/GNOME/libxml2/commit/e301865e69b9b834f7b777dc58a9cee40ae056b2
+Conflict:NA
+
+---
+ xmlregexp.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/xmlregexp.c b/xmlregexp.c
+index 24f9fc0..df0626c 100644
+--- a/xmlregexp.c
++++ b/xmlregexp.c
+@@ -607,7 +607,7 @@ xmlRegEpxFromParse(xmlRegParserCtxtPtr ctxt) {
+ 
+ 	    for (j = 0;j < state->nbTrans;j++) {
+ 		trans = &(state->trans[j]);
+-		if ((trans->to == -1) || (trans->atom == NULL))
++		if ((trans->to < 0) || (trans->atom == NULL))
+ 		    continue;
+                 atomno = stringRemap[trans->atom->no];
+ 		if ((trans->atom->data != NULL) && (transdata == NULL)) {
+@@ -2783,11 +2783,11 @@ xmlFAComputesDeterminism(xmlRegParserCtxtPtr ctxt) {
+ 		/* t1->nd = 1; */
+ 		continue;
+ 	    }
+-	    if (t1->to == -1) /* eliminated */
++	    if (t1->to < 0) /* eliminated */
+ 		continue;
+ 	    for (i = 0;i < transnr;i++) {
+ 		t2 = &(state->trans[i]);
+-		if (t2->to == -1) /* eliminated */
++		if (t2->to < 0) /* eliminated */
+ 		    continue;
+ 		if (t2->atom != NULL) {
+ 		    if (t1->to == t2->to) {
+@@ -2825,11 +2825,11 @@ xmlFAComputesDeterminism(xmlRegParserCtxtPtr ctxt) {
+ 	    if (t1->atom == NULL) {
+ 		continue;
+ 	    }
+-	    if (t1->to == -1) /* eliminated */
++	    if (t1->to < 0) /* eliminated */
+ 		continue;
+ 	    for (i = 0;i < transnr;i++) {
+ 		t2 = &(state->trans[i]);
+-		if (t2->to == -1) /* eliminated */
++		if (t2->to < 0) /* eliminated */
+ 		    continue;
+ 		if (t2->atom != NULL) {
+                     /*
+@@ -2843,7 +2843,7 @@ xmlFAComputesDeterminism(xmlRegParserCtxtPtr ctxt) {
+ 			t2->nd = 1;
+ 			last = t1;
+ 		    }
+-		} else if (t1->to != -1) {
++		} else {
+ 		    /*
+ 		     * do the closure in case of remaining specific
+ 		     * epsilon transitions like choices or all
+-- 
+2.27.0
+

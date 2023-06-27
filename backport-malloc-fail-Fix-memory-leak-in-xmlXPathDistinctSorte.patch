@@ -1,0 +1,47 @@
+From bc9f372c1001ff64353400edf489fb0ce4ab17fc Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 26 Feb 2023 18:00:30 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlXPathDistinctSorted
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/bc9f372c1001ff64353400edf489fb0ce4ab17fc
+Conflict:NA
+---
+ xpath.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/xpath.c b/xpath.c
+index 1f358e3..b6a3983 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -4540,16 +4540,23 @@ xmlXPathDistinctSorted (xmlNodeSetPtr nodes) {
+ 	cur = xmlXPathNodeSetItem(nodes, i);
+ 	strval = xmlXPathCastNodeToString(cur);
+ 	if (xmlHashLookup(hash, strval) == NULL) {
+-	    xmlHashAddEntry(hash, strval, strval);
+-            /* TODO: Propagate memory error. */
++	    if (xmlHashAddEntry(hash, strval, strval) < 0) {
++                xmlFree(strval);
++                goto error;
++            }
+ 	    if (xmlXPathNodeSetAddUnique(ret, cur) < 0)
+-	        break;
++	        goto error;
+ 	} else {
+ 	    xmlFree(strval);
+ 	}
+     }
+     xmlHashFree(hash, xmlHashDefaultDeallocator);
+     return(ret);
++
++error:
++    xmlHashFree(hash, xmlHashDefaultDeallocator);
++    xmlXPathFreeNodeSet(ret);
++    return(NULL);
+ }
+ 
+ /**
+-- 
+2.27.0
+

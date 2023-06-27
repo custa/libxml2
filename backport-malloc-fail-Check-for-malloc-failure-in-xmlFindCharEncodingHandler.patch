@@ -1,0 +1,49 @@
+From 1c5e1fc194a661783d4bffbfd4b4424a7d74881f Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 14 Feb 2023 13:56:21 +0100
+Subject: [PATCH] malloc-fail: Check for malloc failure in
+ xmlFindCharEncodingHandler
+
+Don't return encoding handlers with a NULL name.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/1c5e1fc194a661783d4bffbfd4b4424a7d74881f
+Conflict:NA
+---
+ encoding.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/encoding.c b/encoding.c
+index c073a9c..400e860 100644
+--- a/encoding.c
++++ b/encoding.c
+@@ -1726,6 +1726,12 @@ xmlFindCharEncodingHandler(const char *name) {
+ 	    }
+             memset(enc, 0, sizeof(xmlCharEncodingHandler));
+ 	    enc->name = xmlMemStrdup(name);
++            if (enc->name == NULL) {
++                xmlFree(enc);
++                iconv_close(icv_in);
++                iconv_close(icv_out);
++                return(NULL);
++            }
+ 	    enc->input = NULL;
+ 	    enc->output = NULL;
+ 	    enc->iconv_in = icv_in;
+@@ -1758,6 +1764,12 @@ xmlFindCharEncodingHandler(const char *name) {
+ 	    }
+             memset(encu, 0, sizeof(xmlCharEncodingHandler));
+ 	    encu->name = xmlMemStrdup(name);
++            if (encu->name == NULL) {
++                xmlFree(encu);
++                closeIcuConverter(ucv_in);
++                closeIcuConverter(ucv_out);
++                return(NULL);
++            }
+ 	    encu->input = NULL;
+ 	    encu->output = NULL;
+ 	    encu->uconv_in = ucv_in;
+-- 
+2.27.0
+

@@ -1,0 +1,30 @@
+From a3e11b385c04f2d0dc7d8c51635e5deb5b867261 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 25 Feb 2023 16:05:24 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlXPathEqualNodeSetFloat
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/a3e11b385c04f2d0dc7d8c51635e5deb5b867261
+Conflict:NA
+---
+ xpath.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/xpath.c b/xpath.c
+index ef9f517..7f2c92a 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -6814,8 +6814,8 @@ xmlXPathEqualNodeSetFloat(xmlXPathParserContextPtr ctxt,
+ 		valuePush(ctxt, xmlXPathCacheNewString(ctxt->context, str2));
+ 		xmlFree(str2);
+ 		xmlXPathNumberFunction(ctxt, 1);
+-		val = valuePop(ctxt);
+                 CHECK_ERROR0;
++		val = valuePop(ctxt);
+ 		v = val->floatval;
+ 		xmlXPathReleaseObject(ctxt->context, val);
+ 		if (!xmlXPathIsNaN(v)) {
+-- 
+2.27.0
+

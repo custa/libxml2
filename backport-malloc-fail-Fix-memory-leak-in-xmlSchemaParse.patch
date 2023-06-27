@@ -1,0 +1,29 @@
+From cfbc1f48ee6259efaedcdc485d86b90e252da970 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 5 Mar 2023 14:06:51 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlSchemaParse
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/cfbc1f48ee6259efaedcdc485d86b90e252da970
+Conflict:NA
+---
+ xmlschemas.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/xmlschemas.c b/xmlschemas.c
+index c68103c..fa9d113 100644
+--- a/xmlschemas.c
++++ b/xmlschemas.c
+@@ -21473,7 +21473,7 @@ xmlSchemaParse(xmlSchemaParserCtxtPtr ctxt)
+     if (ctxt->constructor == NULL) {
+ 	ctxt->constructor = xmlSchemaConstructionCtxtCreate(ctxt->dict);
+ 	if (ctxt->constructor == NULL)
+-	    return(NULL);
++	    goto exit_failure;
+ 	/* Take ownership of the constructor to be able to free it. */
+ 	ctxt->ownsConstructor = 1;
+     }
+-- 
+2.27.0
+

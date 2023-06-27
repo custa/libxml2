@@ -1,0 +1,54 @@
+From b75976e02999c453ae80bb1ade72f704a78b95ce Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 12 Mar 2023 19:06:19 +0100
+Subject: [PATCH] parser: Use size_t when subtracting input buffer pointers
+
+Avoid integer overflows.
+
+Reference:https://github.com/GNOME/libxml2/commit/b75976e02999c453ae80bb1ade72f704a78b95ce
+Conflict:NA
+
+---
+ HTMLparser.c | 2 +-
+ parser.c     | 5 +++--
+ 2 files changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index 72ede56..b76218c 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -3833,7 +3833,7 @@ htmlCheckEncodingDirect(htmlParserCtxtPtr ctxt, const xmlChar *encoding) {
+ 	    (ctxt->input->buf->raw != NULL) &&
+ 	    (ctxt->input->buf->buffer != NULL)) {
+ 	    int nbchars;
+-	    int processed;
++	    size_t processed;
+ 
+ 	    /*
+ 	     * convert as much as possible to the parser reading buffer.
+diff --git a/parser.c b/parser.c
+index c276a1a..75bd27f 100644
+--- a/parser.c
++++ b/parser.c
+@@ -9267,7 +9267,7 @@ xmlParseStartTag2(xmlParserCtxtPtr ctxt, const xmlChar **pref,
+     int maxatts = ctxt->maxatts;
+     int nratts, nbatts, nbdef, inputid;
+     int i, j, nbNs, attval;
+-    unsigned long cur;
++    size_t cur;
+     int nsNr = ctxt->nsNr;
+ 
+     if (RAW != '<') return(NULL);
+@@ -11202,7 +11202,8 @@ xmlCheckCdataPush(const xmlChar *utf, int len, int complete) {
+ static int
+ xmlParseTryOrFinish(xmlParserCtxtPtr ctxt, int terminate) {
+     int ret = 0;
+-    int avail, tlen;
++    int tlen;
++    size_t avail;
+     xmlChar cur, next;
+     const xmlChar *lastlt, *lastgt;
+ 
+-- 
+2.27.0
+

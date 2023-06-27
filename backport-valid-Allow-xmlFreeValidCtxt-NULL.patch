@@ -1,0 +1,29 @@
+From a57a7549fabfb7112510a2ee80a874e988200c32 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 12 Mar 2023 16:06:19 +0100
+Subject: [PATCH] valid: Allow xmlFreeValidCtxt(NULL)
+
+
+Reference:https://github.com/GNOME/libxml2/commit/a57a7549fabfb7112510a2ee80a874e988200c32
+Conflict:NA
+
+---
+ valid.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/valid.c b/valid.c
+index b7b92fe..9a2c708 100644
+--- a/valid.c
++++ b/valid.c
+@@ -899,6 +899,8 @@ xmlValidCtxtPtr xmlNewValidCtxt(void) {
+  */
+ void
+ xmlFreeValidCtxt(xmlValidCtxtPtr cur) {
++    if (cur == NULL)
++        return;
+     if (cur->vstateTab != NULL)
+         xmlFree(cur->vstateTab);
+     if (cur->nodeTab != NULL)
+-- 
+2.27.0
+

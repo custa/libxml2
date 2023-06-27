@@ -1,0 +1,70 @@
+From a442d16a5fe61626f00f33abe547da9379a37d89 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 26 Feb 2023 14:48:23 +0100
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlGetNsList
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/a442d16a5fe61626f00f33abe547da9379a37d89
+Conflict:NA
+---
+ tree.c | 25 +++++++++----------------
+ 1 file changed, 9 insertions(+), 16 deletions(-)
+
+diff --git a/tree.c b/tree.c
+index 35bd948..4a80e28 100644
+--- a/tree.c
++++ b/tree.c
+@@ -5971,7 +5971,7 @@ xmlGetNsList(const xmlDoc *doc ATTRIBUTE_UNUSED, const xmlNode *node)
+     xmlNsPtr cur;
+     xmlNsPtr *ret = NULL;
+     int nbns = 0;
+-    int maxns = 10;
++    int maxns = 0;
+     int i;
+ 
+     if ((node == NULL) || (node->type == XML_NAMESPACE_DECL))
+@@ -5981,16 +5981,6 @@ xmlGetNsList(const xmlDoc *doc ATTRIBUTE_UNUSED, const xmlNode *node)
+         if (node->type == XML_ELEMENT_NODE) {
+             cur = node->nsDef;
+             while (cur != NULL) {
+-                if (ret == NULL) {
+-                    ret =
+-                        (xmlNsPtr *) xmlMalloc((maxns + 1) *
+-                                               sizeof(xmlNsPtr));
+-                    if (ret == NULL) {
+-			xmlTreeErrMemory("getting namespace list");
+-                        return (NULL);
+-                    }
+-                    ret[nbns] = NULL;
+-                }
+                 for (i = 0; i < nbns; i++) {
+                     if ((cur->prefix == ret[i]->prefix) ||
+                         (xmlStrEqual(cur->prefix, ret[i]->prefix)))
+@@ -5998,15 +5988,18 @@ xmlGetNsList(const xmlDoc *doc ATTRIBUTE_UNUSED, const xmlNode *node)
+                 }
+                 if (i >= nbns) {
+                     if (nbns >= maxns) {
+-                        maxns *= 2;
+-                        ret = (xmlNsPtr *) xmlRealloc(ret,
+-                                                      (maxns +
+-                                                       1) *
++                        xmlNsPtr *tmp;
++
++                        maxns = maxns ? maxns * 2 : 10;
++                        tmp = (xmlNsPtr *) xmlRealloc(ret,
++                                                      (maxns + 1) *
+                                                       sizeof(xmlNsPtr));
+-                        if (ret == NULL) {
++                        if (tmp == NULL) {
+ 			    xmlTreeErrMemory("getting namespace list");
++                            xmlFree(ret);
+                             return (NULL);
+                         }
++                        ret = tmp;
+                     }
+                     ret[nbns++] = cur;
+                     ret[nbns] = NULL;
+-- 
+2.27.0
+
