@@ -1,29 +1,12 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
-Version: 2.9.14
-Release: 9
+Version: 2.11.4
+Release: 1
 License: MIT
 Group: Development/Libraries
-Source: https://download.gnome.org/sources/%{name}/2.9/%{name}-%{version}.tar.xz
+Source: https://download.gnome.org/sources/%{name}/2.11/%{name}-%{version}.tar.xz
 
 Patch0: libxml2-multilib.patch
-Patch1: backport-Rework-validation-context-flags.patch
-Patch2: backport-Remove-unneeded-code-in-xmlreader.c.patch
-Patch3: backport-Don-t-add-IDs-containing-unexpanded-entity-reference.patch
-Patch4: backport-Only-warn-on-invalid-redeclarations-of-predefined-en.patch
-Patch5: backport-Add-XML_DEPRECATED-macro.patch
-Patch6: Fix-memleaks-in-xmlXIncludeProcessFlags.patch
-Patch7: Fix-memory-leaks-for-xmlACatalogAdd.patch
-Patch8: Fix-memory-leaks-in-xmlACatalogAdd-when-xmlHashAddEntry-failed.patch
-Patch9: backport-CVE-2022-40303-Fix-integer-overflows-with-XML_PARSE_.patch
-Patch10: backport-CVE-2022-40304-Fix-dict-corruption-caused-by-entity-.patch
-Patch11: backport-schemas-Fix-null-pointer-deref-in-xmlSchemaCheckCOSS.patch
-Patch12: backport-parser-Fix-potential-memory-leak-in-xmlParseAttValue.patch
-Patch13: backport-Fix-unused-variable-warnings-with-disabled-features.patch
-Patch14: backport-Update-xmlStrlen-to-use-POSIX-ISO-C-strlen.patch
-Patch15: backport-schemas-Fix-infinite-loop-in-xmlSchemaCheckElemSubst.patch
-Patch16: backport-CVE-2023-28484-Fix-null-deref-in-xmlSchemaFixupCompl.patch
-Patch17: backport-CVE-2023-29469-Hashing-of-empty-dict-strings-isn-t-d.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -140,7 +123,6 @@ rm -fr %{buildroot}
 %defattr(-, root, root)
 
 %doc NEWS README.md Copyright
-%doc doc/*.html doc/html doc/*.gif doc/*.png
 %doc doc/tutorial doc/libxml2-api.xml.gz
 %doc doc/examples
 %doc %dir %{_datadir}/gtk-doc/html/libxml2
@@ -150,35 +132,34 @@ rm -fr %{buildroot}
 %doc %{_datadir}/gtk-doc/html/libxml2/*.css
 
 %{_libdir}/lib*.so
-%{_libdir}/*.sh
 %{_includedir}/*
 %{_bindir}/xml2-config
 %{_datadir}/aclocal/libxml.m4
 %{_libdir}/pkgconfig/libxml-2.0.pc
 %{_libdir}/cmake/libxml2/libxml2-config.cmake
 
-%{_libdir}/*a
-
 %files -n python3-%{name}
 %defattr(-, root, root)
 
-%{_libdir}/python3*/site-packages/libxml2.py*
-%{_libdir}/python3*/site-packages/drv_libxml2.py*
-%{_libdir}/python3*/site-packages/__pycache__/*py*
-%{_libdir}/python3*/site-packages/libxml2mod*
-%doc python/TODO
+%{python3_sitearch}/libxml2mod.so
+%{python3_sitelib}/*.py
+%{python3_sitelib}/__pycache__/*.pyc
 %doc python/libxml2class.txt
 %doc py3doc/*.py
-%doc doc/python.html
 
 %files help
 %doc %{_mandir}/man1/xml2-config.1*
 %doc %{_mandir}/man1/xmllint.1*
 %doc %{_mandir}/man1/xmlcatalog.1*
-%doc %{_mandir}/man3/libxml.3*
 
 
 %changelog
+* Tue Jul 18 2023 zhuofeng <zhuofeng2@huawei.com.com> - 2.11.4-1
+- Type:enhancement
+- CVE:NA
+- SUG:NA
+- DESC:update version to 2.11.4
+
 * Thu Apr 20 2023 BruceGW <gyl93216@163.com> - 2.9.14-9
 - Type:CVE
 - CVE:CVE-2023-28484 CVE-2023-29469
