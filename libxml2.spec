@@ -101,6 +101,7 @@ rm -rf $RPM_BUILD_ROOT%{_datadir}/doc/libxml2-python-%{version}/*
 gzip -9 -c doc/libxml2-api.xml > doc/libxml2-api.xml.gz
 
 %check
+(cd doc/examples; ls;cat Makefile)
 make runtests
 
 %clean
