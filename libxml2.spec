@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.11.4
-Release: 1
+Release: 2
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.11/%{name}-%{version}.tar.xz
@@ -97,7 +97,7 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/python*/site-packages/*.a
 rm -f $RPM_BUILD_ROOT%{_libdir}/python*/site-packages/*.la
 rm -rf $RPM_BUILD_ROOT%{_datadir}/doc/libxml2-%{version}/*
 rm -rf $RPM_BUILD_ROOT%{_datadir}/doc/libxml2-python-%{version}/*
-(cd doc/examples ; make clean ; rm -rf .deps Makefile)
+(cd doc/examples ; make clean ; rm -rf .deps)
 gzip -9 -c doc/libxml2-api.xml > doc/libxml2-api.xml.gz
 
 %check
@@ -154,6 +154,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Mon Aug 07 2023 zhuofeng <zhuofeng2@huawei.com> - 2.11.4-2
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:fix failed test
+
 * Tue Jul 18 2023 zhuofeng <zhuofeng2@huawei.com.com> - 2.11.4-1
 - Type:enhancement
 - CVE:NA
