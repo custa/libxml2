@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.11.4
-Release: 2
+Release: 3
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.11/%{name}-%{version}.tar.xz
@@ -83,7 +83,7 @@ sed -i 's|#!/usr/bin/python |#!%{__python3} |' py3doc/*.py
 
 %build
 ./autogen.sh
-%configure
+%configure --enable-static
 %make_build
 
 find doc -type f -exec chmod 0644 \{\} \;
@@ -97,14 +97,16 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/python*/site-packages/*.a
 rm -f $RPM_BUILD_ROOT%{_libdir}/python*/site-packages/*.la
 rm -rf $RPM_BUILD_ROOT%{_datadir}/doc/libxml2-%{version}/*
 rm -rf $RPM_BUILD_ROOT%{_datadir}/doc/libxml2-python-%{version}/*
-(cd doc/examples ; make clean ; rm -rf .deps)
 gzip -9 -c doc/libxml2-api.xml > doc/libxml2-api.xml.gz
 
 %check
 make runtests
 
+(cd doc/examples ; make clean ; rm -rf .deps Makefile)
+
 %clean
 rm -fr %{buildroot}
+
 
 %post -p /sbin/ldconfig
 
@@ -138,6 +140,8 @@ rm -fr %{buildroot}
 %{_libdir}/pkgconfig/libxml-2.0.pc
 %{_libdir}/cmake/libxml2/libxml2-config.cmake
 
+%{_libdir}/*.a
+
 %files -n python3-%{name}
 %defattr(-, root, root)
 
@@ -154,6 +158,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Mon Aug 07 2023 zhuofeng <zhuofeng2@huawei.com> - 2.11.4-3
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:update doc/example file and libxml2.a
+
 * Mon Aug 07 2023 zhuofeng <zhuofeng2@huawei.com> - 2.11.4-2
 - Type:bugfix
 - CVE:NA
