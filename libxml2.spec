@@ -97,7 +97,7 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/python*/site-packages/*.a
 rm -f $RPM_BUILD_ROOT%{_libdir}/python*/site-packages/*.la
 rm -rf $RPM_BUILD_ROOT%{_datadir}/doc/libxml2-%{version}/*
 rm -rf $RPM_BUILD_ROOT%{_datadir}/doc/libxml2-python-%{version}/*
-(cd doc/examples ; make clean ; rm -rf .deps Makefile)
+(cd doc/examples ; make clean ; rm -rf *)
 gzip -9 -c doc/libxml2-api.xml > doc/libxml2-api.xml.gz
 
 %check
