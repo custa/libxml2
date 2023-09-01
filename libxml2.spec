@@ -1,12 +1,14 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.11.4
-Release: 3
+Release: 4
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.11/%{name}-%{version}.tar.xz
 
 Patch0: libxml2-multilib.patch
+Patch1: backport-Fix-old-SAX1-parser-with-custom-callbacks.patch
+Patch2: backport-Always-initialize-SAX1-element-handlers.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -158,6 +160,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Fri Sep 01 2023 liningjie <liningjie@xfusion.com> - 2.11.4-4
+- Fix old SAX1 parser with custom callbacks
+
 * Mon Aug 07 2023 zhuofeng <zhuofeng2@huawei.com> - 2.11.4-3
 - Type:bugfix
 - CVE:NA
