@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.11.4
-Release: 3
+Release: 4
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.11/%{name}-%{version}.tar.xz
@@ -83,7 +83,7 @@ sed -i 's|#!/usr/bin/python |#!%{__python3} |' py3doc/*.py
 
 %build
 ./autogen.sh
-%configure --enable-static
+%configure --enable-static --with-ftp
 %make_build
 
 find doc -type f -exec chmod 0644 \{\} \;
@@ -158,6 +158,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Mon Aug 07 2023 zhuofeng <zhuofeng2@huawei.com> - 2.11.4-4
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:Enable ftp which is needed by open-vm-tools
+
 * Mon Aug 07 2023 zhuofeng <zhuofeng2@huawei.com> - 2.11.4-3
 - Type:bugfix
 - CVE:NA
