@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.14
-Release: 7
+Release: 8
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.9/%{name}-%{version}.tar.xz
@@ -187,6 +187,7 @@ Patch6166:  backport-Fix-use-after-free-in-xmlParseContentInternal.patch
 Patch6167:  backport-malloc-fail-Fix-null-deref-after-xmlXIncludeNewRef.patch
 
 Patch6168:  backport-xpath-Ignore-entity-ref-nodes-when-computing-node-ha.patch
+Patch6169:  backport-SAX-Always-initialize-SAX1-element-handlers.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -342,6 +343,9 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Fri Sep 01 2023 liningjie <liningjie@xfusion.com> - 2.9.14-8
+- SAX: Always initialize SAX1 element handlers
+
 * Mon Jun 19 2023 zhuofeng <zhuofeng2@huawei.com> - 2.9.14-7
 - Type:bugfix
 - CVE:NA
