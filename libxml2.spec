@@ -1,12 +1,13 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.11.4
-Release: 4
+Release: 5
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.11/%{name}-%{version}.tar.xz
 
 Patch0: libxml2-multilib.patch
+Patch1: backport-CVE-2023-45322.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -158,6 +159,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Mon Oct 16 2023 BruceGW <gyl93216@163.com> -2.11.4-5
+- Type:CVE
+- CVE:CVE-2023-45322
+- SUG:NA
+- DESC:fix CVE-2023-45322
+
 * Mon Aug 07 2023 zhuofeng <zhuofeng2@huawei.com> - 2.11.4-4
 - Type:bugfix
 - CVE:NA
