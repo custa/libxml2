@@ -1,0 +1,100 @@
+From a697ed1e24234a9e6a4a4639555dcca230f752c1 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 15 Jun 2020 14:49:22 +0200
+Subject: [PATCH] Fix return value of xmlCharEncOutput
+
+Commit 407b393d introduced a regression caused by xmlCharEncOutput
+returning 0 in case of success instead of the number of bytes written.
+Always use its return value for nbchars in xmlOutputBufferWrite.
+
+Fixes #166.
+
+Reference:https://github.com/GNOME/libxml2/commit/a697ed1e24234a9e6a4a4639555dcca230f752c1
+Conflict:NA
+
+---
+ encoding.c |  6 +++---
+ xmlIO.c    | 20 ++++----------------
+ 2 files changed, 7 insertions(+), 19 deletions(-)
+
+diff --git a/encoding.c b/encoding.c
+index 65c58894..8b6f349c 100644
+--- a/encoding.c
++++ b/encoding.c
+@@ -2394,7 +2394,7 @@ xmlCharEncOutput(xmlOutputBufferPtr output, int init)
+ {
+     int ret;
+     size_t written;
+-    size_t writtentot = 0;
++    int writtentot = 0;
+     size_t toconv;
+     int c_in;
+     int c_out;
+@@ -2427,7 +2427,7 @@ retry:
+ 	xmlGenericError(xmlGenericErrorContext,
+ 		"initialized encoder\n");
+ #endif
+-        return(0);
++        return(c_out);
+     }
+ 
+     /*
+@@ -2540,7 +2540,7 @@ retry:
+             goto retry;
+ 	}
+     }
+-    return(ret);
++    return(writtentot ? writtentot : ret);
+ }
+ #endif
+ 
+diff --git a/xmlIO.c b/xmlIO.c
+index 7827dcf3..57312b97 100644
+--- a/xmlIO.c
++++ b/xmlIO.c
+@@ -3401,18 +3401,12 @@ xmlOutputBufferWrite(xmlOutputBufferPtr out, int len, const char *buf) {
+ 		out->error = XML_IO_ENCODER;
+ 		return(-1);
+ 	    }
+-            if (out->writecallback)
+-	        nbchars = xmlBufUse(out->conv);
+-            else
+-                nbchars = ret;
++            nbchars = ret >= 0 ? ret : 0;
+ 	} else {
+ 	    ret = xmlBufAdd(out->buffer, (const xmlChar *) buf, chunk);
+ 	    if (ret != 0)
+ 	        return(-1);
+-            if (out->writecallback)
+-	        nbchars = xmlBufUse(out->buffer);
+-            else
+-                nbchars = chunk;
++            nbchars = chunk;
+ 	}
+ 	buf += chunk;
+ 	len -= chunk;
+@@ -3599,19 +3593,13 @@ xmlOutputBufferWriteEscape(xmlOutputBufferPtr out, const xmlChar *str,
+ 		out->error = XML_IO_ENCODER;
+ 		return(-1);
+ 	    }
+-            if (out->writecallback)
+-	        nbchars = xmlBufUse(out->conv);
+-            else
+-                nbchars = ret;
++            nbchars = ret >= 0 ? ret : 0;
+ 	} else {
+ 	    ret = escaping(xmlBufEnd(out->buffer), &chunk, str, &cons);
+ 	    if ((ret < 0) || (chunk == 0)) /* chunk==0 => nothing done */
+ 	        return(-1);
+             xmlBufAddLen(out->buffer, chunk);
+-            if (out->writecallback)
+-	        nbchars = xmlBufUse(out->buffer);
+-            else
+-                nbchars = chunk;
++            nbchars = chunk;
+ 	}
+ 	str += cons;
+ 	len -= cons;
+-- 
+2.27.0
+
