@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
-Version: 2.11.4
-Release: 6
+Version: 2.11.5
+Release: 1
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.11/%{name}-%{version}.tar.xz
@@ -161,6 +161,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Mon Jan 29 2024 zhuofeng <zhuofeng2@huawei.com> - 2.11.5-1
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:update version to 2.11.5
+
 * Sun Dec 31 2023 Zhipeng Xie <xiezhipeng1@huawei.com> - 2.11.4-6
 - Type:bugfix
 - CVE:NA
