@@ -1,0 +1,766 @@
+From fc119e329069fae2ac7c25bc36ccb8847bac04ad Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 30 Apr 2023 15:28:12 +0200
+Subject: [PATCH] examples: Don't call xmlCleanupParser and xmlMemoryDump
+
+xmlCleanupParser is dangerous and shouldn't be called in most cases.
+Being part of the examples led many people to use it incorrectly.
+
+xmlMemoryDump is an obsolete way to test for memory leaks.
+---
+ doc/examples/Makefile.am  |  18 -----
+ doc/examples/examples.xml | 136 +++++++++++++++-----------------------
+ doc/examples/index.html   | 106 +++++++++++++----------------
+ doc/examples/index.py     |   2 -
+ doc/examples/io1.c        |   8 ---
+ doc/examples/parse1.c     |   8 ---
+ doc/examples/parse2.c     |   8 ---
+ doc/examples/parse3.c     |   8 ---
+ doc/examples/parse4.c     |   8 ---
+ doc/examples/reader1.c    |   8 ---
+ doc/examples/reader2.c    |   8 ---
+ doc/examples/reader3.c    |   9 ---
+ doc/examples/reader4.c    |   8 ---
+ doc/examples/testWriter.c |   8 ---
+ doc/examples/tree1.c      |   6 --
+ doc/examples/tree2.c      |  10 ---
+ doc/examples/xpath1.c     |   7 --
+ doc/examples/xpath2.c     |   7 --
+ 18 files changed, 101 insertions(+), 272 deletions(-)
+
+diff --git a/doc/examples/Makefile.am b/doc/examples/Makefile.am
+index 75e138be..e30c02b4 100644
+--- a/doc/examples/Makefile.am
++++ b/doc/examples/Makefile.am
+@@ -22,7 +22,6 @@ uninstall-local:
+ 
+ clean-local:
+ 	test -f Makefile.am || rm -f test?.xml
+-	rm -f .memdump
+ 
+ EXTRA_DIST = \
+ 	examples.xml \
+@@ -86,35 +85,18 @@ valgrind:
+ check-local:
+ 	@test -f Makefile.am || test -f test1.xml || $(LN_S) $(srcdir)/test?.xml .
+ 	@(echo '## examples regression tests')
+-	@(echo > .memdump)
+ 	@$(CHECKER) ./io1 >/dev/null
+-	@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0
+ 	@$(CHECKER) ./io2 >/dev/null
+-	@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0
+ 	@$(CHECKER) ./parse1 test1.xml
+-	@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0
+ 	@$(CHECKER) ./parse2 test2.xml
+-	@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0
+ 	@$(CHECKER) ./parse3
+-	@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0
+ 	@$(CHECKER) ./parse4 test3.xml
+-	@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0
+ 	@$(CHECKER) ./reader1 test2.xml >/dev/null
+-	@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0
+ 	@$(CHECKER) ./reader2 test2.xml >/dev/null
+-	@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0
+ 	@$(CHECKER) ./reader3 >/dev/null
+-	@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0
+ 	@$(CHECKER) ./reader4 test1.xml test2.xml test3.xml >/dev/null
+-	@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0
+ 	@$(CHECKER) ./testWriter
+-	@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0
+ 	@$(CHECKER) ./tree1 test2.xml >/dev/null
+-	@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0
+ 	@$(CHECKER) ./tree2 >/dev/null
+-	@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0
+-	@$(CHECKER) ./xpath1 test3.xml '//child2' >/dev/null
+-	@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0
+ 	@$(CHECKER) ./xpath2 test3.xml '//discarded' discarded >/dev/null
+-	@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0
+ 	@rm -f *.tmp
+diff --git a/doc/examples/examples.xml b/doc/examples/examples.xml
+index 465ea824..177e8159 100644
+--- a/doc/examples/examples.xml
++++ b/doc/examples/examples.xml
+@@ -15,11 +15,9 @@
+     </includes>
+     <uses>
+       <macro line='117' file='xmlversion' name='LIBXML_TEST_VERSION'/>
+-      <function line='154' file='parser' name='xmlCleanupParser'/>
+       <function line='143' file='tree' name='xmlDocDump'/>
+       <typedef line='105' file='tree' name='xmlDocPtr'/>
+       <function line='149' file='tree' name='xmlFreeDoc'/>
+-      <function line='158' file='xmlmemory' name='xmlMemoryDump'/>
+       <function line='124' file='parser' name='xmlReadMemory'/>
+       <function line='117' file='xmlIO' name='xmlRegisterInputCallbacks'/>
+       <function line='134' file='xinclude' name='xmlXIncludeProcess'/>
+@@ -62,10 +60,8 @@
+     </includes>
+     <uses>
+       <macro line='45' file='xmlversion' name='LIBXML_TEST_VERSION'/>
+-      <function line='50' file='parser' name='xmlCleanupParser'/>
+       <typedef line='24' file='tree' name='xmlDocPtr'/>
+       <function line='31' file='tree' name='xmlFreeDoc'/>
+-      <function line='54' file='xmlmemory' name='xmlMemoryDump'/>
+       <function line='26' file='parser' name='xmlReadFile'/>
+     </uses>
+   </example>
+@@ -84,12 +80,10 @@
+     <uses>
+       <macro line='61' file='xmlversion' name='LIBXML_TEST_VERSION'/>
+       <enum line='35' file='parser' name='XML_PARSE_DTDVALID'/>
+-      <function line='66' file='parser' name='xmlCleanupParser'/>
+       <function line='35' file='parser' name='xmlCtxtReadFile'/>
+       <typedef line='26' file='tree' name='xmlDocPtr'/>
+       <function line='44' file='tree' name='xmlFreeDoc'/>
+       <function line='47' file='parser' name='xmlFreeParserCtxt'/>
+-      <function line='70' file='xmlmemory' name='xmlMemoryDump'/>
+       <function line='29' file='parser' name='xmlNewParserCtxt'/>
+       <typedef line='25' file='tree' name='xmlParserCtxtPtr'/>
+     </uses>
+@@ -108,10 +102,8 @@
+     </includes>
+     <uses>
+       <macro line='49' file='xmlversion' name='LIBXML_TEST_VERSION'/>
+-      <function line='54' file='parser' name='xmlCleanupParser'/>
+       <typedef line='27' file='tree' name='xmlDocPtr'/>
+       <function line='38' file='tree' name='xmlFreeDoc'/>
+-      <function line='58' file='xmlmemory' name='xmlMemoryDump'/>
+       <function line='33' file='parser' name='xmlReadMemory'/>
+     </uses>
+   </example>
+@@ -129,12 +121,10 @@
+     </includes>
+     <uses>
+       <macro line='120' file='xmlversion' name='LIBXML_TEST_VERSION'/>
+-      <function line='131' file='parser' name='xmlCleanupParser'/>
+       <function line='67' file='parser' name='xmlCreatePushParserCtxt'/>
+       <typedef line='47' file='tree' name='xmlDocPtr'/>
+       <function line='103' file='tree' name='xmlFreeDoc'/>
+       <function line='94' file='parser' name='xmlFreeParserCtxt'/>
+-      <function line='135' file='xmlmemory' name='xmlMemoryDump'/>
+       <function line='80' file='parser' name='xmlParseChunk'/>
+       <typedef line='45' file='tree' name='xmlParserCtxtPtr'/>
+     </uses>
+@@ -152,9 +142,7 @@
+     </includes>
+     <uses>
+       <macro line='89' file='xmlversion' name='LIBXML_TEST_VERSION'/>
+-      <function line='94' file='parser' name='xmlCleanupParser'/>
+       <function line='69' file='xmlreader' name='xmlFreeTextReader'/>
+-      <function line='98' file='xmlmemory' name='xmlMemoryDump'/>
+       <function line='62' file='xmlreader' name='xmlReaderForFile'/>
+       <function line='44' file='xmlstring' name='xmlStrlen'/>
+       <function line='29' file='xmlreader' name='xmlTextReaderConstName'/>
+@@ -250,35 +238,35 @@
+       <include line='17'>&lt;libxml/xmlwriter.h&gt;</include>
+     </includes>
+     <uses>
+-      <macro line='885' file='parser' name='XML_DEFAULT_VERSION'/>
+-      <function line='347' file='tree' name='xmlBufferCreate'/>
+-      <function line='613' file='tree' name='xmlBufferFree'/>
+-      <typedef line='341' file='tree' name='xmlBufferPtr'/>
+-      <typedef line='1151' file='encoding' name='xmlCharEncodingHandlerPtr'/>
+-      <function line='901' file='tree' name='xmlDocSetRootElement'/>
+-      <function line='1156' file='encoding' name='xmlFindCharEncodingHandler'/>
+-      <variable line='113' file='globals' name='xmlFree'/>
+-      <function line='327' file='xmlwriter' name='xmlFreeTextWriter'/>
+-      <variable line='1166' file='globals' name='xmlMalloc'/>
+-      <function line='885' file='tree' name='xmlNewDoc'/>
+-      <function line='894' file='tree' name='xmlNewDocNode'/>
+-      <function line='632' file='xmlwriter' name='xmlNewTextWriterDoc'/>
+-      <function line='76' file='xmlwriter' name='xmlNewTextWriterFilename'/>
+-      <function line='355' file='xmlwriter' name='xmlNewTextWriterMemory'/>
+-      <function line='904' file='xmlwriter' name='xmlNewTextWriterTree'/>
+-      <typedef line='880' file='tree' name='xmlNodePtr'/>
+-      <variable line='1183' file='globals' name='xmlRealloc'/>
+-      <function line='863' file='tree' name='xmlSaveFileEnc'/>
+-      <function line='320' file='xmlwriter' name='xmlTextWriterEndDocument'/>
+-      <function line='200' file='xmlwriter' name='xmlTextWriterEndElement'/>
+-      <typedef line='72' file='xmlwriter' name='xmlTextWriterPtr'/>
+-      <function line='85' file='xmlwriter' name='xmlTextWriterStartDocument'/>
+-      <function line='94' file='xmlwriter' name='xmlTextWriterStartElement'/>
+-      <function line='124' file='xmlwriter' name='xmlTextWriterWriteAttribute'/>
+-      <function line='107' file='xmlwriter' name='xmlTextWriterWriteComment'/>
+-      <function line='181' file='xmlwriter' name='xmlTextWriterWriteElement'/>
+-      <function line='143' file='xmlwriter' name='xmlTextWriterWriteFormatComment'/>
+-      <function line='162' file='xmlwriter' name='xmlTextWriterWriteFormatElement'/>
++      <macro line='877' file='parser' name='XML_DEFAULT_VERSION'/>
++      <function line='339' file='tree' name='xmlBufferCreate'/>
++      <function line='605' file='tree' name='xmlBufferFree'/>
++      <typedef line='333' file='tree' name='xmlBufferPtr'/>
++      <typedef line='1143' file='encoding' name='xmlCharEncodingHandlerPtr'/>
++      <function line='893' file='tree' name='xmlDocSetRootElement'/>
++      <function line='1148' file='encoding' name='xmlFindCharEncodingHandler'/>
++      <variable line='105' file='globals' name='xmlFree'/>
++      <function line='319' file='xmlwriter' name='xmlFreeTextWriter'/>
++      <variable line='1158' file='globals' name='xmlMalloc'/>
++      <function line='877' file='tree' name='xmlNewDoc'/>
++      <function line='886' file='tree' name='xmlNewDocNode'/>
++      <function line='624' file='xmlwriter' name='xmlNewTextWriterDoc'/>
++      <function line='68' file='xmlwriter' name='xmlNewTextWriterFilename'/>
++      <function line='347' file='xmlwriter' name='xmlNewTextWriterMemory'/>
++      <function line='896' file='xmlwriter' name='xmlNewTextWriterTree'/>
++      <typedef line='872' file='tree' name='xmlNodePtr'/>
++      <variable line='1175' file='globals' name='xmlRealloc'/>
++      <function line='855' file='tree' name='xmlSaveFileEnc'/>
++      <function line='312' file='xmlwriter' name='xmlTextWriterEndDocument'/>
++      <function line='192' file='xmlwriter' name='xmlTextWriterEndElement'/>
++      <typedef line='64' file='xmlwriter' name='xmlTextWriterPtr'/>
++      <function line='77' file='xmlwriter' name='xmlTextWriterStartDocument'/>
++      <function line='86' file='xmlwriter' name='xmlTextWriterStartElement'/>
++      <function line='116' file='xmlwriter' name='xmlTextWriterWriteAttribute'/>
++      <function line='99' file='xmlwriter' name='xmlTextWriterWriteComment'/>
++      <function line='173' file='xmlwriter' name='xmlTextWriterWriteElement'/>
++      <function line='135' file='xmlwriter' name='xmlTextWriterWriteFormatComment'/>
++      <function line='154' file='xmlwriter' name='xmlTextWriterWriteFormatElement'/>
+     </uses>
+   </example>
+   <example filename='tree1.c'>
+@@ -338,22 +326,22 @@
+       <include line='19'>&lt;libxml/xpathInternals.h&gt;</include>
+     </includes>
+     <uses>
+-      <enum line='229' file='tree' name='XML_ELEMENT_NODE'/>
+-      <enum line='217' file='tree' name='XML_NAMESPACE_DECL'/>
+-      <variable line='173' file='globals' name='xmlFree'/>
++      <enum line='222' file='tree' name='XML_ELEMENT_NODE'/>
++      <enum line='210' file='tree' name='XML_NAMESPACE_DECL'/>
++      <variable line='166' file='globals' name='xmlFree'/>
+       <function line='39' file='parser' name='xmlInitParser'/>
+-      <typedef line='206' file='tree' name='xmlNodePtr'/>
+-      <typedef line='218' file='tree' name='xmlNsPtr'/>
+-      <function line='94' file='parser' name='xmlParseFile'/>
+-      <function line='170' file='xmlstring' name='xmlStrchr'/>
+-      <function line='156' file='xmlstring' name='xmlStrdup'/>
+-      <typedef line='87' file='xpath' name='xmlXPathContextPtr'/>
+-      <function line='117' file='xpath' name='xmlXPathEvalExpression'/>
+-      <function line='111' file='xpath' name='xmlXPathFreeContext'/>
+-      <function line='129' file='xpath' name='xmlXPathFreeObject'/>
+-      <function line='101' file='xpath' name='xmlXPathNewContext'/>
+-      <typedef line='88' file='xpath' name='xmlXPathObjectPtr'/>
+-      <function line='186' file='xpathInternals' name='xmlXPathRegisterNs'/>
++      <typedef line='199' file='tree' name='xmlNodePtr'/>
++      <typedef line='211' file='tree' name='xmlNsPtr'/>
++      <function line='87' file='parser' name='xmlParseFile'/>
++      <function line='163' file='xmlstring' name='xmlStrchr'/>
++      <function line='149' file='xmlstring' name='xmlStrdup'/>
++      <typedef line='80' file='xpath' name='xmlXPathContextPtr'/>
++      <function line='110' file='xpath' name='xmlXPathEvalExpression'/>
++      <function line='104' file='xpath' name='xmlXPathFreeContext'/>
++      <function line='122' file='xpath' name='xmlXPathFreeObject'/>
++      <function line='94' file='xpath' name='xmlXPathNewContext'/>
++      <typedef line='81' file='xpath' name='xmlXPathObjectPtr'/>
++      <function line='179' file='xpathInternals' name='xmlXPathRegisterNs'/>
+     </uses>
+   </example>
+   <example filename='xpath2.c'>
+@@ -371,17 +359,17 @@
+       <include line='19'>&lt;libxml/xpathInternals.h&gt;</include>
+     </includes>
+     <uses>
+-      <enum line='180' file='tree' name='XML_NAMESPACE_DECL'/>
+-      <function line='127' file='tree' name='xmlDocDump'/>
++      <enum line='173' file='tree' name='XML_NAMESPACE_DECL'/>
++      <function line='120' file='tree' name='xmlDocDump'/>
+       <function line='41' file='parser' name='xmlInitParser'/>
+-      <function line='162' file='tree' name='xmlNodeSetContent'/>
+-      <function line='95' file='parser' name='xmlParseFile'/>
+-      <typedef line='87' file='xpath' name='xmlXPathContextPtr'/>
+-      <function line='110' file='xpath' name='xmlXPathEvalExpression'/>
+-      <function line='113' file='xpath' name='xmlXPathFreeContext'/>
+-      <function line='123' file='xpath' name='xmlXPathFreeObject'/>
+-      <function line='102' file='xpath' name='xmlXPathNewContext'/>
+-      <typedef line='88' file='xpath' name='xmlXPathObjectPtr'/>
++      <function line='155' file='tree' name='xmlNodeSetContent'/>
++      <function line='88' file='parser' name='xmlParseFile'/>
++      <typedef line='80' file='xpath' name='xmlXPathContextPtr'/>
++      <function line='103' file='xpath' name='xmlXPathEvalExpression'/>
++      <function line='106' file='xpath' name='xmlXPathFreeContext'/>
++      <function line='116' file='xpath' name='xmlXPathFreeObject'/>
++      <function line='95' file='xpath' name='xmlXPathNewContext'/>
++      <typedef line='81' file='xpath' name='xmlXPathObjectPtr'/>
+     </uses>
+   </example>
+   <symbols>
+@@ -429,14 +417,6 @@
+     <symbol name='xmlCharEncodingHandlerPtr'>
+       <ref filename='testWriter.c'/>
+     </symbol>
+-    <symbol name='xmlCleanupParser'>
+-      <ref filename='io1.c'/>
+-      <ref filename='parse1.c'/>
+-      <ref filename='parse2.c'/>
+-      <ref filename='parse3.c'/>
+-      <ref filename='parse4.c'/>
+-      <ref filename='reader1.c'/>
+-    </symbol>
+     <symbol name='xmlCreateIntSubset'>
+       <ref filename='tree2.c'/>
+     </symbol>
+@@ -506,14 +486,6 @@
+     <symbol name='xmlMalloc'>
+       <ref filename='testWriter.c'/>
+     </symbol>
+-    <symbol name='xmlMemoryDump'>
+-      <ref filename='io1.c'/>
+-      <ref filename='parse1.c'/>
+-      <ref filename='parse2.c'/>
+-      <ref filename='parse3.c'/>
+-      <ref filename='parse4.c'/>
+-      <ref filename='reader1.c'/>
+-    </symbol>
+     <symbol name='xmlNewChild'>
+       <ref filename='tree2.c'/>
+     </symbol>
+diff --git a/doc/examples/index.html b/doc/examples/index.html
+index ff7b1cd3..b4d29f31 100644
+--- a/doc/examples/index.html
++++ b/doc/examples/index.html
+@@ -87,8 +87,6 @@ install</i> step or when installing the libxml2 development package:</p>
+       <li> line 134: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xinclude.html#xmlXIncludeProcess">xmlXIncludeProcess</a> from xinclude.h</li>
+       <li> line 143: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlDocDump">xmlDocDump</a> from tree.h</li>
+       <li> line 149: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlFreeDoc">xmlFreeDoc</a> from tree.h</li>
+-      <li> line 154: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlCleanupParser">xmlCleanupParser</a> from parser.h</li>
+-      <li> line 158: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlmemory.html#xmlMemoryDump">xmlMemoryDump</a> from xmlmemory.h</li>
+     </ul>
+     <p>Usage:</p>
+     <p>io1</p>
+@@ -133,8 +131,6 @@ install</i> step or when installing the libxml2 development package:</p>
+       <li> line 26: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlReadFile">xmlReadFile</a> from parser.h</li>
+       <li> line 31: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlFreeDoc">xmlFreeDoc</a> from tree.h</li>
+       <li> line 45: Macro <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlversion.html#LIBXML_TEST_VERSION">LIBXML_TEST_VERSION</a> from xmlversion.h</li>
+-      <li> line 50: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlCleanupParser">xmlCleanupParser</a> from parser.h</li>
+-      <li> line 54: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlmemory.html#xmlMemoryDump">xmlMemoryDump</a> from xmlmemory.h</li>
+     </ul>
+     <p>Usage:</p>
+     <p>parse1 test1.xml</p>
+@@ -159,8 +155,6 @@ install</i> step or when installing the libxml2 development package:</p>
+       <li> line 44: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlFreeDoc">xmlFreeDoc</a> from tree.h</li>
+       <li> line 47: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlFreeParserCtxt">xmlFreeParserCtxt</a> from parser.h</li>
+       <li> line 61: Macro <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlversion.html#LIBXML_TEST_VERSION">LIBXML_TEST_VERSION</a> from xmlversion.h</li>
+-      <li> line 66: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlCleanupParser">xmlCleanupParser</a> from parser.h</li>
+-      <li> line 70: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlmemory.html#xmlMemoryDump">xmlMemoryDump</a> from xmlmemory.h</li>
+     </ul>
+     <p>Usage:</p>
+     <p>parse2 test2.xml</p>
+@@ -182,8 +176,6 @@ install</i> step or when installing the libxml2 development package:</p>
+       <li> line 33: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlReadMemory">xmlReadMemory</a> from parser.h</li>
+       <li> line 38: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlFreeDoc">xmlFreeDoc</a> from tree.h</li>
+       <li> line 49: Macro <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlversion.html#LIBXML_TEST_VERSION">LIBXML_TEST_VERSION</a> from xmlversion.h</li>
+-      <li> line 54: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlCleanupParser">xmlCleanupParser</a> from parser.h</li>
+-      <li> line 58: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlmemory.html#xmlMemoryDump">xmlMemoryDump</a> from xmlmemory.h</li>
+     </ul>
+     <p>Usage:</p>
+     <p>parse3</p>
+@@ -208,8 +200,6 @@ install</i> step or when installing the libxml2 development package:</p>
+       <li> line 94: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlFreeParserCtxt">xmlFreeParserCtxt</a> from parser.h</li>
+       <li> line 103: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlFreeDoc">xmlFreeDoc</a> from tree.h</li>
+       <li> line 120: Macro <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlversion.html#LIBXML_TEST_VERSION">LIBXML_TEST_VERSION</a> from xmlversion.h</li>
+-      <li> line 131: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlCleanupParser">xmlCleanupParser</a> from parser.h</li>
+-      <li> line 135: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlmemory.html#xmlMemoryDump">xmlMemoryDump</a> from xmlmemory.h</li>
+     </ul>
+     <p>Usage:</p>
+     <p>parse4 test3.xml</p>
+@@ -281,18 +271,18 @@ install</i> step or when installing the libxml2 development package:</p>
+     <p>Uses:</p>
+     <ul>
+       <li> line 39: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlInitParser">xmlInitParser</a> from parser.h</li>
+-      <li> line 87: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathContextPtr">xmlXPathContextPtr</a> from xpath.h</li>
+-      <li> line 88: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathObjectPtr">xmlXPathObjectPtr</a> from xpath.h</li>
+-      <li> line 94: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlParseFile">xmlParseFile</a> from parser.h</li>
+-      <li> line 101: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathNewContext">xmlXPathNewContext</a> from xpath.h</li>
+-      <li> line 111: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathFreeContext">xmlXPathFreeContext</a> from xpath.h</li>
+-      <li> line 117: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathEvalExpression">xmlXPathEvalExpression</a> from xpath.h</li>
+-      <li> line 129: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathFreeObject">xmlXPathFreeObject</a> from xpath.h</li>
+-      <li> line 156: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlstring.html#xmlStrdup">xmlStrdup</a> from xmlstring.h</li>
+-      <li> line 170: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlstring.html#xmlStrchr">xmlStrchr</a> from xmlstring.h</li>
+-      <li> line 186: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpathInternals.html#xmlXPathRegisterNs">xmlXPathRegisterNs</a> from xpathInternals.h</li>
+-      <li> line 206: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlNodePtr">xmlNodePtr</a> from tree.h</li>
+-      <li> line 218: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlNsPtr">xmlNsPtr</a> from tree.h</li>
++      <li> line 80: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathContextPtr">xmlXPathContextPtr</a> from xpath.h</li>
++      <li> line 81: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathObjectPtr">xmlXPathObjectPtr</a> from xpath.h</li>
++      <li> line 87: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlParseFile">xmlParseFile</a> from parser.h</li>
++      <li> line 94: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathNewContext">xmlXPathNewContext</a> from xpath.h</li>
++      <li> line 104: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathFreeContext">xmlXPathFreeContext</a> from xpath.h</li>
++      <li> line 110: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathEvalExpression">xmlXPathEvalExpression</a> from xpath.h</li>
++      <li> line 122: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathFreeObject">xmlXPathFreeObject</a> from xpath.h</li>
++      <li> line 149: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlstring.html#xmlStrdup">xmlStrdup</a> from xmlstring.h</li>
++      <li> line 163: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlstring.html#xmlStrchr">xmlStrchr</a> from xmlstring.h</li>
++      <li> line 179: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpathInternals.html#xmlXPathRegisterNs">xmlXPathRegisterNs</a> from xpathInternals.h</li>
++      <li> line 199: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlNodePtr">xmlNodePtr</a> from tree.h</li>
++      <li> line 211: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlNsPtr">xmlNsPtr</a> from tree.h</li>
+     </ul>
+     <p>Usage:</p>
+     <p>xpath1 &lt;xml-file&gt; &lt;xpath-expr&gt; [&lt;known-ns-list&gt;]</p>
+@@ -317,15 +307,15 @@ install</i> step or when installing the libxml2 development package:</p>
+     <p>Uses:</p>
+     <ul>
+       <li> line 41: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlInitParser">xmlInitParser</a> from parser.h</li>
+-      <li> line 87: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathContextPtr">xmlXPathContextPtr</a> from xpath.h</li>
+-      <li> line 88: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathObjectPtr">xmlXPathObjectPtr</a> from xpath.h</li>
+-      <li> line 95: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlParseFile">xmlParseFile</a> from parser.h</li>
+-      <li> line 102: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathNewContext">xmlXPathNewContext</a> from xpath.h</li>
+-      <li> line 110: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathEvalExpression">xmlXPathEvalExpression</a> from xpath.h</li>
+-      <li> line 113: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathFreeContext">xmlXPathFreeContext</a> from xpath.h</li>
+-      <li> line 123: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathFreeObject">xmlXPathFreeObject</a> from xpath.h</li>
+-      <li> line 127: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlDocDump">xmlDocDump</a> from tree.h</li>
+-      <li> line 162: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlNodeSetContent">xmlNodeSetContent</a> from tree.h</li>
++      <li> line 80: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathContextPtr">xmlXPathContextPtr</a> from xpath.h</li>
++      <li> line 81: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathObjectPtr">xmlXPathObjectPtr</a> from xpath.h</li>
++      <li> line 88: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlParseFile">xmlParseFile</a> from parser.h</li>
++      <li> line 95: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathNewContext">xmlXPathNewContext</a> from xpath.h</li>
++      <li> line 103: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathEvalExpression">xmlXPathEvalExpression</a> from xpath.h</li>
++      <li> line 106: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathFreeContext">xmlXPathFreeContext</a> from xpath.h</li>
++      <li> line 116: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xpath.html#xmlXPathFreeObject">xmlXPathFreeObject</a> from xpath.h</li>
++      <li> line 120: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlDocDump">xmlDocDump</a> from tree.h</li>
++      <li> line 155: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlNodeSetContent">xmlNodeSetContent</a> from tree.h</li>
+     </ul>
+     <p>Usage:</p>
+     <p>xpath2 &lt;xml-file&gt; &lt;xpath-expr&gt; &lt;new-value&gt;</p>
+@@ -353,8 +343,6 @@ install</i> step or when installing the libxml2 development package:</p>
+       <li> line 64: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlreader.html#xmlTextReaderRead">xmlTextReaderRead</a> from xmlreader.h</li>
+       <li> line 69: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlreader.html#xmlFreeTextReader">xmlFreeTextReader</a> from xmlreader.h</li>
+       <li> line 89: Macro <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlversion.html#LIBXML_TEST_VERSION">LIBXML_TEST_VERSION</a> from xmlversion.h</li>
+-      <li> line 94: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#xmlCleanupParser">xmlCleanupParser</a> from parser.h</li>
+-      <li> line 98: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlmemory.html#xmlMemoryDump">xmlMemoryDump</a> from xmlmemory.h</li>
+     </ul>
+     <p>Usage:</p>
+     <p>reader1 &lt;filename&gt;</p>
+@@ -440,32 +428,32 @@ install</i> step or when installing the libxml2 development package:</p>
+     </ul>
+     <p>Uses:</p>
+     <ul>
+-      <li> line 72: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterPtr">xmlTextWriterPtr</a> from xmlwriter.h</li>
+-      <li> line 76: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlNewTextWriterFilename">xmlNewTextWriterFilename</a> from xmlwriter.h</li>
+-      <li> line 85: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterStartDocument">xmlTextWriterStartDocument</a> from xmlwriter.h</li>
+-      <li> line 94: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterStartElement">xmlTextWriterStartElement</a> from xmlwriter.h</li>
+-      <li> line 107: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterWriteComment">xmlTextWriterWriteComment</a> from xmlwriter.h</li>
+-      <li> line 124: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterWriteAttribute">xmlTextWriterWriteAttribute</a> from xmlwriter.h</li>
+-      <li> line 143: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterWriteFormatComment">xmlTextWriterWriteFormatComment</a> from xmlwriter.h</li>
+-      <li> line 162: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterWriteFormatElement">xmlTextWriterWriteFormatElement</a> from xmlwriter.h</li>
+-      <li> line 181: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterWriteElement">xmlTextWriterWriteElement</a> from xmlwriter.h</li>
+-      <li> line 200: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterEndElement">xmlTextWriterEndElement</a> from xmlwriter.h</li>
+-      <li> line 320: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterEndDocument">xmlTextWriterEndDocument</a> from xmlwriter.h</li>
+-      <li> line 327: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlFreeTextWriter">xmlFreeTextWriter</a> from xmlwriter.h</li>
+-      <li> line 341: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlBufferPtr">xmlBufferPtr</a> from tree.h</li>
+-      <li> line 347: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlBufferCreate">xmlBufferCreate</a> from tree.h</li>
+-      <li> line 355: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlNewTextWriterMemory">xmlNewTextWriterMemory</a> from xmlwriter.h</li>
+-      <li> line 613: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlBufferFree">xmlBufferFree</a> from tree.h</li>
+-      <li> line 632: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlNewTextWriterDoc">xmlNewTextWriterDoc</a> from xmlwriter.h</li>
+-      <li> line 863: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlSaveFileEnc">xmlSaveFileEnc</a> from tree.h</li>
+-      <li> line 880: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlNodePtr">xmlNodePtr</a> from tree.h</li>
+-      <li> line 885: Macro <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#XML_DEFAULT_VERSION">XML_DEFAULT_VERSION</a> from parser.h</li>
+-      <li> line 885: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlNewDoc">xmlNewDoc</a> from tree.h</li>
+-      <li> line 894: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlNewDocNode">xmlNewDocNode</a> from tree.h</li>
+-      <li> line 901: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlDocSetRootElement">xmlDocSetRootElement</a> from tree.h</li>
+-      <li> line 904: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlNewTextWriterTree">xmlNewTextWriterTree</a> from xmlwriter.h</li>
+-      <li> line 1151: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-encoding.html#xmlCharEncodingHandlerPtr">xmlCharEncodingHandlerPtr</a> from encoding.h</li>
+-      <li> line 1156: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-encoding.html#xmlFindCharEncodingHandler">xmlFindCharEncodingHandler</a> from encoding.h</li>
++      <li> line 64: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterPtr">xmlTextWriterPtr</a> from xmlwriter.h</li>
++      <li> line 68: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlNewTextWriterFilename">xmlNewTextWriterFilename</a> from xmlwriter.h</li>
++      <li> line 77: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterStartDocument">xmlTextWriterStartDocument</a> from xmlwriter.h</li>
++      <li> line 86: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterStartElement">xmlTextWriterStartElement</a> from xmlwriter.h</li>
++      <li> line 99: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterWriteComment">xmlTextWriterWriteComment</a> from xmlwriter.h</li>
++      <li> line 116: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterWriteAttribute">xmlTextWriterWriteAttribute</a> from xmlwriter.h</li>
++      <li> line 135: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterWriteFormatComment">xmlTextWriterWriteFormatComment</a> from xmlwriter.h</li>
++      <li> line 154: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterWriteFormatElement">xmlTextWriterWriteFormatElement</a> from xmlwriter.h</li>
++      <li> line 173: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterWriteElement">xmlTextWriterWriteElement</a> from xmlwriter.h</li>
++      <li> line 192: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterEndElement">xmlTextWriterEndElement</a> from xmlwriter.h</li>
++      <li> line 312: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlTextWriterEndDocument">xmlTextWriterEndDocument</a> from xmlwriter.h</li>
++      <li> line 319: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlFreeTextWriter">xmlFreeTextWriter</a> from xmlwriter.h</li>
++      <li> line 333: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlBufferPtr">xmlBufferPtr</a> from tree.h</li>
++      <li> line 339: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlBufferCreate">xmlBufferCreate</a> from tree.h</li>
++      <li> line 347: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlNewTextWriterMemory">xmlNewTextWriterMemory</a> from xmlwriter.h</li>
++      <li> line 605: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlBufferFree">xmlBufferFree</a> from tree.h</li>
++      <li> line 624: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlNewTextWriterDoc">xmlNewTextWriterDoc</a> from xmlwriter.h</li>
++      <li> line 855: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlSaveFileEnc">xmlSaveFileEnc</a> from tree.h</li>
++      <li> line 872: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlNodePtr">xmlNodePtr</a> from tree.h</li>
++      <li> line 877: Macro <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-parser.html#XML_DEFAULT_VERSION">XML_DEFAULT_VERSION</a> from parser.h</li>
++      <li> line 877: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlNewDoc">xmlNewDoc</a> from tree.h</li>
++      <li> line 886: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlNewDocNode">xmlNewDocNode</a> from tree.h</li>
++      <li> line 893: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-tree.html#xmlDocSetRootElement">xmlDocSetRootElement</a> from tree.h</li>
++      <li> line 896: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-xmlwriter.html#xmlNewTextWriterTree">xmlNewTextWriterTree</a> from xmlwriter.h</li>
++      <li> line 1143: Type <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-encoding.html#xmlCharEncodingHandlerPtr">xmlCharEncodingHandlerPtr</a> from encoding.h</li>
++      <li> line 1148: Function <a href="https://gnome.pages.gitlab.gnome.org/libxml2/devhelp/libxml2-encoding.html#xmlFindCharEncodingHandler">xmlFindCharEncodingHandler</a> from encoding.h</li>
+     </ul>
+     <p>Usage:</p>
+     <p>testWriter</p>
+diff --git a/doc/examples/index.py b/doc/examples/index.py
+index c422904f..bceae8b9 100755
+--- a/doc/examples/index.py
++++ b/doc/examples/index.py
+@@ -262,10 +262,8 @@ clean-local:
+     Makefile = Makefile + "tests: $(check_PROGRAMS)\n"
+     Makefile = Makefile + "\t@test -f Makefile.am || test -f test1.xml || $(LN_S) $(srcdir)/test?.xml .\n"
+     Makefile = Makefile + "\t@(echo '## examples regression tests')\n"
+-    Makefile = Makefile + "\t@(echo > .memdump)\n"
+     for test in tests:
+         Makefile = Makefile + "\t@$(CHECKER) %s\n" % (test)
+-        Makefile = Makefile + '\t@grep "MORY ALLO" .memdump | grep -v "MEMORY ALLOCATED : 0" ; exit 0\n'
+     Makefile = Makefile + "\t@rm *.tmp\n"
+     try:
+         old = open("Makefile.am", "r").read()
+diff --git a/doc/examples/io1.c b/doc/examples/io1.c
+index 5c2b25d7..366c63cb 100644
+--- a/doc/examples/io1.c
++++ b/doc/examples/io1.c
+@@ -148,14 +148,6 @@ int main(void) {
+      */
+     xmlFreeDoc(doc);
+ 
+-    /*
+-     * Cleanup function for the XML library.
+-     */
+-    xmlCleanupParser();
+-    /*
+-     * this is to debug memory for regression tests
+-     */
+-    xmlMemoryDump();
+     return(0);
+ }
+ #else
+diff --git a/doc/examples/parse1.c b/doc/examples/parse1.c
+index e3c9d3a6..01087d1a 100644
+--- a/doc/examples/parse1.c
++++ b/doc/examples/parse1.c
+@@ -44,13 +44,5 @@ int main(int argc, char **argv) {
+ 
+     example1Func(argv[1]);
+ 
+-    /*
+-     * Cleanup function for the XML library.
+-     */
+-    xmlCleanupParser();
+-    /*
+-     * this is to debug memory for regression tests
+-     */
+-    xmlMemoryDump();
+     return(0);
+ }
+diff --git a/doc/examples/parse2.c b/doc/examples/parse2.c
+index 4dcbfde9..0732e1e5 100644
+--- a/doc/examples/parse2.c
++++ b/doc/examples/parse2.c
+@@ -60,13 +60,5 @@ int main(int argc, char **argv) {
+ 
+     exampleFunc(argv[1]);
+ 
+-    /*
+-     * Cleanup function for the XML library.
+-     */
+-    xmlCleanupParser();
+-    /*
+-     * this is to debug memory for regression tests
+-     */
+-    xmlMemoryDump();
+     return(0);
+ }
+diff --git a/doc/examples/parse3.c b/doc/examples/parse3.c
+index 076a786a..15349dcc 100644
+--- a/doc/examples/parse3.c
++++ b/doc/examples/parse3.c
+@@ -48,13 +48,5 @@ int main(void) {
+ 
+     example3Func(document, 6);
+ 
+-    /*
+-     * Cleanup function for the XML library.
+-     */
+-    xmlCleanupParser();
+-    /*
+-     * this is to debug memory for regression tests
+-     */
+-    xmlMemoryDump();
+     return(0);
+ }
+diff --git a/doc/examples/parse4.c b/doc/examples/parse4.c
+index ae8d332a..eaeab40c 100644
+--- a/doc/examples/parse4.c
++++ b/doc/examples/parse4.c
+@@ -125,14 +125,6 @@ int main(int argc, char **argv) {
+         fprintf(stderr, "Failed to parse %s\n", argv[1]);
+     }
+ 
+-    /*
+-     * Cleanup function for the XML library.
+-     */
+-    xmlCleanupParser();
+-    /*
+-     * this is to debug memory for regression tests
+-     */
+-    xmlMemoryDump();
+     return(0);
+ }
+ #else /* ! LIBXML_PUSH_ENABLED */
+diff --git a/doc/examples/reader1.c b/doc/examples/reader1.c
+index 10301686..eafb6e1d 100644
+--- a/doc/examples/reader1.c
++++ b/doc/examples/reader1.c
+@@ -88,14 +88,6 @@ int main(int argc, char **argv) {
+ 
+     streamFile(argv[1]);
+ 
+-    /*
+-     * Cleanup function for the XML library.
+-     */
+-    xmlCleanupParser();
+-    /*
+-     * this is to debug memory for regression tests
+-     */
+-    xmlMemoryDump();
+     return(0);
+ }
+ 
+diff --git a/doc/examples/reader2.c b/doc/examples/reader2.c
+index 9c2d2e6b..d8d7f924 100644
+--- a/doc/examples/reader2.c
++++ b/doc/examples/reader2.c
+@@ -103,14 +103,6 @@ int main(int argc, char **argv) {
+ 
+     streamFile(argv[1]);
+ 
+-    /*
+-     * Cleanup function for the XML library.
+-     */
+-    xmlCleanupParser();
+-    /*
+-     * this is to debug memory for regression tests
+-     */
+-    xmlMemoryDump();
+     return(0);
+ }
+ 
+diff --git a/doc/examples/reader3.c b/doc/examples/reader3.c
+index f6082979..d6a43b1b 100644
+--- a/doc/examples/reader3.c
++++ b/doc/examples/reader3.c
+@@ -100,15 +100,6 @@ int main(int argc, char **argv) {
+ 	xmlFreeDoc(doc);
+     }
+ 
+-
+-    /*
+-     * Cleanup function for the XML library.
+-     */
+-    xmlCleanupParser();
+-    /*
+-     * this is to debug memory for regression tests
+-     */
+-    xmlMemoryDump();
+     return(0);
+ }
+ 
+diff --git a/doc/examples/reader4.c b/doc/examples/reader4.c
+index f4277ec4..3c0d1b97 100644
+--- a/doc/examples/reader4.c
++++ b/doc/examples/reader4.c
+@@ -103,14 +103,6 @@ int main(int argc, char **argv) {
+      */
+     xmlFreeTextReader(readerPtr);
+ 
+-    /*
+-     * Cleanup function for the XML library.
+-     */
+-    xmlCleanupParser();
+-    /*
+-     * this is to debug memory for regression tests
+-     */
+-    xmlMemoryDump();
+     return(0);
+ }
+ 
+diff --git a/doc/examples/testWriter.c b/doc/examples/testWriter.c
+index a77eec71..948cf16f 100644
+--- a/doc/examples/testWriter.c
++++ b/doc/examples/testWriter.c
+@@ -48,14 +48,6 @@ main(void)
+     /* next, the tree version */
+     testXmlwriterTree("writer4.tmp");
+ 
+-    /*
+-     * Cleanup function for the XML library.
+-     */
+-    xmlCleanupParser();
+-    /*
+-     * this is to debug memory for regression tests
+-     */
+-    xmlMemoryDump();
+     return 0;
+ }
+ 
+diff --git a/doc/examples/tree1.c b/doc/examples/tree1.c
+index e8fc8d1b..28fc1b70 100644
+--- a/doc/examples/tree1.c
++++ b/doc/examples/tree1.c
+@@ -78,12 +78,6 @@ main(int argc, char **argv)
+     /*free the document */
+     xmlFreeDoc(doc);
+ 
+-    /*
+-     *Free the global variables that may
+-     *have been allocated by the parser.
+-     */
+-    xmlCleanupParser();
+-
+     return 0;
+ }
+ #else
+diff --git a/doc/examples/tree2.c b/doc/examples/tree2.c
+index 83f29a0b..78dcac14 100644
+--- a/doc/examples/tree2.c
++++ b/doc/examples/tree2.c
+@@ -97,16 +97,6 @@ main(int argc, char **argv)
+     /*free the document */
+     xmlFreeDoc(doc);
+ 
+-    /*
+-     *Free the global variables that may
+-     *have been allocated by the parser.
+-     */
+-    xmlCleanupParser();
+-
+-    /*
+-     * this is to debug memory for regression tests
+-     */
+-    xmlMemoryDump();
+     return(0);
+ }
+ #else
+diff --git a/doc/examples/xpath1.c b/doc/examples/xpath1.c
+index af996e69..14efcbab 100644
+--- a/doc/examples/xpath1.c
++++ b/doc/examples/xpath1.c
+@@ -45,13 +45,6 @@ main(int argc, char **argv) {
+ 	return(-1);
+     }
+ 
+-    /* Shutdown libxml */
+-    xmlCleanupParser();
+-    
+-    /*
+-     * this is to debug memory for regression tests
+-     */
+-    xmlMemoryDump();
+     return 0;
+ }
+ 
+diff --git a/doc/examples/xpath2.c b/doc/examples/xpath2.c
+index a17a0256..bf4e631d 100644
+--- a/doc/examples/xpath2.c
++++ b/doc/examples/xpath2.c
+@@ -47,13 +47,6 @@ main(int argc, char **argv) {
+ 	return(-1);
+     }
+ 
+-    /* Shutdown libxml */
+-    xmlCleanupParser();
+-    
+-    /*
+-     * this is to debug memory for regression tests
+-     */
+-    xmlMemoryDump();
+     return 0;
+ }
+ 
+-- 
+2.27.0
+
