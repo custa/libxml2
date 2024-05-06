@@ -1,0 +1,33 @@
+From 514ab399550a9bfcd4a5eb60e921d06a1d38af9e Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 11 Oct 2023 13:25:49 +0200
+Subject: [PATCH] parser: Don't overwrite error state in xmlParseTextDecl
+
+If a memory allocation fails, this could cause a null deref after
+recent changes.
+
+Found by OSS-Fuzz.
+
+Reference:https://github.com/GNOME/libxml2/commit/514ab399550a9bfcd4a5eb60e921d06a1d38af9e
+Conflict:xmlParseTextDecl
+
+---
+ parser.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/parser.c b/parser.c
+index 54947aa..29524d2 100644
+--- a/parser.c
++++ b/parser.c
+@@ -6987,6 +6987,8 @@ xmlParseTextDecl(xmlParserCtxtPtr ctxt) {
+ 	xmlFatalErr(ctxt, XML_ERR_XMLDECL_NOT_FINISHED, NULL);
+ 	MOVETO_ENDTAG(CUR_PTR);
+ 	NEXT;
++	if (ctxt->instate == XML_PARSER_EOF)
++		return;
+     }
+ 
+     ctxt->instate = oldstate;
+-- 
+2.33.0
+

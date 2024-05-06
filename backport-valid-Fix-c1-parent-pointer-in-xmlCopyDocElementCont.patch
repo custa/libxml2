@@ -1,0 +1,30 @@
+From 58de9d31da4d0e8cb6bcf7f5e99714f9df2c4411 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 3 Aug 2023 12:00:55 +0200
+Subject: [PATCH] valid: Fix c1->parent pointer in xmlCopyDocElementContent
+
+Fixes #572.
+
+Reference:https://github.com/GNOME/libxml2/commit/58de9d31da4d0e8cb6bcf7f5e99714f9df2c4411
+Conflict:NA
+
+---
+ valid.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/valid.c b/valid.c
+index 479fa628..67e1b1de 100644
+--- a/valid.c
++++ b/valid.c
+@@ -1052,7 +1052,7 @@ xmlCopyDocElementContent(xmlDocPtr doc, xmlElementContentPtr cur) {
+ 	    if (cur->c1 != NULL)
+ 	        tmp->c1 = xmlCopyDocElementContent(doc,cur->c1);
+ 	    if (tmp->c1 != NULL)
+-		tmp->c1->parent = ret;
++		tmp->c1->parent = tmp;
+ 	    prev = tmp;
+ 	    cur = cur->c2;
+ 	}
+-- 
+2.33.0
+
