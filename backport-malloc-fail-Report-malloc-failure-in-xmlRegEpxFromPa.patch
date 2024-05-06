@@ -1,0 +1,34 @@
+From b7d56ef7f158813816a31fa05ce0e48b98bead82 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 22 Sep 2023 17:03:56 +0200
+Subject: [PATCH] malloc-fail: Report malloc failure in xmlRegEpxFromParse
+
+Reference:https://github.com/GNOME/libxml2/commit/b7d56ef7f158813816a31fa05ce0e48b98bead82
+Conflict:Don't change fuzz/*, the related code does not exist. For details, see Submission:
+https://github.com/GNOME/libxml2/commit/42322eba820022eaebb9b6e7c083a8aadddea286
+
+Also check whether malloc failures are reported when fuzzing.
+---
+ xmlregexp.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/xmlregexp.c b/xmlregexp.c
+index b0111e2..22534a7 100644
+--- a/xmlregexp.c
++++ b/xmlregexp.c
+@@ -481,7 +481,11 @@ xmlRegEpxFromParse(xmlRegParserCtxtPtr ctxt) {
+     ret->determinist = ctxt->determinist;
+     ret->flags = ctxt->flags;
+     if (ret->determinist == -1) {
+-        xmlRegexpIsDeterminist(ret);
++        if (xmlRegexpIsDeterminist(ret) < 0) {
++            xmlRegexpErrMemory(ctxt, "checking determinism");
++            xmlFree(ret);
++            return(NULL);
++        }
+     }
+ 
+     if ((ret->determinist != 0) &&
+-- 
+2.33.0
+

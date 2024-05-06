@@ -1,0 +1,33 @@
+From 305a75ccbec4e4b14ab6c05d581d82bd9801b19f Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 6 Jun 2023 13:15:46 +0200
+Subject: [PATCH] malloc-fail: Fix null-deref with xmllint --copy
+
+See #344. Fixes #552.
+
+Reference:https://github.com/GNOME/libxml2/commit/305a75ccbec4e4b14ab6c05d581d82bd9801b19f
+Conflict:NA
+
+---
+ xmllint.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/xmllint.c b/xmllint.c
+index 4093b4c..084c24a 100644
+--- a/xmllint.c
++++ b/xmllint.c
+@@ -2483,6 +2483,11 @@ static void parseAndPrintFile(char *filename, xmlParserCtxtPtr rectxt) {
+ 	    startTimer();
+ 	}
+ 	doc = xmlCopyDoc(doc, 1);
++        if (doc == NULL) {
++            progresult = XMLLINT_ERR_MEM;
++            xmlFreeDoc(tmp);
++            return;
++        }
+ 	if (timing) {
+ 	    endTimer("Copying");
+ 	}
+-- 
+2.33.0
+

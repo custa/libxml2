@@ -1,0 +1,91 @@
+From a581f65194212f183dcbe77da44657d477a4758d Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Wed, 21 Feb 2024 12:09:10 +0100
+Subject: [PATCH] tree: Check for integer overflow in xmlStringGetNodeList
+
+This function is called with unvalidated strings from functions like
+xmlNewDocProp, xmlNewDocNode or xmlNodeSetContent, so we have to check
+for integer overflow after all.
+
+Reference:https://github.com/GNOME/libxml2/commit/a581f65194212f183dcbe77da44657d477a4758d
+Conflict:remove comment
+
+---
+ tree.c | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/tree.c b/tree.c
+index 8039ca6..496a531 100644
+--- a/tree.c
++++ b/tree.c
+@@ -1332,6 +1332,8 @@ xmlStringLenGetNodeList(const xmlDoc *doc, const xmlChar *value, int len) {
+ 			charval = 0;
+ 			break;
+ 		    }
++                    if (charval > 0x110000)
++                        charval = 0x110000;
+ 		    cur++;
+ 		    if (cur < end)
+ 			tmp = *cur;
+@@ -1357,6 +1359,8 @@ xmlStringLenGetNodeList(const xmlDoc *doc, const xmlChar *value, int len) {
+ 			charval = 0;
+ 			break;
+ 		    }
++                    if (charval > 0x110000)
++                        charval = 0x110000;
+ 		    cur++;
+ 		    if (cur < end)
+ 			tmp = *cur;
+@@ -1447,12 +1451,14 @@ xmlStringLenGetNodeList(const xmlDoc *doc, const xmlChar *value, int len) {
+ 		xmlChar buffer[10];
+ 		int l;
+ 
++                if (charval >= 0x110000)
++                    charval = 0xFFFD; /* replacement character */
++
+ 		l = xmlCopyCharMultiByte(buffer, charval);
+ 		buffer[l] = 0;
+ 
+ 		if (xmlBufCat(buf, buffer))
+ 		    goto out;
+-		charval = 0;
+ 	    }
+ 	} else
+ 	    cur++;
+@@ -1541,6 +1547,8 @@ xmlStringGetNodeList(const xmlDoc *doc, const xmlChar *value) {
+ 			charval = 0;
+ 			break;
+ 		    }
++                    if (charval > 0x110000)
++                        charval = 0x110000;
+ 		    cur++;
+ 		    tmp = *cur;
+ 		}
+@@ -1560,6 +1568,8 @@ xmlStringGetNodeList(const xmlDoc *doc, const xmlChar *value) {
+ 			charval = 0;
+ 			break;
+ 		    }
++                    if (charval > 0x110000)
++                        charval = 0x110000;
+ 		    cur++;
+ 		    tmp = *cur;
+ 		}
+@@ -1644,12 +1654,14 @@ xmlStringGetNodeList(const xmlDoc *doc, const xmlChar *value) {
+ 		xmlChar buffer[10];
+ 		int len;
+ 
++                if (charval >= 0x110000)
++                    charval = 0xFFFD; /* replacement character */
++
+ 		len = xmlCopyCharMultiByte(buffer, charval);
+ 		buffer[len] = 0;
+ 
+ 		if (xmlBufCat(buf, buffer))
+ 		    goto out;
+-		charval = 0;
+ 	    }
+ 	} else
+ 	    cur++;
+-- 
+2.33.0
+

@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.14
-Release: 10
+Release: 11
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.9/%{name}-%{version}.tar.xz
@@ -186,10 +186,42 @@ Patch6165:  backport-xmlValidatePopElement-can-return-invalid-value-1.patch
 Patch6166:  backport-Fix-use-after-free-in-xmlParseContentInternal.patch
 Patch6167:  backport-malloc-fail-Fix-null-deref-after-xmlXIncludeNewRef.patch
 
-Patch6168:  backport-xpath-Ignore-entity-ref-nodes-when-computing-node-ha.patch
-Patch6169:  backport-SAX-Always-initialize-SAX1-element-handlers.patch
-Patch6170:  backport-CVE-2023-45322.patch
-Patch6171:  backport-CVE-2024-25062.patch
+Patch6168:	backport-malloc-fail-Handle-malloc-failures-in-xmlAddEncoding.patch
+Patch6169:	backport-malloc-fail-Fix-null-deref-with-xmllint-copy.patch
+Patch6170:	backport-xpath-Ignore-entity-ref-nodes-when-computing-node-ha.patch
+Patch6171:	backport-SAX-Always-initialize-SAX1-element-handlers.patch
+
+Patch6172:	backport-parser-Fix-potential-use-after-free-in-xmlParseCharD.patch
+Patch6173:	backport-malloc-fail-Fix-memory-leak-in-xmlCompileAttributeTe.patch
+Patch6174:	backport-SAX2-Ignore-namespaces-in-HTML-documents.patch
+Patch6175:	backport-valid-Fix-c1-parent-pointer-in-xmlCopyDocElementCont.patch
+Patch6176:	backport-malloc-fail-Fix-unsigned-integer-overflow-in-xmlText.patch
+Patch6177:	backport-CVE-2023-45322.patch
+Patch6178:	backport-dict-Fix-integer-overflow-of-string-lengths.patch
+Patch6179:	backport-schemas-Fix-memory-leak-of-annotations-in-notations.patch
+Patch6180:	backport-malloc-fail-Report-malloc-failure-in-xmlRegEpxFromPa.patch
+Patch6181:	backport-malloc-fail-Report-malloc-failure-in-xmlFARegExec.patch
+Patch6182:	backport-regexp-Fix-status-codes-and-handle-invalid-UTF-8.patch
+Patch6183:	backport-buf-Also-reset-input-in-error-case.patch
+Patch6184:	backport-hash-Fix-integer-overflow-of-nbElems.patch
+Patch6185:	backport-dict-Fix-integer-overflow-in-xmlDictAddString.patch
+Patch6186:	backport-parser-Dont-overwrite-error-state-in-xmlParseTextDecl.patch
+Patch6187:	backport-CVE-2024-25062.patch
+
+Patch6188:	backport-tree-Fix-regression-when-copying-DTDs.patch
+Patch6189:	backport-tree-Fix-583-again.patch
+Patch6190:	backport-html-Don-t-close-fd-in-htmlCtxtReadFd.patch
+Patch6191:	backport-xzlib-Fix-harmless-unsigned-integer-overflow.patch
+Patch6192:	backport-parser-Fix-crash-in-xmlParseInNodeContext-with-HTML-.patch
+Patch6193:	backport-malloc-fail-Fix-null-deref-in-xmlXPathTranslateFunct.patch
+Patch6194:	backport-tree-Check-for-integer-overflow-in-xmlStringGetNodeL.patch
+
+Patch6195:	backport-tree-Don-t-allow-NULL-name-in-xmlSetNsProp.patch
+Patch6196:	backport-valid-Check-for-NULL-text-content-in-xmlValidateOneE.patch
+Patch6197:	backport-malloc-fail-Fix-use-after-free-in-xmlBufBackToBuffer.patch
+Patch6198:	backport-entities-Don-t-allow-null-name-in-xmlNewEntity.patch
+Patch6199:	backport-save-Check-for-NULL-node-name-in-xhtmlIsEmpty.patch
+Patch6200:	backport-valid-Check-for-NULL-node-name-in-xmlSnprintfElement.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -345,6 +377,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Mon May 06 2024 zhuofeng <zhuofeng2@huawei.com> - 2.9.14-11
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:backport upstream patches
+
 * Sun Feb 18 2024 BruceGW <gyl93216@163.com> - 2.9.14-10
 - Type:CVE
 - SUG:NA

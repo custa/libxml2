@@ -1,0 +1,33 @@
+From e62b0dbde57d58a2a475ff4f851618054ae0a63c Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 19 Dec 2023 19:47:07 +0100
+Subject: [PATCH] xzlib: Fix harmless unsigned integer overflow
+
+Reference: https://github.com/GNOME/libxml2/commit/e62b0dbde57d58a2a475ff4f851618054ae0a63c
+Conflict: NA
+
+---
+ xzlib.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/xzlib.c b/xzlib.c
+index 1b50d757..724be7cc 100644
+--- a/xzlib.c
++++ b/xzlib.c
+@@ -321,8 +321,12 @@ is_format_lzma(xz_statep state)
+      * If someone complains, this will be reconsidered.
+      */
+     if (dict_size != UINT32_MAX) {
+-        uint32_t d = dict_size - 1;
++        uint32_t d;
+ 
++        if (dict_size == 0)
++            return 0;
++
++        d = dict_size - 1;
+         d |= d >> 2;
+         d |= d >> 3;
+         d |= d >> 4;
+-- 
+2.33.0
+
