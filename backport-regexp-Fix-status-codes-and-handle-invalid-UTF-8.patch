@@ -1,0 +1,37 @@
+From f98fa86318d52f6057f60a02e31066c646fb998b Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 22 Sep 2023 15:25:40 +0200
+Subject: [PATCH] regexp: Fix status codes and handle invalid UTF-8
+
+Reference:https://github.com/GNOME/libxml2/commit/f98fa86318d52f6057f60a02e31066c646fb998b
+Conflict:only add define macros.
+
+Fixes #561.
+---
+ xmlregexp.c | 74 ++++++++++++++++++++++++++++++-----------------------
+ 1 file changed, 42 insertions(+), 32 deletions(-)
+
+diff --git a/xmlregexp.c b/xmlregexp.c
+index 34167a5..89e2ebf 100644
+--- a/xmlregexp.c
++++ b/xmlregexp.c
+@@ -50,6 +50,16 @@
+ 
+ #define MAX_PUSH 10000000
+ 
++/*
++ * -2 and -3 are used by xmlValidateElementType for other things.
++ */
++#define XML_REGEXP_OK               0
++#define XML_REGEXP_NOT_FOUND        (-1)
++#define XML_REGEXP_INTERNAL_ERROR   (-4)
++#define XML_REGEXP_OUT_OF_MEMORY    (-5)
++#define XML_REGEXP_INTERNAL_LIMIT   (-6)
++#define XML_REGEXP_INVALID_UTF8     (-7)
++
+ #ifdef ERROR
+ #undef ERROR
+ #endif
+-- 
+2.33.0
+

@@ -1,0 +1,28 @@
+From edbf1eb63befa14417ec5b0b588444498a086f88 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 5 Mar 2024 18:07:13 +0100
+Subject: [PATCH] entities: Don't allow null name in xmlNewEntity
+
+Reference: https://github.com/GNOME/libxml2/commit/edbf1eb63befa14417ec5b0b588444498a086f88
+Conflict: adapt xmlNewEntity
+
+---
+ entities.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/entities.c b/entities.c
+index ec1b9a7..5a56690 100644
+--- a/entities.c
++++ b/entities.c
+@@ -429,6 +429,8 @@ xmlNewEntity(xmlDocPtr doc, const xmlChar *name, int type,
+     if ((doc != NULL) && (doc->intSubset != NULL)) {
+ 	return(xmlAddDocEntity(doc, name, type, ExternalID, SystemID, content));
+     }
++    if (name == NULL)
++        return(NULL);
+     if (doc != NULL)
+         dict = doc->dict;
+     else
+-- 
+2.33.0
+

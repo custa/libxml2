@@ -1,0 +1,28 @@
+From fb1e63025bab4e1f33a3fa6a916c66753ae873a0 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 17 Mar 2024 19:24:06 +0100
+Subject: [PATCH] save: Check for NULL node->name in xhtmlIsEmpty
+
+Reference: https://github.com/GNOME/libxml2/commit/fb1e63025bab4e1f33a3fa6a916c66753ae873a0
+Conflict: NA
+
+---
+ xmlsave.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/xmlsave.c b/xmlsave.c
+index 90e1856..fad0869 100644
+--- a/xmlsave.c
++++ b/xmlsave.c
+@@ -1288,7 +1288,7 @@ xhtmlIsEmpty(xmlNodePtr node) {
+ 	return(0);
+     if (node->children != NULL)
+ 	return(0);
+-    switch (node->name[0]) {
++    switch (node->name ? node->name[0] : 0) {
+ 	case 'a':
+ 	    if (xmlStrEqual(node->name, BAD_CAST "area"))
+ 		return(1);
+-- 
+2.33.0
+
