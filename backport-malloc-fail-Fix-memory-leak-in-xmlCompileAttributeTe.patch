@@ -1,0 +1,53 @@
+From 75693281389aab047b424d46df944b35ab4a3263 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 21 Jul 2023 14:50:30 +0200
+Subject: [PATCH] malloc-fail: Fix memory leak in xmlCompileAttributeTest
+
+Found by OSS-Fuzz, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/75693281389aab047b424d46df944b35ab4a3263
+Conflict:NA
+
+---
+ pattern.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/pattern.c b/pattern.c
+index 27e9694..64231a2 100644
+--- a/pattern.c
++++ b/pattern.c
+@@ -947,7 +947,6 @@ xmlCompileAttributeTest(xmlPatParserContextPtr ctxt) {
+ 
+ 	if (IS_BLANK_CH(CUR)) {
+ 	    ERROR5(NULL, NULL, NULL, "Invalid QName.\n", NULL);
+-	    XML_PAT_FREE_STRING(ctxt, prefix);
+ 	    ctxt->error = 1;
+ 	    goto error;
+ 	}
+@@ -972,12 +971,12 @@ xmlCompileAttributeTest(xmlPatParserContextPtr ctxt) {
+ 		ERROR5(NULL, NULL, NULL,
+ 		    "xmlCompileAttributeTest : no namespace bound to prefix %s\n",
+ 		    prefix);
+-	        XML_PAT_FREE_STRING(ctxt, prefix);
+ 		ctxt->error = 1;
+ 		goto error;
+ 	    }
+ 	}
+-	XML_PAT_FREE_STRING(ctxt, prefix);
++        XML_PAT_FREE_STRING(ctxt, name);
++        name = NULL;
+ 	if (token == NULL) {
+ 	    if (CUR == '*') {
+ 		NEXT;
+@@ -996,6 +995,8 @@ xmlCompileAttributeTest(xmlPatParserContextPtr ctxt) {
+     }
+     return;
+ error:
++    if (name != NULL)
++	XML_PAT_FREE_STRING(ctxt, name);
+     if (URL != NULL)
+ 	XML_PAT_FREE_STRING(ctxt, URL)
+     if (token != NULL)
+-- 
+2.33.0
+

@@ -1,0 +1,28 @@
+From d1cc6f7df2492eac3d689a5632fff74d99a575b9 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 5 Mar 2024 04:34:59 +0100
+Subject: [PATCH] tree: Don't allow NULL name in xmlSetNsProp
+
+Reference: https://github.com/GNOME/libxml2/commit/d1cc6f7df2492eac3d689a5632fff74d99a575b9
+Conflict: adapt xmlSetNsProp
+
+---
+ tree.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/tree.c b/tree.c
+index 496a531..be84324 100644
+--- a/tree.c
++++ b/tree.c
+@@ -6963,6 +6963,8 @@ xmlSetNsProp(xmlNodePtr node, xmlNsPtr ns, const xmlChar *name,
+ 
+     if (ns && (ns->href == NULL))
+ 	return(NULL);
++    if (name == NULL)
++        return(NULL);
+     prop = xmlGetPropNodeInternal(node, name, (ns != NULL) ? ns->href : NULL, 0);
+     if (prop != NULL) {
+ 	/*
+-- 
+2.33.0
+
