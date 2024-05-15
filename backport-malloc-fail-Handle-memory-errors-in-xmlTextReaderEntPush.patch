@@ -1,3 +1,14 @@
+From c266a220232d1a9cc9f7fe87116299269822a06a Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 22 Jan 2023 18:18:00 +0100
+Subject: [PATCH] malloc-fail: Handle memory errors in xmlTextReaderEntPush
+
+Unfortunately, there's no way to properly report memory errors.
+
+Found with libFuzzer, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/c266a220232d1a9cc9f7fe87116299269822a06a
+Conflict:NA
 ---
  xmlreader.c | 36 +++++++++++++++++-------------------
  1 file changed, 17 insertions(+), 19 deletions(-)

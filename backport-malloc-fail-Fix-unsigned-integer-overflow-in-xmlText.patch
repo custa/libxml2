@@ -1,0 +1,35 @@
+From e2ab48b9b5f5a97da76d6c90f0630ad0486bac6e Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 14 Aug 2023 15:05:30 +0200
+Subject: [PATCH] malloc-fail: Fix unsigned integer overflow in
+ xmlTextReaderPushData
+
+Return immediately if xmlParserInputBufferRead fails.
+
+Found by OSS-Fuzz, see #344.
+
+Reference:https://github.com/GNOME/libxml2/commit/e2ab48b9b5f5a97da76d6c90f0630ad0486bac6e
+Conflict:NA
+
+---
+ xmlreader.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/xmlreader.c b/xmlreader.c
+index 193a5d4..d34f294 100644
+--- a/xmlreader.c
++++ b/xmlreader.c
+@@ -928,9 +928,7 @@ xmlTextReaderPushData(xmlTextReaderPtr reader) {
+ 		} else if (val < 0) {
+ 		    reader->mode = XML_TEXTREADER_MODE_EOF;
+ 		    reader->state = oldstate;
+-		    if ((oldstate != XML_TEXTREADER_START) ||
+-			(reader->ctxt->myDoc != NULL))
+-			return(val);
++		    return(val);
+ 		} else if (val == 0) {
+ 		    /* mark the end of the stream and process the remains */
+ 		    reader->mode = XML_TEXTREADER_MODE_EOF;
+-- 
+2.33.0
+
