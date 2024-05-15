@@ -1,0 +1,80 @@
+From 3e7673bc2de35345ccdd91d0821dbe35fc5a7753 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 23 Sep 2023 17:31:55 +0200
+Subject: [PATCH] malloc-fail: Report malloc failure in xmlFARegExec
+
+Reference:https://github.com/GNOME/libxml2/commit/3e7673bc2de35345ccdd91d0821dbe35fc5a7753
+Conflict:NA
+
+---
+ xmlregexp.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/xmlregexp.c b/xmlregexp.c
+index 22534a7..34167a5 100644
+--- a/xmlregexp.c
++++ b/xmlregexp.c
+@@ -3234,6 +3234,7 @@ xmlFARegExecSave(xmlRegExecCtxtPtr exec) {
+ 	if (exec->rollbacks == NULL) {
+ 	    xmlRegexpErrMemory(NULL, "saving regexp");
+ 	    exec->maxRollbacks = 0;
++            exec->status = XML_REGEXP_OUT_OF_MEMORY;
+ 	    return;
+ 	}
+ 	memset(exec->rollbacks, 0,
+@@ -3248,6 +3249,7 @@ xmlFARegExecSave(xmlRegExecCtxtPtr exec) {
+ 	if (tmp == NULL) {
+ 	    xmlRegexpErrMemory(NULL, "saving regexp");
+ 	    exec->maxRollbacks /= 2;
++            exec->status = XML_REGEXP_OUT_OF_MEMORY;
+ 	    return;
+ 	}
+ 	exec->rollbacks = tmp;
+@@ -3275,6 +3277,8 @@ xmlFARegExecSave(xmlRegExecCtxtPtr exec) {
+ 
+ static void
+ xmlFARegExecRollBack(xmlRegExecCtxtPtr exec) {
++    if (exec->status != XML_REGEXP_OK)
++        return;
+     if (exec->nbRollbacks <= 0) {
+ 	exec->status = -1;
+ #ifdef DEBUG_REGEXP_EXEC
+@@ -3334,7 +3338,7 @@ xmlFARegExec(xmlRegexpPtr comp, const xmlChar *content) {
+ 	exec->counts = (int *) xmlMalloc(comp->nbCounters * sizeof(int));
+ 	if (exec->counts == NULL) {
+ 	    xmlRegexpErrMemory(NULL, "running regexp");
+-	    return(-1);
++	    return(XML_REGEXP_OUT_OF_MEMORY);
+ 	}
+         memset(exec->counts, 0, comp->nbCounters * sizeof(int));
+     } else
+@@ -3431,6 +3435,8 @@ xmlFARegExec(xmlRegexpPtr comp, const xmlChar *content) {
+                     /* Save before incrementing */
+ 		    if (exec->state->nbTrans > exec->transno + 1) {
+ 			xmlFARegExecSave(exec);
++                        if (exec->status != XML_REGEXP_OK)
++                            goto error;
+ 		    }
+ 		    if (trans->counter >= 0) {
+ #ifdef DEBUG_REGEXP_EXEC
+@@ -3464,6 +3470,8 @@ xmlFARegExec(xmlRegexpPtr comp, const xmlChar *content) {
+ 			    exec->transno = -1; /* trick */
+ 			    exec->state = to;
+ 			    xmlFARegExecSave(exec);
++                            if (exec->status != XML_REGEXP_OK)
++                                goto error;
+ 			    exec->transno = transno;
+ 			    exec->state = state;
+ 			}
+@@ -3523,6 +3531,8 @@ xmlFARegExec(xmlRegexpPtr comp, const xmlChar *content) {
+ 			       trans->count, codepoint, exec->index);
+ #endif
+ 		    xmlFARegExecSave(exec);
++                    if (exec->status != XML_REGEXP_OK)
++                        goto error;
+ 		}
+ 		if (trans->counter >= 0) {
+ 		    xmlRegCounterPtr counter;
+-- 
+2.33.0
+

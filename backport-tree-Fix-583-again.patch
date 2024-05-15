@@ -1,0 +1,53 @@
+From 8707838e69f9c6e729c1d1d46bb3681d9e622be5 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 28 Nov 2023 13:27:25 +0100
+Subject: [PATCH] tree: Fix #583 again
+
+Only set doc->intSubset after successful copy to avoid dangling pointers
+in error case.
+
+Reference: https://github.com/GNOME/libxml2/commit/8707838e69f9c6e729c1d1d46bb3681d9e622be5
+Conflict: NA
+---
+ tree.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/tree.c b/tree.c
+index 5a9c24d1..35dabb97 100644
+--- a/tree.c
++++ b/tree.c
+@@ -4301,6 +4301,7 @@ xmlNodePtr
+ xmlStaticCopyNodeList(xmlNodePtr node, xmlDocPtr doc, xmlNodePtr parent) {
+     xmlNodePtr ret = NULL;
+     xmlNodePtr p = NULL,q;
++    xmlDtdPtr newSubset = NULL;
+ 
+     while (node != NULL) {
+ #ifdef LIBXML_TREE_ENABLED
+@@ -4309,12 +4310,12 @@ xmlStaticCopyNodeList(xmlNodePtr node, xmlDocPtr doc, xmlNodePtr parent) {
+ 		node = node->next;
+ 		continue;
+ 	    }
+-	    if (doc->intSubset == NULL) {
++	    if ((doc->intSubset == NULL) && (newSubset == NULL)) {
+ 		q = (xmlNodePtr) xmlCopyDtd( (xmlDtdPtr) node );
+ 		if (q == NULL) goto error;
+ 		q->doc = doc;
+ 		q->parent = parent;
+-		doc->intSubset = (xmlDtdPtr) q;
++		newSubset = (xmlDtdPtr) q;
+ 		xmlAddChild(parent, q);
+ 	    } else {
+ 		q = (xmlNodePtr) doc->intSubset;
+@@ -4335,6 +4336,8 @@ xmlStaticCopyNodeList(xmlNodePtr node, xmlDocPtr doc, xmlNodePtr parent) {
+ 	}
+ 	node = node->next;
+     }
++    if ((doc != NULL) && (newSubset != NULL))
++        doc->intSubset = newSubset;
+     return(ret);
+ error:
+     xmlFreeNodeList(ret);
+-- 
+2.33.0
+
