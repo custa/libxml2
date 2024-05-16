@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.14
-Release: 11
+Release: 12
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.9/%{name}-%{version}.tar.xz
@@ -222,6 +222,7 @@ Patch6197:	backport-malloc-fail-Fix-use-after-free-in-xmlBufBackToBuffer.patch
 Patch6198:	backport-entities-Don-t-allow-null-name-in-xmlNewEntity.patch
 Patch6199:	backport-save-Check-for-NULL-node-name-in-xhtmlIsEmpty.patch
 Patch6200:	backport-valid-Check-for-NULL-node-name-in-xmlSnprintfElement.patch
+Patch6201:	backport-CVE-2024-34459.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -377,6 +378,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Thu May 16 2024 cenhuilin <cenhuilin@kylinos.cn> - 2.9.14-12
+- Type:CVE
+- CVE:CVE-2024-34459
+- SUG:NA
+- DESC:fix CVE-2024-34459
+
 * Mon May 06 2024 zhuofeng <zhuofeng2@huawei.com> - 2.9.14-11
 - Type:bugfix
 - CVE:NA
