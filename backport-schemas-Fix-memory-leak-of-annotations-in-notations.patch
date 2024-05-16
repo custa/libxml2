@@ -1,0 +1,29 @@
+From 90d5b79958fb576c3ffbd5e07b60d5ff20d36d66 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 14 Sep 2023 15:30:38 +0200
+Subject: [PATCH] schemas: Fix memory leak of annotations in notations
+
+Reference:https://github.com/GNOME/libxml2/commit/90d5b79958fb576c3ffbd5e07b60d5ff20d36d66
+Conflict:NA
+
+Found by OSS-Fuzz.
+---
+ xmlschemas.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/xmlschemas.c b/xmlschemas.c
+index 7199d23..f53e7e6 100644
+--- a/xmlschemas.c
++++ b/xmlschemas.c
+@@ -3800,6 +3800,8 @@ xmlSchemaFreeNotation(xmlSchemaNotationPtr nota)
+ {
+     if (nota == NULL)
+         return;
++    if (nota->annot != NULL)
++	xmlSchemaFreeAnnot(nota->annot);
+     xmlFree(nota);
+ }
+ 
+-- 
+2.33.0
+

@@ -1,0 +1,29 @@
+From 8cd563174ad17b82f807640f478f613f22238336 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 21 Dec 2023 02:32:01 +0100
+Subject: [PATCH] html: Don't close fd in htmlCtxtReadFd
+
+Long-standing bug. The XML fix from 2003 was never ported to the HTML
+parser. htmlReadFd was fixed with fe6890e2.
+
+Reference: https://github.com/GNOME/libxml2/commit/8cd563174ad17b82f807640f478f613f22238336
+Conflict: NA
+---
+ HTMLparser.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index 5228b601..c0b54e69 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -6755,6 +6755,7 @@ htmlCtxtReadFd(htmlParserCtxtPtr ctxt, int fd,
+     input = xmlParserInputBufferCreateFd(fd, XML_CHAR_ENCODING_NONE);
+     if (input == NULL)
+         return (NULL);
++    input->closecallback = NULL;
+     stream = xmlNewIOInputStream(ctxt, input, XML_CHAR_ENCODING_NONE);
+     if (stream == NULL) {
+         xmlFreeParserInputBuffer(input);
+-- 
+2.33.0
+

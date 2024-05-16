@@ -1,0 +1,41 @@
+From 9c2d451c0275dfbf859c321058584ec98382542f Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 4 Mar 2024 01:25:46 +0100
+Subject: [PATCH] malloc-fail: Fix use-after-free in xmlBufBackToBuffer
+
+Reference: https://github.com/GNOME/libxml2/commit/9c2d451c0275dfbf859c321058584ec98382542f
+Conflict: NA
+
+---
+ buf.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/buf.c b/buf.c
+index 90224c5..8779a16 100644
+--- a/buf.c
++++ b/buf.c
+@@ -1185,12 +1185,19 @@ xmlBufBackToBuffer(xmlBufPtr buf) {
+     if (buf == NULL)
+         return(NULL);
+     CHECK_COMPAT(buf)
+-    if ((buf->error) || (buf->buffer == NULL)) {
++    ret = buf->buffer;
++
++    if ((buf->error) || (ret == NULL)) {
+         xmlBufFree(buf);
++        if (ret != NULL) {
++            ret->content = NULL;
++            ret->contentIO = NULL;
++            ret->use = 0;
++            ret->size = 0;
++        }
+         return(NULL);
+     }
+ 
+-    ret = buf->buffer;
+     /*
+      * What to do in case of error in the buffer ???
+      */
+-- 
+2.33.0
+

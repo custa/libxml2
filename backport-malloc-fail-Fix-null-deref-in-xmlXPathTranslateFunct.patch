@@ -1,0 +1,51 @@
+From 8583b9f1cdb966315b3caae328f5d9f2c8b65292 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 12 Dec 2023 15:00:44 +0100
+Subject: [PATCH] malloc-fail: Fix null deref in xmlXPathTranslateFunction
+
+Short-lived regression.
+
+Reference: https://github.com/GNOME/libxml2/commit/8583b9f1cdb966315b3caae328f5d9f2c8b65292
+Conflict: adpat error:
+
+---
+ xpath.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/xpath.c b/xpath.c
+index 3128efb..a832722 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -9330,9 +9330,9 @@ xmlXPathNormalizeFunction(xmlXPathParserContextPtr ctxt, int nargs) {
+  */
+ void
+ xmlXPathTranslateFunction(xmlXPathParserContextPtr ctxt, int nargs) {
+-    xmlXPathObjectPtr str;
+-    xmlXPathObjectPtr from;
+-    xmlXPathObjectPtr to;
++    xmlXPathObjectPtr str = NULL;
++    xmlXPathObjectPtr from = NULL;
++    xmlXPathObjectPtr to = NULL;
+     xmlBufPtr target;
+     int offset, max;
+     int ch;
+@@ -9347,6 +9347,8 @@ xmlXPathTranslateFunction(xmlXPathParserContextPtr ctxt, int nargs) {
+     from = valuePop(ctxt);
+     CAST_TO_STRING;
+     str = valuePop(ctxt);
++    if (ctxt->error != 0)
++        goto error;
+ 
+     target = xmlBufCreate();
+     if (target) {
+@@ -9388,6 +9390,7 @@ xmlXPathTranslateFunction(xmlXPathParserContextPtr ctxt, int nargs) {
+     valuePush(ctxt, xmlXPathCacheNewString(ctxt->context,
+ 	xmlBufContent(target)));
+     xmlBufFree(target);
++error:
+     xmlXPathReleaseObject(ctxt->context, str);
+     xmlXPathReleaseObject(ctxt->context, from);
+     xmlXPathReleaseObject(ctxt->context, to);
+-- 
+2.33.0
+
