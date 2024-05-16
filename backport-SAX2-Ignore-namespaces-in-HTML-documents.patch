@@ -1,0 +1,114 @@
+From d7d0bc6581e332f49c9ff628f548eced03c65189 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 31 Mar 2023 16:47:48 +0200
+Subject: [PATCH] SAX2: Ignore namespaces in HTML documents
+
+In commit 21ca8829, we started to ignore namespaces in HTML element
+names but we still called xmlSplitQName, effectively stripping the
+namespace prefix. This would cause elements like <o:p> being parsed
+as <p>. Now we leave the name untouched.
+
+Fixes #508.
+
+Reference:https://github.com/GNOME/libxml2/commit/d7d0bc6581e332f49c9ff628f548eced03c65189
+Conflict:NA
+
+---
+ SAX2.c                     | 15 +++++++++------
+ result/HTML/names.html     |  6 ++++++
+ result/HTML/names.html.err |  3 +++
+ result/HTML/names.html.sax | 20 ++++++++++++++++++++
+ test/HTML/names.html       |  5 +++++
+ 5 files changed, 43 insertions(+), 6 deletions(-)
+ create mode 100644 result/HTML/names.html
+ create mode 100644 result/HTML/names.html.err
+ create mode 100644 result/HTML/names.html.sax
+ create mode 100644 test/HTML/names.html
+
+diff --git a/SAX2.c b/SAX2.c
+index 3984bed..f8bc7c2 100644
+--- a/SAX2.c
++++ b/SAX2.c
+@@ -1589,12 +1589,15 @@ xmlSAX2StartElement(void *ctx, const xmlChar *fullname, const xmlChar **atts)
+ 	ctxt->validate = 0;
+     }
+ 
+-
+-    /*
+-     * Split the full name into a namespace prefix and the tag name
+-     */
+-    name = xmlSplitQName(ctxt, fullname, &prefix);
+-
++    if (ctxt->html) {
++        prefix = NULL;
++        name = xmlStrdup(fullname);
++    } else {
++        /*
++         * Split the full name into a namespace prefix and the tag name
++         */
++        name = xmlSplitQName(ctxt, fullname, &prefix);
++    }
+ 
+     /*
+      * Note : the namespace resolution is deferred until the end of the
+diff --git a/result/HTML/names.html b/result/HTML/names.html
+new file mode 100644
+index 0000000..dd7dcc2
+--- /dev/null
++++ b/result/HTML/names.html
+@@ -0,0 +1,6 @@
++<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
++<html>
++<body>
++  <o:p></o:p>
++</body>
++</html>
+diff --git a/result/HTML/names.html.err b/result/HTML/names.html.err
+new file mode 100644
+index 0000000..4d91a5d
+--- /dev/null
++++ b/result/HTML/names.html.err
+@@ -0,0 +1,3 @@
++./test/HTML/names.html:3: HTML parser error : Tag o:p invalid
++  <o:p></o:p>
++      ^
+diff --git a/result/HTML/names.html.sax b/result/HTML/names.html.sax
+new file mode 100644
+index 0000000..12a107f
+--- /dev/null
++++ b/result/HTML/names.html.sax
+@@ -0,0 +1,20 @@
++SAX.setDocumentLocator()
++SAX.startDocument()
++SAX.startElement(html)
++SAX.characters(
++, 1)
++SAX.startElement(body)
++SAX.characters(
++  , 3)
++SAX.startElement(o:p)
++SAX.error: Tag o:p invalid
++SAX.endElement(o:p)
++SAX.characters(
++, 1)
++SAX.endElement(body)
++SAX.characters(
++, 1)
++SAX.endElement(html)
++SAX.characters(
++, 1)
++SAX.endDocument()
+diff --git a/test/HTML/names.html b/test/HTML/names.html
+new file mode 100644
+index 0000000..0dac7a4
+--- /dev/null
++++ b/test/HTML/names.html
+@@ -0,0 +1,5 @@
++<html>
++<body>
++  <o:p></o:p>
++</body>
++</html>
+-- 
+2.33.0
+

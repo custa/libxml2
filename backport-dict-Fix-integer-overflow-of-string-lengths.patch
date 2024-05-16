@@ -1,0 +1,65 @@
+From f45abbd3e561d25743053236a401cea49e6bdb24 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 4 Sep 2023 15:31:04 +0200
+Subject: [PATCH] dict: Fix integer overflow of string lengths
+
+Reference:https://github.com/GNOME/libxml2/commit/f45abbd3e561d25743053236a401cea49e6bdb24
+Conflict:NA
+
+Fixes #546.
+---
+ dict.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/dict.c b/dict.c
+index e39e8a4..4de231f 100644
+--- a/dict.c
++++ b/dict.c
+@@ -384,7 +384,7 @@ xmlDictComputeBigKey(const xmlChar* data, int namelen, int seed) {
+ 
+     hash = seed;
+ 
+-    for (i = 0;i < namelen; i++) {
++    for (i = 0; i < namelen; i++) {
+         hash += data[i];
+ 	hash += (hash << 10);
+ 	hash ^= (hash >> 6);
+@@ -868,7 +868,7 @@ xmlDictLookup(xmlDictPtr dict, const xmlChar *name, int len) {
+     xmlDictEntryPtr entry;
+     xmlDictEntryPtr insert;
+     const xmlChar *ret;
+-    unsigned int l;
++    size_t l;
+ 
+     if ((dict == NULL) || (name == NULL))
+ 	return(NULL);
+@@ -1006,7 +1006,7 @@ const xmlChar *
+ xmlDictExists(xmlDictPtr dict, const xmlChar *name, int len) {
+     unsigned long key, okey, nbi = 0;
+     xmlDictEntryPtr insert;
+-    unsigned int l;
++    size_t l;
+ 
+     if ((dict == NULL) || (name == NULL))
+ 	return(NULL);
+@@ -1116,7 +1116,7 @@ xmlDictQLookup(xmlDictPtr dict, const xmlChar *prefix, const xmlChar *name) {
+     xmlDictEntryPtr entry;
+     xmlDictEntryPtr insert;
+     const xmlChar *ret;
+-    unsigned int len, plen, l;
++    size_t len, plen, l;
+ 
+     if ((dict == NULL) || (name == NULL))
+ 	return(NULL);
+@@ -1125,6 +1125,8 @@ xmlDictQLookup(xmlDictPtr dict, const xmlChar *prefix, const xmlChar *name) {
+ 
+     l = len = strlen((const char *) name);
+     plen = strlen((const char *) prefix);
++    if ((len > INT_MAX / 2) || (plen > INT_MAX / 2))
++        return(NULL);
+     len += 1 + plen;
+ 
+     /*
+-- 
+2.33.0
+

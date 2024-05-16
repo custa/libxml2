@@ -1,0 +1,32 @@
+From 3061b56a1ee395618f84fc1c2bb0cba7c5b068fe Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Fri, 15 Mar 2024 02:23:08 +0100
+Subject: [PATCH] valid: Check for NULL text content in xmlValidateOneElement
+
+Shouldn't occur in parsed documents but you can create text nodes with
+NULL content through the API.
+
+Reference: https://github.com/GNOME/libxml2/commit/3061b56a1ee395618f84fc1c2bb0cba7c5b068fe
+Conflict: NA
+
+---
+ valid.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/valid.c b/valid.c
+index 3c342c3..bfb8a77 100644
+--- a/valid.c
++++ b/valid.c
+@@ -6244,7 +6244,8 @@ child_ok:
+ 		 */
+ 		child = elem->children;
+ 		while (child != NULL) {
+-		    if (child->type == XML_TEXT_NODE) {
++		    if ((child->type == XML_TEXT_NODE) &&
++                        (child->content != NULL)) {
+ 			const xmlChar *content = child->content;
+ 
+ 			while (IS_BLANK_CH(*content))
+-- 
+2.33.0
+
