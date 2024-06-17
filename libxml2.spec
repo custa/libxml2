@@ -334,19 +334,19 @@ rm -fr %{buildroot}
 - SUG:NA
 - DESC:fix CVE-2024-34459
 
-* Tue Mar 26 zhuofeng <zhuofeng2@huawei.com> - 2.9.10-40
+* Tue Mar 26 2024 zhuofeng <zhuofeng2@huawei.com> - 2.9.10-40
 - Type:CVE
 - CVE:CVE-2022-2309
 - SUG:NA
 - DESC:fix CVE-2022-2309
 
-* Mon Feb 19 hehuazhen <hehuazhen@huawei.com> - 2.9.10-39
+* Mon Feb 19 2024 hehuazhen <hehuazhen@huawei.com> - 2.9.10-39
 - Type:CVE
 - CVE:CVE-2024-25062
 - SUG:NA
 - DESC:fix CVE-2024-25062
 
-* Mon Oct 16 hehuazhen <hehuazhen@huawei.com> - 2.9.10-38
+* Mon Oct 16 2023 hehuazhen <hehuazhen@huawei.com> - 2.9.10-38
 - Type:CVE
 - CVE:CVE-2023-45322
 - SUG:NA
