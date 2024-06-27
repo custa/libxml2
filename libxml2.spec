@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.14
-Release: 13
+Release: 14
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.9/%{name}-%{version}.tar.xz
@@ -298,7 +298,7 @@ rm -fr %{buildroot}
 %files
 %defattr(-, root, root)
 
-%doc %{_datadir}/doc/libxml2
+%doc NEWS README.md Copyright TODO
 
 %{_libdir}/lib*.so.*
 %{_bindir}/xmllint
@@ -311,6 +311,8 @@ rm -fr %{buildroot}
 %doc doc/*.html doc/html doc/*.gif doc/*.png
 %doc doc/tutorial doc/libxml2-api.xml.gz
 %doc doc/examples
+%doc %{_datadir}/doc/libxml2/examples
+%doc %{_datadir}/doc/libxml2/html
 %doc %dir %{_datadir}/gtk-doc/html/libxml2
 %doc %{_datadir}/gtk-doc/html/libxml2/*.devhelp2
 %doc %{_datadir}/gtk-doc/html/libxml2/*.html
@@ -347,6 +349,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Wed Jun 26 2024 zhuofeng <zhuofeng2@huawei.com> - 2.9.14-14
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:remove doc from libxml2 to libxml2-devel
+
 * Sat May 18 2024 zhuofeng <zhuofeng2@huawei.com> - 2.9.14-13
 - Type:bugfix
 - CVE:NA
