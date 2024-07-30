@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.11.5
-Release: 3
+Release: 4
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.11/%{name}-%{version}.tar.xz
@@ -12,6 +12,7 @@ Patch2: backport-xpath-Remove-remaining-references-to-valueFrame.patch
 Patch3: backport-examples-Don-t-call-xmlCleanupParser-and-xmlMemoryDu.patch
 Patch4: backport-CVE-2024-25062.patch
 Patch5: backport-CVE-2024-34459.patch
+Patch6: backport-CVE-2024-40896.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -163,6 +164,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Mon Jul 29 2024 Funda Wang <fundawang@yeah.net> - 2.11.5-4
+- Type:CVE
+- CVE:CVE-2024-40896
+- SUG:NA
+- DESC:fix CVE-2024-40896
+
 * Fri May 17 2024 cenhuilin <cenhuilin@kylinos.cn> - 2.11.5-3
 - Type:CVE
 - CVE:CVE-2024-34459
