@@ -1,21 +1,16 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
-Version: 2.12.6
-Release: 3
+Version: 2.12.9
+Release: 1
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.11/%{name}-%{version}.tar.xz
 
 Patch0: libxml2-multilib.patch
-Patch1: backport-CVE-2024-34459.patch
-Patch2: backport-CVE-2024-40896.patch
 
-BuildRoot: %{_tmppath}/%{name}-%{version}-root
-BuildRequires: python3-devel
-BuildRequires: zlib-devel
-BuildRequires: pkgconfig
-BuildRequires: xz-devel
-BuildRequires: libtool
+BuildRequires: pkgconfig(liblzma)
+BuildRequires: pkgconfig(python3)
+BuildRequires: pkgconfig(zlib)
 URL: http://xmlsoft.org/
 
 %description
@@ -33,11 +28,8 @@ URI library.
 Summary: Libraries, includes, etc. to develop XML and HTML applications
 Group: Development/Libraries
 Requires: libxml2 = %{version}-%{release}
-Requires: zlib-devel
-Requires: xz-devel
-Requires: pkgconfig
 Obsoletes: %{name}-static < %{version}-%{release}
-Provides:  %{name}-static
+Provides:  %{name}-static = %{version}-%{release}
 
 %description devel
 Libraries, include files, etc you can use to develop XML applications.
@@ -68,13 +60,7 @@ to read, modify and write XML and HTML files. There is DTDs support
 this includes parsing and validation even with complex DTDs, either
 at parse time or later once the document has been modified.
 
-%package help
-Summary:    Man page for libxml2
-BuildArch:  noarch
-
-%description  help
-%{summary}.
-
+%package_help
 
 %prep
 %autosetup -n %{name}-%{version} -p1
@@ -84,49 +70,33 @@ cp doc/*.py py3doc
 sed -i 's|#!/usr/bin/python |#!%{__python3} |' py3doc/*.py
 
 %build
-./autogen.sh
 %configure --enable-static --with-ftp
 %make_build
 
 find doc -type f -exec chmod 0644 \{\} \;
 
 %install
-%configure --with-python=%{__python3}
 %make_install
 
 rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
 rm -f $RPM_BUILD_ROOT%{_libdir}/python*/site-packages/*.a
 rm -f $RPM_BUILD_ROOT%{_libdir}/python*/site-packages/*.la
-rm -rf $RPM_BUILD_ROOT%{_datadir}/doc/libxml2-%{version}/*
-rm -rf $RPM_BUILD_ROOT%{_datadir}/doc/libxml2-python-%{version}/*
+rm -rf $RPM_BUILD_ROOT%{_datadir}/doc/*
 gzip -9 -c doc/libxml2-api.xml > doc/libxml2-api.xml.gz
 
 %check
-make runtests
+%make_build check
 
 (cd doc/examples ; make clean ; rm -rf .deps Makefile)
 
-%clean
-rm -fr %{buildroot}
-
-
-%post -p /sbin/ldconfig
-
-%postun -p /sbin/ldconfig
-
 %files
-%defattr(-, root, root)
-
-%doc %{_datadir}/doc/libxml2
-
+%license Copyright
 %{_libdir}/lib*.so.*
 %{_bindir}/xmllint
 %{_bindir}/xmlcatalog
 
 %files devel
-%defattr(-, root, root)
-
-%doc NEWS README.md Copyright
+%doc NEWS README.md
 %doc doc/tutorial doc/libxml2-api.xml.gz
 %doc doc/examples
 %doc %dir %{_datadir}/gtk-doc/html/libxml2
@@ -145,8 +115,6 @@ rm -fr %{buildroot}
 %{_libdir}/*.a
 
 %files -n python3-%{name}
-%defattr(-, root, root)
-
 %{python3_sitearch}/libxml2mod.so
 %{python3_sitelib}/*.py
 %{python3_sitelib}/__pycache__/*.pyc
@@ -154,12 +122,13 @@ rm -fr %{buildroot}
 %doc py3doc/*.py
 
 %files help
-%doc %{_mandir}/man1/xml2-config.1*
-%doc %{_mandir}/man1/xmllint.1*
-%doc %{_mandir}/man1/xmlcatalog.1*
+%{_mandir}/man?/*
 
 
 %changelog
+* Tue Jul 30 2024 Funda Wang <fundawang@yeah.net> - 2.12.9-1
+- update to 2.12.9
+
 * Tue Jul 30 2024 zhuofeng <zhuofeng2@huawei.com> - 2.12.6-3
 - Type:CVE
 - CVE:CVE-2024-40896
