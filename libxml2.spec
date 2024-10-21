@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.11.5
-Release: 4
+Release: 5
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.11/%{name}-%{version}.tar.xz
@@ -89,7 +89,7 @@ sed -i 's|#!/usr/bin/python |#!%{__python3} |' py3doc/*.py
 
 %build
 ./autogen.sh
-%configure --enable-static --with-ftp
+%configure --enable-static --with-ftp --with-xptr-locs --with-legacy
 %make_build
 
 find doc -type f -exec chmod 0644 \{\} \;
@@ -164,6 +164,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Fri Oct 18 2024 zhangzikang <zhangzikang@kylinos.cn> - 2.11.5-5
+- Type:update
+- ID:NA
+- SUG:NA
+- DESC:add configure options, fix libxml2.so ABI compatible
+
 * Mon Jul 29 2024 Funda Wang <fundawang@yeah.net> - 2.11.5-4
 - Type:CVE
 - CVE:CVE-2024-40896
