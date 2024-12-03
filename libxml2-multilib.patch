@@ -1,5 +1,14 @@
+From 3b6412ef95ab8f778f4c3b5cd277041774a2620d Mon Sep 17 00:00:00 2001
+From: liuzhilin <liuzhilin@kylinos.cn>
+Date: Mon, 2 Dec 2024 11:12:17 +0800
+Subject: [PATCH] libxml2-multilib
+
+---
+ xml2-config.in | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
 diff --git a/xml2-config.in b/xml2-config.in
-index 5863ffa..47f205e 100644
+index 1f82f80..17328ed 100644
 --- a/xml2-config.in
 +++ b/xml2-config.in
 @@ -3,7 +3,12 @@
@@ -16,3 +25,6 @@ index 5863ffa..47f205e 100644
  cflags=
  libs=
  
+-- 
+2.25.1
+
