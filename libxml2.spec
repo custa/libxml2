@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.11.5
-Release: 6
+Release: 5
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.11/%{name}-%{version}.tar.xz
@@ -95,7 +95,7 @@ sed -i 's|#!/usr/bin/python |#!%{__python3} |' py3doc/*.py
 find doc -type f -exec chmod 0644 \{\} \;
 
 %install
-%configure --with-python=%{__python3} --with-xptr-locs --with-legacy
+%configure --with-python=%{__python3}
 %make_install
 
 rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
@@ -164,12 +164,6 @@ rm -fr %{buildroot}
 
 
 %changelog
-* Wed Nov 27 2024 zhangzikang <zhangzikang@kylinos.cn> - 2.11.5-6
-- Type:update
-- ID:NA
-- SUG:NA
-- DESC:add configure options, fix some interfaces compile without installation issues
-
 * Fri Oct 18 2024 zhangzikang <zhangzikang@kylinos.cn> - 2.11.5-5
 - Type:update
 - ID:NA
