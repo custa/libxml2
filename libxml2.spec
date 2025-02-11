@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 41
+Release: 42
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -137,6 +137,7 @@ Patch124:backport-CVE-2023-45322.patch
 Patch125:backport-CVE-2024-25062.patch
 Patch126:backport-CVE-2022-2309.patch
 Patch127:backport-CVE-2024-34459.patch
+Patch128:backport-CVE-2022-49043-malloc-fail-Fix-use-after-free-in-xmlXIncludeAddNode.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -328,6 +329,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Feb 11 2025 Linux_zhang <zhangruifang@h-partners.com> - 2.9.10-42
+- Type:CVE
+- CVE:CVE-2022-49043
+- SUG:NA
+- DESC:fix CVE-2022-49043
+
 * Tue May 14 2024 cenhuilin <cenhuilin@kylinos.cn> - 2.9.10-41
 - Type:CVE
 - CVE:CVE-2024-34459
