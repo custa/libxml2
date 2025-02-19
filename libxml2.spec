@@ -1,6 +1,6 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
-Version: 2.12.9
+Version: 2.12.10
 Release: 1
 License: MIT
 Group: Development/Libraries
@@ -126,6 +126,9 @@ gzip -9 -c doc/libxml2-api.xml > doc/libxml2-api.xml.gz
 
 
 %changelog
+* Wed Feb 19 2025 Funda Wang <fundawang@yeah.net> - 2.12.10-1
+- update to 2.12.10
+
 * Tue Jul 30 2024 Funda Wang <fundawang@yeah.net> - 2.12.9-1
 - update to 2.12.9
 
