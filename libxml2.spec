@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.14
-Release: 14
+Release: 15
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.9/%{name}-%{version}.tar.xz
@@ -224,6 +224,9 @@ Patch6199:	backport-save-Check-for-NULL-node-name-in-xhtmlIsEmpty.patch
 Patch6200:	backport-valid-Check-for-NULL-node-name-in-xmlSnprintfElement.patch
 Patch6201:	backport-CVE-2024-34459.patch
 Patch6202:	backport-xpath-Fix-build-without-LIBXML_XPATH_ENABLED.patch
+Patch6203:      backport-CVE-2024-56171.patch
+Patch6204:      backport-CVE-2025-24928.patch
+Patch6205:      backport-CVE-2025-27113.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -381,6 +384,14 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Mon Feb 24 2025 Funda Wang <fundawang@yeah.net> - 2.9.14-15
+- Type:CVE
+- CVE:CVE-2024-56171
+- CVE:CVE-2025-24928
+- CVE:CVE-2025-27113
+- SUG:NA
+- DESC: fix CVE-2024-56171, CVE-2025-24928, CVE-2025-27113
+
 * Wed Jun 26 2024 zhuofeng <zhuofeng2@huawei.com> - 2.9.14-14
 - Type:bugfix
 - CVE:NA
