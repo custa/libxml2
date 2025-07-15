@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.11.5
-Release: 8
+Release: 9
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.11/%{name}-%{version}.tar.xz
@@ -21,6 +21,7 @@ Patch11: backport-CVE-2025-32415.patch
 Patch12: backport-CVE-2025-6021.patch
 Patch13: backport-CVE-2025-49794,CVE-2025-49796.patch
 Patch14: backport-CVE-2025-49795.patch
+Patch15: backport-CVE-2025-6170.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python3-devel
@@ -172,6 +173,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Tue Jul 15 2025 zhuo <1107893276@qq.com> - 2.11.5-9
+- Type:CVE
+- CVE:CVE-2025-6170
+- SUG:NA
+- DESC: fix CVE-2025-6170
+
 * Sun Jul 06 2025 Funda Wang <fundawang@yeah.net> - 2.11.5-8
 - fix CVE-2025-49794, CVE-2025-49795, CVE-2025-49796
 
