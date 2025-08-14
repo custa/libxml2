@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.12.10
-Release: 6
+Release: 7
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.12/%{name}-%{version}.tar.xz
@@ -14,6 +14,7 @@ Patch6004: CVE-2025-49795.patch
 Patch6005: CVE-2025-49794,CVE-2025-49796.patch
 Patch6006: backport-CVE-2025-6170.patch
 Patch6007: backport-Fix-relaxng-is-parsed-to-an-infinite-attrs-next-loop.patch
+Patch6008: Test-for-CVE-2025-6021.patch
 
 BuildRequires: pkgconfig(liblzma)
 BuildRequires: pkgconfig(python3)
@@ -133,6 +134,9 @@ gzip -9 -c doc/libxml2-api.xml > doc/libxml2-api.xml.gz
 
 
 %changelog
+* Thu Aug 14 2025 panzhe <panzhe@kylinos.cn> - 2.12.10-7
+- Add test for CVE-2025-6021
+
 * Tue Aug 12 2025 andy <liuyang01@kylinos.cn> - 2.12.10-6
 - Type:bugfix
 - ID:NA
