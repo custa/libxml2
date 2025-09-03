@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 49
+Release: 50
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -147,6 +147,7 @@ Patch134:backport-CVE-2025-6021.patch
 Patch135:backport-CVE-2025-49794,CVE-2025-49796.patch
 Patch136:backport-CVE-2025-6170.patch
 Patch137:backport-Fix-relaxng-is-parsed-to-an-infinite-attrs-next-loop.patch
+Patch138:backport-CVE-2025-9714-Make-XPath-depth-check-work-with-recursive-invocatio.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
@@ -338,6 +339,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Wed Sep 3 2025 fuanan <fuanan3@h-partners.com> - 2.9.10-50
+- Type:CVE
+- CVE:CVE-2025-9714
+- SUG:NA
+- DESC:fix CVE-2025-9714
+
 * Mon Aug 18 2025 yixiangzhike <yixiangzhike007@163.com> - 2.9.10-49
 - Type:bugfix
 - CVE:NA
