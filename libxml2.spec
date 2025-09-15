@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.12.10
-Release: 6
+Release: 7
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.12/%{name}-%{version}.tar.xz
@@ -15,7 +15,6 @@ Patch6005: CVE-2025-49794,CVE-2025-49796.patch
 Patch6006: backport-CVE-2025-6170.patch
 Patch6007: backport-Fix-relaxng-is-parsed-to-an-infinite-attrs-next-loop.patch
 
-BuildRequires: pkgconfig(liblzma)
 BuildRequires: pkgconfig(python3)
 BuildRequires: pkgconfig(zlib)
 URL: http://xmlsoft.org/
@@ -77,17 +76,19 @@ cp doc/*.py py3doc
 sed -i 's|#!/usr/bin/python |#!%{__python3} |' py3doc/*.py
 
 %build
-%configure --enable-static --with-ftp
+%configure --enable-static \
+    --without-http \
+    --without-ftp \
+    --without-lzma
 %make_build
 
 find doc -type f -exec chmod 0644 \{\} \;
 
 %install
 %make_install
+%delete_la
 
-rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
 rm -f $RPM_BUILD_ROOT%{_libdir}/python*/site-packages/*.a
-rm -f $RPM_BUILD_ROOT%{_libdir}/python*/site-packages/*.la
 rm -rf $RPM_BUILD_ROOT%{_datadir}/doc/*
 gzip -9 -c doc/libxml2-api.xml > doc/libxml2-api.xml.gz
 
@@ -133,6 +134,9 @@ gzip -9 -c doc/libxml2-api.xml > doc/libxml2-api.xml.gz
 
 
 %changelog
+* Mon Sep 15 2025 Funda Wang <fundawang@yeah.net> - 2.12.10-7
+- remove http, ftp and lzma features which are removed upstream
+
 * Tue Aug 12 2025 andy <liuyang01@kylinos.cn> - 2.12.10-6
 - Type:bugfix
 - ID:NA
