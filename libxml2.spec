@@ -1,19 +1,13 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
-Version: 2.12.10
-Release: 7
+Version: 2.13.9
+Release: 1
 License: MIT
 Group: Development/Libraries
-Source: https://download.gnome.org/sources/%{name}/2.12/%{name}-%{version}.tar.xz
+Source: https://download.gnome.org/sources/%{name}/2.13/%{name}-%{version}.tar.xz
 
 Patch0: libxml2-multilib.patch
-Patch6001: CVE-2025-32414.patch
-Patch6002: CVE-2025-32415.patch
-Patch6003: CVE-2025-6021.patch
-Patch6004: CVE-2025-49795.patch
-Patch6005: CVE-2025-49794,CVE-2025-49796.patch
-Patch6006: backport-CVE-2025-6170.patch
-Patch6007: backport-Fix-relaxng-is-parsed-to-an-infinite-attrs-next-loop.patch
+Patch6001: backport-Fix-relaxng-is-parsed-to-an-infinite-attrs-next-loop.patch
 
 BuildRequires: pkgconfig(python3)
 BuildRequires: pkgconfig(zlib)
@@ -95,8 +89,6 @@ gzip -9 -c doc/libxml2-api.xml > doc/libxml2-api.xml.gz
 %check
 %make_build check
 
-(cd doc/examples ; make clean ; rm -rf .deps Makefile)
-
 %files
 %license Copyright
 %{_libdir}/lib*.so.*
@@ -105,8 +97,7 @@ gzip -9 -c doc/libxml2-api.xml > doc/libxml2-api.xml.gz
 
 %files devel
 %doc NEWS README.md
-%doc doc/tutorial doc/libxml2-api.xml.gz
-%doc doc/examples
+%doc doc/libxml2-api.xml.gz
 %doc %dir %{_datadir}/gtk-doc/html/libxml2
 %doc %{_datadir}/gtk-doc/html/libxml2/*.devhelp2
 %doc %{_datadir}/gtk-doc/html/libxml2/*.html
@@ -134,6 +125,9 @@ gzip -9 -c doc/libxml2-api.xml > doc/libxml2-api.xml.gz
 
 
 %changelog
+* Wed Nov 12 2025 wangziliang <wangziliang@kylinos.cn> - 2.13.9-1
+- update to 2.13.9
+
 * Mon Sep 15 2025 Funda Wang <fundawang@yeah.net> - 2.12.10-7
 - remove http, ftp and lzma features which are removed upstream
 
