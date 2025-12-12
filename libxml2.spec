@@ -1,23 +1,30 @@
+%bcond_without compat
+%bcond_without docs
+
+%if %{with compat}
+%global compat_version 2.12.10
+%endif
+
 Summary: Library providing XML and HTML support
 Name: libxml2
-Version: 2.12.10
-Release: 7
+Version: 2.15.1
+Release: 1
 License: MIT
 Group: Development/Libraries
-Source: https://download.gnome.org/sources/%{name}/2.12/%{name}-%{version}.tar.xz
+Source: https://download.gnome.org/sources/%{name}/%{version_major}/%{name}-%{version}.tar.xz
+%if %{with compat}
+Source1: https://download.gnome.org/sources/%{name}/2.12/%{name}-%{compat_version}.tar.xz
+%endif
 
 Patch0: libxml2-multilib.patch
-Patch6001: CVE-2025-32414.patch
-Patch6002: CVE-2025-32415.patch
-Patch6003: CVE-2025-6021.patch
-Patch6004: CVE-2025-49795.patch
-Patch6005: CVE-2025-49794,CVE-2025-49796.patch
-Patch6006: backport-CVE-2025-6170.patch
-Patch6007: backport-Fix-relaxng-is-parsed-to-an-infinite-attrs-next-loop.patch
-
+BuildRequires: meson >= 0.61
 BuildRequires: pkgconfig(python3)
 BuildRequires: pkgconfig(zlib)
-URL: http://xmlsoft.org/
+BuildRequires: /usr/bin/doxygen
+BuildRequires: /usr/bin/xsltproc
+BuildRequires: docbook-style-xsl
+BuildRequires: cmake-rpm-macros
+URL: https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home
 
 %description
 This library allows to manipulate XML files. It includes support
@@ -35,7 +42,6 @@ Summary: Libraries, includes, etc. to develop XML and HTML applications
 Group: Development/Libraries
 Requires: libxml2 = %{version}-%{release}
 Obsoletes: %{name}-static < %{version}-%{release}
-Provides:  %{name}-static = %{version}-%{release}
 
 %description devel
 Libraries, include files, etc you can use to develop XML applications.
@@ -70,70 +76,71 @@ at parse time or later once the document has been modified.
 
 %prep
 %autosetup -n %{name}-%{version} -p1
-
-mkdir py3doc
-cp doc/*.py py3doc
-sed -i 's|#!/usr/bin/python |#!%{__python3} |' py3doc/*.py
+%if %{with compat}
+tar xf %{S:1}
+%endif
 
 %build
-%configure --enable-static \
-    --without-http \
-    --without-ftp \
-    --without-lzma
-%make_build
+%meson \
+    -Dhistory=disabled \
+    -Dreadline=disabled \
+    -Dpython=enabled \
+    -Dhttp=disabled \
+    -Dschematron=disabled \
+%if %{with docs}
+    -Ddocs=enabled \
+%else
+    -Ddocs=disabled \
+%endif
+%{nil}
+%meson_build
 
-find doc -type f -exec chmod 0644 \{\} \;
+%if %{with compat}
+pushd %{name}-%{compat_version}
+%configure --enable-static --without-http --without-ftp --without-lzma
+%make_build
+popd
+%endif
 
 %install
-%make_install
-%delete_la
+%meson_install
 
-rm -f $RPM_BUILD_ROOT%{_libdir}/python*/site-packages/*.a
-rm -rf $RPM_BUILD_ROOT%{_datadir}/doc/*
-gzip -9 -c doc/libxml2-api.xml > doc/libxml2-api.xml.gz
+%if %{with compat}
+install -m755 %{name}-%{compat_version}/.libs/*.so.* %{buildroot}%{_libdir}/
+%endif
 
 %check
-%make_build check
-
-(cd doc/examples ; make clean ; rm -rf .deps Makefile)
+%meson_test
 
 %files
 %license Copyright
-%{_libdir}/lib*.so.*
+%{_libdir}/libxml2.so.*
 %{_bindir}/xmllint
 %{_bindir}/xmlcatalog
 
 %files devel
 %doc NEWS README.md
-%doc doc/tutorial doc/libxml2-api.xml.gz
-%doc doc/examples
-%doc %dir %{_datadir}/gtk-doc/html/libxml2
-%doc %{_datadir}/gtk-doc/html/libxml2/*.devhelp2
-%doc %{_datadir}/gtk-doc/html/libxml2/*.html
-%doc %{_datadir}/gtk-doc/html/libxml2/*.png
-%doc %{_datadir}/gtk-doc/html/libxml2/*.css
+%doc %{_datadir}/doc/%{name}/html
+%doc %{_datadir}/doc/%{name}/*.html
 
 %{_libdir}/lib*.so
 %{_includedir}/*
 %{_bindir}/xml2-config
-%{_datadir}/aclocal/libxml.m4
 %{_libdir}/pkgconfig/libxml-2.0.pc
 %{_libdir}/cmake/libxml2/libxml2-config.cmake
 
-%{_libdir}/*.a
-
 %files -n python3-%{name}
-%{python3_sitearch}/libxml2mod.so
+%{python3_sitearch}/*.so
 %{python3_sitelib}/*.py
 %{python3_sitelib}/__pycache__/*.pyc
-%doc python/libxml2class.txt
-%doc py3doc/*.py
 
 %files help
 %{_mandir}/man?/*
 
-
 %changelog
+* Tue Dec 02 2025 Funda Wang <fundawang@yeah.net> - 2.15.1-1
+- update to 2.15.1
+
 * Mon Sep 15 2025 Funda Wang <fundawang@yeah.net> - 2.12.10-7
 - remove http, ftp and lzma features which are removed upstream
 
