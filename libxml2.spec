@@ -8,7 +8,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.15.1
-Release: 3
+Release: 4
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/%{version_major}/%{name}-%{version}.tar.xz
@@ -17,6 +17,7 @@ Source1: https://download.gnome.org/sources/%{name}/2.12/%{name}-%{compat_versio
 %endif
 
 Patch0: libxml2-multilib.patch
+Patch6001: backport-CVE-2025-8732.patch
 BuildRequires: meson >= 0.61
 BuildRequires: pkgconfig(python3)
 BuildRequires: pkgconfig(zlib)
@@ -138,6 +139,9 @@ install -m755 %{name}-%{compat_version}/.libs/*.so.* %{buildroot}%{_libdir}/
 %{_mandir}/man?/*
 
 %changelog
+* Fri Jan 16 2026 Funda Wang <fundawang@yeah.net> - 2.15.1-4
+- fix CVE-2025-8732
+
 * Fri Jan 16 2026 Funda Wang <fundawang@yeah.net> - 2.15.1-3
 - enable comapt build due to libsolv not being resolved yet
 
