@@ -1,4 +1,4 @@
-%bcond_with compat
+%bcond_without compat
 %bcond_without docs
 
 %if %{with compat}
@@ -8,7 +8,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.15.1
-Release: 2
+Release: 3
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/%{version_major}/%{name}-%{version}.tar.xz
@@ -138,6 +138,9 @@ install -m755 %{name}-%{compat_version}/.libs/*.so.* %{buildroot}%{_libdir}/
 %{_mandir}/man?/*
 
 %changelog
+* Fri Jan 16 2026 Funda Wang <fundawang@yeah.net> - 2.15.1-3
+- enable comapt build due to libsolv not being resolved yet
+
 * Sun Dec 14 2025 Funda Wang <fundawang@yeah.net> - 2.15.1-2
 - disable compat build
 
