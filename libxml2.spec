@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.11.9
-Release: 8
+Release: 9
 License: MIT
 Group: Development/Libraries
 Source: https://download.gnome.org/sources/%{name}/2.11/%{name}-%{version}.tar.xz
@@ -21,6 +21,7 @@ Patch11:backport-CVE-2025-49795.patch
 Patch12:backport-CVE-2025-6170.patch
 Patch13:backport-Fix-relaxng-is-parsed-to-an-infinite-attrs-next-loop.patch
 Patch14:backport-CVE-2025-8732.patch
+Patch15:backport-CVE-2026-0990.patch
 
 BuildRequires: python3-devel
 BuildRequires: zlib-devel
@@ -158,6 +159,9 @@ gzip -9 -c doc/libxml2-api.xml > doc/libxml2-api.xml.gz
 
 
 %changelog
+* Mon Jan 19 2026 Funda Wang <fundawang@yeah.net> - 2.11.9-9
+- fix CVE-2026-0990
+
 * Fri Jan 16 2026 Funda Wang <fundawang@yeah.net> - 2.11.9-8
 - fix CVE-2025-8732
 
