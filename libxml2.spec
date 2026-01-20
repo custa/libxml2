@@ -75,6 +75,7 @@ Patch63: CVE-2021-3518.patch
 Patch64: backport-Revert-Fix-memory-leak-in-xmlParseBalancedChunkMemor.patch
 Patch65: backport-xmlParseBalancedChunkMemory-must-not-be-called-with-.patch
 Patch66: backport-CVE-2022-23308-Use-after-free-of-ID-and-IDREF-attrib.patch
+Patch67: CVE-2026-0989-limit-relaxng-include-depth.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python2-devel
