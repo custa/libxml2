@@ -1,7 +1,7 @@
 Summary: Library providing XML and HTML support
 Name: libxml2
 Version: 2.9.10
-Release: 14
+Release: 15
 License: MIT
 Group: Development/Libraries
 Source: ftp://xmlsoft.org/libxml2/libxml2-%{version}.tar.gz
@@ -267,6 +267,12 @@ rm -fr %{buildroot}
 
 
 %changelog
+* Mon Jan 20 2026 copilot <copilot@github.com> - 2.9.10-15
+- Type:CVE
+- ID:CVE-2026-0989
+- SUG:NA
+- DESC:fix CVE-2026-0989: Limit RelaxNG include depth to prevent stack exhaustion
+
 * Wed Mar 09 2022 fuanan <fuanan3@h-partners.com> - 2.9.10-14
 - Type:CVE
 - ID:CVE-2022-23308
